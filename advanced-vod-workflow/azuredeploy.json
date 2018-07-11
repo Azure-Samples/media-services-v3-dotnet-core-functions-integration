@@ -17,9 +17,9 @@
     },
     "project": {
       "type": "string",
-      "defaultValue": "advanced-vod-workflow-functions-v3",
+      "defaultValue": "advanced-vod-workflow",
       "allowedValues": [
-        "advanced-vod-workflow-functions-v3"
+        "advanced-vod-workflow"
       ],
       "metadata": {
         "description": "The project in the Media Services Functions samples to deploy. Choose the name that matches the folder name containing the functions samples that you wish to deploy."
@@ -27,7 +27,7 @@
     },
     "sourceCodeRepositoryURL": {
       "type": "string",
-      "defaultValue": "ENTER PATH to YOUR FORK of https://github.com/shigeyf/media-services-dotnet-functions-integration",
+      "defaultValue": "ENTER PATH to YOUR FORK of https://github.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration",
       "metadata": {
         "description": "Source code repository URL. Is is REQUIRED that you first fork the samples repository and point this to your fork. If you are using your own fork, you may see an error in deployment related to GitHub auth. We require this for your own good, as we may update and break your application or testing as we deploy new updates to the public samples repository."
       }
