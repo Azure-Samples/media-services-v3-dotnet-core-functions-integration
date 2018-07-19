@@ -30,6 +30,8 @@ If not already done : fork the repo, download a local copy. Open the solution wi
 These functions have been designed to work with Irdeto back-end. It requires credentials and urls to be set in application settings. If you run the functions locally, you need to specify the values in the local settings file.
 
 local.settings.json will look like (please replace 'value' with the correct data):
+
+```json
 {
     "IsEncrypted": false,
   "Values": {
@@ -54,3 +56,8 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoFairPlayLAURL": "value"
   }
 }
+```
+
+
+
+
