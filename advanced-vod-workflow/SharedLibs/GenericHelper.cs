@@ -5,6 +5,8 @@
 //
 
 using System;
+using System.Collections.Generic;
+
 
 namespace advanced_vod_functions_v3.SharedLibs
 {
@@ -21,5 +23,10 @@ namespace advanced_vod_functions_v3.SharedLibs
 
             return returnValue;
         }
+    }
+    public class JsonObjectConversionRule
+    {
+        public Type t;
+        public Dictionary<string, Type> rules;
     }
 }

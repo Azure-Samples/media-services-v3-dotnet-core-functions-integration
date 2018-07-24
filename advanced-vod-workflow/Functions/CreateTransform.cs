@@ -93,7 +93,7 @@ namespace advanced_vod_functions_v3
                 {
                     // You need to specify what you want it to produce as an output
                     JsonConverter[] jsonConverters = {
-                        new MediaServicesHelperJsonConverter(),
+                        new MediaServicesHelperJsonReader(),
                         new MediaServicesHelperTimeSpanJsonConverter()
                     };
                     List<TransformOutput> transformOutputList = JsonConvert.DeserializeObject<List<TransformOutput>>(data.transformOutputs.ToString(), jsonConverters);

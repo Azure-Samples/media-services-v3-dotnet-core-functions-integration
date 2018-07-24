@@ -12,125 +12,126 @@ using System.Reflection;
 using Microsoft.Azure.Management.Media.Models;
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 
 namespace advanced_vod_functions_v3.SharedLibs
 {
-    public class JsonConvertionRule
+    public class MediaServicesHelperJsonConverter : JsonConverter
     {
-        public Type t;
-        public Dictionary<string, Type> convertRules;
-    }
-
-    public class MediaServicesHelperJsonConverter : Newtonsoft.Json.JsonConverter
-    {
-        static List<JsonConvertionRule> conversions = new List<JsonConvertionRule>
+        protected static List<JsonObjectConversionRule> conversions = new List<JsonObjectConversionRule>
         {
             // Codec
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(Codec),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.Codec),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.AacAudio", typeof(AacAudio) },
-                    { "#Microsoft.Media.CopyAudio", typeof(CopyAudio) },
-                    { "#Microsoft.Media.CopyVideo", typeof(CopyVideo) },
-                    { "#Microsoft.Media.H264Video", typeof(H264Video) },
-                    { "#Microsoft.Media.JpgImage", typeof(JpgImage) },
-                    { "#Microsoft.Media.PngImage", typeof(PngImage) }
+                    { "#Microsoft.Media.AacAudio", typeof(Microsoft.Azure.Management.Media.Models.AacAudio) },
+                    { "#Microsoft.Media.CopyAudio", typeof(Microsoft.Azure.Management.Media.Models.CopyAudio) },
+                    { "#Microsoft.Media.CopyVideo", typeof(Microsoft.Azure.Management.Media.Models.CopyVideo) },
+                    { "#Microsoft.Media.H264Video", typeof(Microsoft.Azure.Management.Media.Models.H264Video) },
+                    { "#Microsoft.Media.JpgImage", typeof(Microsoft.Azure.Management.Media.Models.JpgImage) },
+                    { "#Microsoft.Media.PngImage", typeof(Microsoft.Azure.Management.Media.Models.PngImage) }
                 }
             },
             // ContentKeyPolicyConfiguration
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(ContentKeyPolicyConfiguration),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyConfiguration),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.ContentKeyPolicyClearKeyConfiguration", typeof(ContentKeyPolicyClearKeyConfiguration) },
-                    { "#Microsoft.Media.ContentKeyPolicyFairPlayConfiguration", typeof(ContentKeyPolicyFairPlayConfiguration) },
-                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyConfiguration", typeof(ContentKeyPolicyPlayReadyConfiguration) },
-                    { "#Microsoft.Media.ContentKeyPolicyWidevineConfiguration", typeof(ContentKeyPolicyWidevineConfiguration) }
+                    { "#Microsoft.Media.ContentKeyPolicyClearKeyConfiguration", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyClearKeyConfiguration) },
+                    { "#Microsoft.Media.ContentKeyPolicyFairPlayConfiguration", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyFairPlayConfiguration) },
+                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyConfiguration", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyPlayReadyConfiguration) },
+                    { "#Microsoft.Media.ContentKeyPolicyWidevineConfiguration", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyWidevineConfiguration) }
                 }
             },
             // ContentKeyPolicyRestriction
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(ContentKeyPolicyRestriction),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyRestriction),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.ContentKeyPolicyOpenRestriction", typeof(ContentKeyPolicyOpenRestriction) },
-                    { "#Microsoft.Media.ContentKeyPolicyTokenRestriction", typeof(ContentKeyPolicyTokenRestriction) }
+                    { "#Microsoft.Media.ContentKeyPolicyOpenRestriction", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyOpenRestriction) },
+                    { "#Microsoft.Media.ContentKeyPolicyTokenRestriction", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyTokenRestriction) }
                 }
             },
             // ContentKeyPolicyRestrictionTokenKey
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(ContentKeyPolicyRestrictionTokenKey),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyRestrictionTokenKey),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.ContentKeyPolicyRsaTokenKey", typeof(ContentKeyPolicyRsaTokenKey) },
-                    { "#Microsoft.Media.ContentKeyPolicySymmetricTokenKey", typeof(ContentKeyPolicySymmetricTokenKey) },
-                    { "#Microsoft.Media.ContentKeyPolicyX509CertificateTokenKey", typeof(ContentKeyPolicyX509CertificateTokenKey) }
+                    { "#Microsoft.Media.ContentKeyPolicyRsaTokenKey", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyRsaTokenKey) },
+                    { "#Microsoft.Media.ContentKeyPolicySymmetricTokenKey", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicySymmetricTokenKey) },
+                    { "#Microsoft.Media.ContentKeyPolicyX509CertificateTokenKey", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyX509CertificateTokenKey) }
                 }
             },
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(ContentKeyPolicyPlayReadyContentKeyLocation),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyPlayReadyContentKeyLocation),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyContentEncryptionKeyFromHeader", typeof(ContentKeyPolicyPlayReadyContentEncryptionKeyFromHeader) },
-                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyContentEncryptionKeyFromKeyIdentifier", typeof(ContentKeyPolicyPlayReadyContentEncryptionKeyFromKeyIdentifier) }
+                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyContentEncryptionKeyFromHeader", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyPlayReadyContentEncryptionKeyFromHeader) },
+                    { "#Microsoft.Media.ContentKeyPolicyPlayReadyContentEncryptionKeyFromKeyIdentifier", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyPlayReadyContentEncryptionKeyFromKeyIdentifier) }
                 }
             },
             // Format
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(Format),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.Format),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.Mp4Format", typeof(Mp4Format) },
-                    { "#Microsoft.Media.TransportStreamFormat", typeof(TransportStreamFormat) },
-                    { "#Microsoft.Media.JpgFormat", typeof(JpgFormat) },
-                    { "#Microsoft.Media.PngFormat", typeof(PngFormat) }
+                    { "#Microsoft.Media.Mp4Format", typeof(Microsoft.Azure.Management.Media.Models.Mp4Format) },
+                    { "#Microsoft.Media.TransportStreamFormat", typeof(Microsoft.Azure.Management.Media.Models.TransportStreamFormat) },
+                    { "#Microsoft.Media.JpgFormat", typeof(Microsoft.Azure.Management.Media.Models.JpgFormat) },
+                    { "#Microsoft.Media.PngFormat", typeof(Microsoft.Azure.Management.Media.Models.PngFormat) }
                 }
             },
             // JobInput
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(JobInput),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.JobInput),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.JobInputAsset ", typeof(JobInputAsset) },
-                    { "#Microsoft.Media.JobInputHttp", typeof(JobInputHttp) },
-                    { "#Microsoft.Media.JobInputs", typeof(JobInputs) }
+                    { "#Microsoft.Media.JobInputAsset ", typeof(Microsoft.Azure.Management.Media.Models.JobInputAsset) },
+                    { "#Microsoft.Media.JobInputHttp", typeof(Microsoft.Azure.Management.Media.Models.JobInputHttp) },
+                    { "#Microsoft.Media.JobInputs", typeof(Microsoft.Azure.Management.Media.Models.JobInputs) }
                 }
             },
             // Layer
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(Layer),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.Layer),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.H264Layer ", typeof(H264Layer) },
-                    { "#Microsoft.Media.JpgLayer", typeof(JpgLayer) },
-                    { "#Microsoft.Media.PngLayer", typeof(PngLayer) }
+                    { "#Microsoft.Media.H264Layer ", typeof(Microsoft.Azure.Management.Media.Models.H264Layer) },
+                    { "#Microsoft.Media.JpgLayer", typeof(Microsoft.Azure.Management.Media.Models.JpgLayer) },
+                    { "#Microsoft.Media.PngLayer", typeof(Microsoft.Azure.Management.Media.Models.PngLayer) }
                 }
             },
             // Preset
-            new JsonConvertionRule
+            new JsonObjectConversionRule
             {
-                t = typeof(Preset),
-                convertRules = new Dictionary<string, Type>()
+                t = typeof(Microsoft.Azure.Management.Media.Models.Preset),
+                rules = new Dictionary<string, Type>()
                 {
-                    { "#Microsoft.Media.BuiltInStandardEncoderPreset", typeof(BuiltInStandardEncoderPreset) },
-                    { "#Microsoft.Media.AudioAnalyzerPreset", typeof(AudioAnalyzerPreset) },
-                    { "#Microsoft.Media.VideoAnalyzerPreset", typeof(VideoAnalyzerPreset) },
-                    { "#Microsoft.Media.StandardEncoderPreset", typeof(StandardEncoderPreset) }
+                    { "#Microsoft.Media.BuiltInStandardEncoderPreset", typeof(Microsoft.Azure.Management.Media.Models.BuiltInStandardEncoderPreset) },
+                    { "#Microsoft.Media.AudioAnalyzerPreset", typeof(Microsoft.Azure.Management.Media.Models.AudioAnalyzerPreset) },
+                    { "#Microsoft.Media.VideoAnalyzerPreset", typeof(Microsoft.Azure.Management.Media.Models.VideoAnalyzerPreset) },
+                    { "#Microsoft.Media.StandardEncoderPreset", typeof(Microsoft.Azure.Management.Media.Models.StandardEncoderPreset) }
                 }
             }
         };
-
+        public override bool CanConvert(Type objectType) { throw new NotImplementedException(); }
+        public override bool CanRead => false;
+        public override bool CanWrite => false;
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) { throw new NotImplementedException(); }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) { throw new NotImplementedException(); }
+    }
+    public class MediaServicesHelperJsonReader : MediaServicesHelperJsonConverter
+    {
         public override bool CanConvert(Type objectType)
         {
             foreach (var c in conversions)
@@ -139,7 +140,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             }
             return false;
         }
-
+        public override bool CanRead => true;
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == Newtonsoft.Json.JsonToken.Null) return null;
@@ -152,9 +153,9 @@ namespace advanced_vod_functions_v3.SharedLibs
             {
                 if (c.t.GetTypeInfo().Equals(abstractType))
                 {
-                    if (c.convertRules.ContainsKey(targetODataType))
+                    if (c.rules.ContainsKey(targetODataType))
                     {
-                        Type targetType = c.convertRules[targetODataType];
+                        Type targetType = c.rules[targetODataType];
                         return tokens.ToObject(targetType, serializer);
                     }
                     else
@@ -166,11 +167,62 @@ namespace advanced_vod_functions_v3.SharedLibs
 
             throw new NotSupportedException($"Type {targetODataType} is not supported");
         }
-
         public override bool CanWrite => false;
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) { throw new NotImplementedException(); }
+    }
+    public class MediaServicesHelperJsonWriter : MediaServicesHelperJsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            foreach (var c in conversions)
+            {
+                if (objectType == c.t || objectType.IsSubclassOf(c.t)) return true;
+            }
+            return false;
+        }
+        public override bool CanRead => false;
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) { throw new NotImplementedException(); }
+        public override bool CanWrite => true;
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            JToken tokens = JToken.FromObject(value);
+            Type t = value.GetType();
+
+            string odata = null;
+            foreach (var c in conversions)
+            {
+                if (c.t.GetTypeInfo().IsAssignableFrom(t))
+                {
+                    foreach (var r in c.rules)
+                    {
+                        Type targetType = r.Value;
+                        if (t.Equals(targetType))
+                        {
+                            odata = r.Key;
+                        }
+                    }
+                }
+            }
+
+            PropertyInfo[] props = t.GetProperties();
+            JObject o = new JObject();
+            if (odata != null)
+            {
+                int count = 0;
+                if (!t.IsSubclassOf(typeof(Microsoft.Azure.Management.Media.Models.Layer)))
+                    o.AddFirst(new JProperty("@odata.type", odata));
+                foreach (JToken child in tokens.Children())
+                {
+                    PropertyInfo p = props[count];
+                    object pv = p.GetValue(value, null);
+                    if (pv != null)
+                        o.Add(child.Path, JToken.FromObject(pv, serializer));
+                    else
+                        o.Add(child.Path, null);
+                    count++;
+                }
+                o.WriteTo(writer);
+            }
         }
     }
 
@@ -183,6 +235,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             return false;
         }
 
+        public override bool CanRead => true;
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == Newtonsoft.Json.JsonToken.Null) return null;
@@ -201,10 +254,25 @@ namespace advanced_vod_functions_v3.SharedLibs
             throw new NotImplementedException();
         }
 
-        public override bool CanWrite => false;
+        public override bool CanWrite => true;
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            JToken token = JToken.FromObject(value);
+            TimeSpan ts = (TimeSpan)token;
+            if (ts == new TimeSpan())
+            {
+                Nullable<TimeSpan> obj = null;
+                writer.WriteValue(obj);
+            }
+            else
+            {
+                string hours = (ts.Hours != 0) ? ts.Hours.ToString() + "H" : "";
+                string mins = (ts.Minutes != 0) ? ts.Minutes.ToString() + "M" : "";
+                string secs = (ts.Seconds != 0) ? ts.Seconds.ToString() + "S" : "";
+                string tsString = "PT" + hours + mins + secs;
+                JToken o = JToken.FromObject(tsString);
+                o.WriteTo(writer);
+            }
         }
     }
 }
