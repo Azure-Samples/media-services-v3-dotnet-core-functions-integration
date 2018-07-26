@@ -68,7 +68,7 @@ namespace advanced_vod_functions_v3
         [FunctionName("CreateContentKeyPolicy")]
         public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
         {
-            log.Info($"AMS v3 Function - CreateEmptyAsset was triggered!");
+            log.Info($"AMS v3 Function - CreateContentKeyPolicy was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);

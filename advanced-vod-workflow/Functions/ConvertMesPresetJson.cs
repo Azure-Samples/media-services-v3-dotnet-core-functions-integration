@@ -1,7 +1,7 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// CreateTransform - This function creates a new transform.
+// ConvertMesPresetJson - This function converts AMSv2 based MES custom preset JSON data to a preset parameters for new Transform (StandardEncoderPreset).
 //
 /*
 ```c#
