@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Rest.Azure.Authentication;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace ImgDrmOperationsV2
+namespace LiveDrmOperationsV3
 {
     class MediaServicesHelpers
     {
@@ -52,5 +52,11 @@ namespace ImgDrmOperationsV2
             };
         }
         // </CreateMediaServicesClient>
+    }
+
+    public class InputUrl
+    {
+        public string Url { get; set; }
+        public string Protocol { get; set; }
     }
 }

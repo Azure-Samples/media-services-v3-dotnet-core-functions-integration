@@ -1,15 +1,17 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 
-namespace ImgDrmOperationsV2
+namespace LiveDrmOperationsV3
 {
     public class ConfigWrapper
     {
         private readonly IConfiguration _config;
+        private readonly string _azureRegionCode;
 
-        public ConfigWrapper(IConfiguration config)
+        public ConfigWrapper(IConfiguration config, string azureRegionCode = null)
         {
             _config = config;
+            _azureRegionCode = azureRegionCode;
         }
 
         public string SubscriptionId
@@ -19,12 +21,12 @@ namespace ImgDrmOperationsV2
 
         public string ResourceGroup
         {
-            get { return _config["ResourceGroup"]; }
+            get { return _config["ResourceGroup"] + _azureRegionCode; }
         }
 
         public string AccountName
         {
-            get { return _config["AccountName"]; }
+            get { return _config["AccountName"] + _azureRegionCode; }
         }
 
         public string AadTenantId
@@ -59,8 +61,41 @@ namespace ImgDrmOperationsV2
 
         public string Region
         {
-            get { return _config["Region"]; }
+            get
+            {
+
+                if (_azureRegionCode == null)
+                {
+                    return _config["Region"];
+                }
+                else
+                {
+                    switch (_azureRegionCode)  // codes as defined in AMS Streaming Endpoint hostname - to be completed
+                    {
+                        case "euno":
+                        case "eu":
+                            return "North Europe";
+
+                        case "euwe":
+                        case "we":
+                            return "West Europe";
+
+                        default:
+                            return _config["Region"];
+
+                    }
+                }
+            }
         }
+
+        public string AzureRegionCode
+        {
+            get
+            {
+                return _azureRegionCode;
+            }
+        }
+
 
         public string IrdetoUserName
         {
@@ -90,6 +125,21 @@ namespace ImgDrmOperationsV2
         {
             get { return _config["IrdetoFairPlayLAURL"]; }
         }
-       
+        public string CosmosConnectionString
+        {
+            get { return _config["CosmosConnectionString"]; }
+        }
+        public string CosmosDB
+        {
+            get { return _config["CosmosDB"]; }
+        }
+        public string CosmosCollectionOutputs
+        {
+            get { return _config["CosmosCollectionOutputs"]; }
+        }
+        public string CosmosCollectionSettings
+        {
+            get { return _config["CosmosCollectionSettings"]; }
+        }
     }
 }
