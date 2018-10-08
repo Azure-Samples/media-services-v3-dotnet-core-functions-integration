@@ -9,7 +9,6 @@ This Visual Studio 2017 Solution exposes several Azure functions that can be use
 
 This Media Services Functions example is based on AMS REST API v3 on Azure Functions v2.
 
-
 ## Prerequisites for a sample Logic Apps deployments
 
 ### 1. Create an Azure Media Services account
@@ -53,11 +52,11 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoSoapService": "value",
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
-    "IrdetoFairPlayLAURL": "value"
+    "IrdetoFairPlayLAURL": "value",
+    "CosmosConnectionString": "value",
+    "CosmosDB": "liveDRMStreaming",
+    "CosmosCollectionSettings": "liveEventSettings",
+    "CosmosCollectionOutputs": "liveEventOutputInfo"
   }
 }
 ```
-
-
-
-

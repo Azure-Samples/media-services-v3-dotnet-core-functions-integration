@@ -115,8 +115,8 @@ using System.Net;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDRMIrdeto.Helpers;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Helpers;
+using LiveDrmOperationsV3.Models;
 
 namespace LiveDrmOperationsV3
 {
@@ -179,8 +179,6 @@ namespace LiveDrmOperationsV3
 
             // init default
 
-            string manifestName = liveEventName.ToLower();
-
             bool deleteAsset = true;
             if (data.deleteAsset != null)
             {
@@ -189,6 +187,8 @@ namespace LiveDrmOperationsV3
 
             string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
             string streamingLocatorName = "locator-" + uniqueness;
+            string manifestName = liveEventName.ToLower();
+
 
             IAzureMediaServicesClient client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
@@ -211,7 +211,7 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                // let's check that the channel does not exist already
+                // let's check that the channel exists
                 liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
                 if (liveEvent == null)
                 {
@@ -230,7 +230,9 @@ namespace LiveDrmOperationsV3
                 // get the name of the streaming policy. If not possible, recreate it
                 if (ps.First() != null)
                 {
-                    streamingLocatorName = IrdetoHelpers.ReturnLocatorNameFromDescription(ps.First());
+                    asset = client.Assets.Get(config.ResourceGroup, config.AccountName, ps.First().AssetName);
+
+                    streamingLocatorName = IrdetoHelpers.ReturnLocatorNameFromDescription(asset).FirstOrDefault();
                     if (streamingLocatorName != null)
                     {
                         var sp = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, streamingLocatorName);
@@ -287,10 +289,10 @@ namespace LiveDrmOperationsV3
             try
             {
                 log.LogInformation("Asset creation...");
-                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName));
+                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName, description: IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName)));
 
                 Hls hlsParam = null;
-                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes((double)eventInfoFromCosmos.archiveWindowLength), null, "output-" + uniqueness, null, IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName), liveEventName.ToLower(), hlsParam); //we put the streaming locator in description
+                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes((double)eventInfoFromCosmos.archiveWindowLength), null, "output-" + uniqueness, null, null, manifestName, hlsParam); //we put the streaming locator in description
                 log.LogInformation("await task reset...");
 
                 await taskReset; // let's wait for the reset to complete
@@ -362,13 +364,10 @@ namespace LiveDrmOperationsV3
 
             try
             {
-
-                // let's get the asset
-                // in v3, asset name = asset if in v2 (without prefix)
-                log.LogInformation("Asset configuration.");
+                // streaming locator creation
+                log.LogInformation("Locator creation...");
 
                 StreamingLocator locator = await IrdetoHelpers.SetupDRMAndCreateLocator(config, streamingPolicyName, streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
-
 
                 log.LogInformation("locator : " + locator.Name);
 
@@ -381,7 +380,7 @@ namespace LiveDrmOperationsV3
 
 
             // object to store the output of the function
-            var generalOutputInfo = new LiveDRMIrdeto.Models.GeneralOutputInfo();
+            var generalOutputInfo = new GeneralOutputInfo();
 
             // let's build info for the live event and output
             try

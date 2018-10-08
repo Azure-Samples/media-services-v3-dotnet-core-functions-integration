@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Rest.Azure.Authentication;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace LiveDrmOperationsV3
+namespace LiveDrmOperationsV3.Helpers
 {
     class MediaServicesHelpers
     {

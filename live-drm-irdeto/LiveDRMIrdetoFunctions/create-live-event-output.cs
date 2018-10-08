@@ -124,8 +124,9 @@ using System.Net;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDRMIrdeto.Helpers;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Models;
+using LiveDrmOperationsV3.Helpers;
+
 
 namespace LiveDrmOperationsV3
 {
@@ -185,12 +186,10 @@ namespace LiveDrmOperationsV3
 
             // init default
 
-
-            string manifestName = liveEventName.ToLower();
-
             StreamingPolicy streamingPolicy = null;
             string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
             string streamingLocatorName = "locator-" + uniqueness;
+            string manifestName = liveEventName.ToLower();
 
             bool useDRM = (data.useDRM != null) ? (bool)data.useDRM : true;
             Asset asset = null;
@@ -346,11 +345,11 @@ namespace LiveDrmOperationsV3
             {
                 log.LogInformation("Asset creation...");
 
-                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: eventInfoFromCosmos.StorageName));
+                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: eventInfoFromCosmos.StorageName, description: IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName)));
 
                 Hls hlsParam = null;
 
-                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes((double)eventInfoFromCosmos.archiveWindowLength), null, "output-" + uniqueness, null, IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName), manifestName, hlsParam); //we put the streaming locator in description
+                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes((double)eventInfoFromCosmos.archiveWindowLength), null, "output-" + uniqueness, null, null, manifestName, hlsParam); //we put the streaming locator in description
                 log.LogInformation("await task...");
 
                 log.LogInformation("create live output...");
@@ -450,7 +449,7 @@ namespace LiveDrmOperationsV3
             }
 
             // object to store the output of the function
-            var generalOutputInfo = new LiveDRMIrdeto.Models.GeneralOutputInfo();
+            var generalOutputInfo = new GeneralOutputInfo();
 
             // let's build info for the live event and output
             try

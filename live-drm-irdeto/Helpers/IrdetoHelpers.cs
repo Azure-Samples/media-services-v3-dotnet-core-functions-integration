@@ -15,8 +15,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
+using LiveDrmOperationsV3.Models;
+using Newtonsoft.Json;
 
-namespace LiveDrmOperationsV3
+namespace LiveDrmOperationsV3.Helpers
 {
     class IrdetoHelpers
     {
@@ -226,8 +228,13 @@ namespace LiveDrmOperationsV3
             return streamingPolicy;
         }
 
-        public static string ReturnLocatorNameFromDescription(LiveOutput liveOutput)
+        public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset)
         {
+
+
+            return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
+
+            /*
             if (liveOutput.Description.Length > 9)
             {
                 return liveOutput.Description.Substring(8); // for now we store the locator name in the live outpiut description
@@ -236,11 +243,18 @@ namespace LiveDrmOperationsV3
             {
                 return null;
             }
+            */
         }
 
-        public static string SetLocatorNameInDescription(string locatorName)
+        public static string SetLocatorNameInDescription(string locatorName, string existingDescription = null)
         {
-            return "locator:" + locatorName; // for now we store the locator name in the live output description
+            var mylist = new List<string>();
+            if (!string.IsNullOrEmpty(existingDescription))
+            {
+                mylist = (List<string>)JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
+            }
+            mylist.Add(locatorName);
+            return JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
         }
 
         public static List<InputUrl> GetUrls(ConfigWrapper config,
@@ -256,6 +270,16 @@ namespace LiveDrmOperationsV3
         {
             var streamingEndpoints = client.StreamingEndpoints.List(config.ResourceGroup, config.AccountName);
 
+            string encString = "(encryption=cenc";
+            string encString2 = ",encryption=cenc";
+
+            if (locator.StreamingPolicyName == PredefinedStreamingPolicy.ClearStreamingOnly)
+            {
+                encString = "";
+                encString2 = "";
+            }
+
+
             // Get the URls to stream the output
             List<InputUrl> urls = new List<InputUrl>();
 
@@ -268,11 +292,11 @@ namespace LiveDrmOperationsV3
                     uriBuilder.Host = se.HostName;
                     uriBuilder.Path = "/" + locator.StreamingLocatorId + "/" + manifestFileName + ".ism/manifest";
                     var myPath = uriBuilder.ToString();
-                    if (smoothStreaming) urls.Add(new InputUrl() { Url = myPath + "(encryption=cenc)", Protocol = "SmoothStreaming" });
-                    if (dashCsf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-csf,encryption=cenc)", Protocol = "DashCsf" });
-                    if (dashCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-cmaf,encryption=cenc)", Protocol = "DashCmaf" });
-                    if (hlsCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-cmaf,encryption=cbcs-aapl)", Protocol = "HlsCmaf" });
-                    if (hlsTs) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-aapl,encryption=cbcs-aapl)", Protocol = "HlsTs" });
+                    if (smoothStreaming) urls.Add(new InputUrl() { Url = myPath + encString, Protocol = "SmoothStreaming" });
+                    if (dashCsf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-csf" + encString2 + ")", Protocol = "DashCsf" });
+                    if (dashCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-cmaf" + encString2 + ")", Protocol = "DashCmaf" });
+                    if (hlsCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-cmaf" + encString2 + ")", Protocol = "HlsCmaf" });
+                    if (hlsTs) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-aapl" + encString2 + ")", Protocol = "HlsTs" });
                 }
             }
 
@@ -302,6 +326,21 @@ namespace LiveDrmOperationsV3
                   contentKeys: new List<StreamingLocatorContentKey>() { keyCenc, keyCbcs },
                   streamingLocatorId: null
                   );
+
+            locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, locator);
+            return locator;
+        }
+
+        public static async Task<StreamingLocator> CreateClearLocator(ConfigWrapper config, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset)
+        {
+
+            StreamingLocator locator = new StreamingLocator(
+               assetName: asset.Name,
+               streamingPolicyName: PredefinedStreamingPolicy.ClearStreamingOnly,
+               defaultContentKeyPolicyName: null,
+               contentKeys: null,
+               streamingLocatorId: null
+               );
 
             locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, locator);
             return locator;

@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 
-namespace LiveDrmOperationsV3
+namespace LiveDrmOperationsV3.Helpers
 {
     public class ConfigWrapper
     {

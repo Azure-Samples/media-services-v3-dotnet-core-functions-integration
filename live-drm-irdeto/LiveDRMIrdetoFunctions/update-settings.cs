@@ -32,8 +32,8 @@ using System.Net;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDRMIrdeto.Helpers;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Helpers;
+using LiveDrmOperationsV3.Models;
 
 namespace LiveDrmOperationsV3
 {

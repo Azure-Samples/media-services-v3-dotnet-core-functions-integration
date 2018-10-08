@@ -42,6 +42,8 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
+using LiveDrmOperationsV3.Helpers;
+
 
 namespace LiveDrmOperationsV3
 {

@@ -104,8 +104,8 @@ using System.Net;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDRMIrdeto.Helpers;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Helpers;
+using LiveDrmOperationsV3.Models;
 
 namespace LiveDrmOperationsV3
 {
@@ -175,7 +175,7 @@ namespace LiveDrmOperationsV3
 
 
             // object to store the output of the function
-            var generalOutputInfo = new LiveDRMIrdeto.Models.GeneralOutputInfo();
+            var generalOutputInfo = new GeneralOutputInfo();
 
             // let's build info for the live event and output
             try

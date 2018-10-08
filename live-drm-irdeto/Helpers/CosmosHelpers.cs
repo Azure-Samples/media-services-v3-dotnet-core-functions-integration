@@ -1,5 +1,5 @@
 ﻿using LiveDrmOperationsV3;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Models;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Logging;
@@ -9,7 +9,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LiveDRMIrdeto.Helpers
+namespace LiveDrmOperationsV3.Helpers
 {
     class CosmosHelpers
     {
@@ -55,7 +55,7 @@ namespace LiveDRMIrdeto.Helpers
         }
 
 
-        public async Task CreateOrUpdateGeneralInfoDocument(LiveDRMIrdeto.Models.LiveEventEntry liveEvent)
+        public async Task CreateOrUpdateGeneralInfoDocument(LiveEventEntry liveEvent)
         {
             if (!init || !actionOutputs) return;
 
@@ -77,7 +77,7 @@ namespace LiveDRMIrdeto.Helpers
         }
 
 
-        public async Task DeleteGeneralInfoDocument(LiveDRMIrdeto.Models.LiveEventEntry liveEvent)
+        public async Task DeleteGeneralInfoDocument(LiveEventEntry liveEvent)
         {
             if (!init || !actionOutputs) return;
 

@@ -122,8 +122,8 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Documents.Client;
-using LiveDRMIrdeto.Helpers;
-using LiveDRMIrdeto.Models;
+using LiveDrmOperationsV3.Models;
+using LiveDrmOperationsV3.Helpers;
 
 namespace LiveDrmOperationsV3
 {
@@ -163,7 +163,7 @@ namespace LiveDrmOperationsV3
             var liveEvents = client.LiveEvents.List(config.ResourceGroup, config.AccountName);
 
             // object to store the output of the function
-            var generalOutputInfo = new LiveDRMIrdeto.Models.GeneralOutputInfo();
+            var generalOutputInfo = new GeneralOutputInfo();
 
             // let's list live events
             try

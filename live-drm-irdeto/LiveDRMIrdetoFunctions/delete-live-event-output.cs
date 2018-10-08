@@ -39,8 +39,9 @@ using System.Collections.Generic;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDRMIrdeto.Models;
-using LiveDRMIrdeto.Helpers;
+using LiveDrmOperationsV3.Models;
+using LiveDrmOperationsV3.Helpers;
+using System.Linq;
 
 namespace LiveDrmOperationsV3
 {
@@ -102,28 +103,35 @@ namespace LiveDrmOperationsV3
                 foreach (var p in ps)
                 {
                     string assetName = p.AssetName;
+                    var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, assetName);
 
                     // let's store name of the streaming policy
                     string streamingPolicyName = null;
-                    var streamingLocatorName = IrdetoHelpers.ReturnLocatorNameFromDescription(p);
-                    if (streamingLocatorName != null)
+                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
+
+                    foreach (var locatorName in streamingLocatorsNames)
                     {
-                        var streamingLocator = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, streamingLocatorName);
-                        if (streamingLocator != null)
+                        if (locatorName != null)
                         {
-                            streamingPolicyName = streamingLocator.StreamingPolicyName;
+                            //StreamingLocator streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup, config.AccountName, streamingLocatorName);
+                            var streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup, config.AccountName, locatorName);
+
+                            if (streamingLocator != null)
+                            {
+                                streamingPolicyName = streamingLocator.StreamingPolicyName;
+                            }
                         }
-                    }
-                    log.LogInformation("deleting live output : " + p.Name);
-                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
-                    if (deleteAsset)
-                    {
-                        log.LogInformation("deleting asset : " + assetName);
-                        client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
-                        if (streamingPolicyName != null) // let's delete the streaming policy
+                        log.LogInformation("deleting live output : " + p.Name);
+                        await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
+                        if (deleteAsset)
                         {
-                            log.LogInformation("deleting streaming policy : " + streamingPolicyName);
-                            client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
+                            log.LogInformation("deleting asset : " + assetName);
+                            client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                            if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)) // let's delete the streaming policy if custom
+                            {
+                                log.LogInformation("deleting streaming policy : " + streamingPolicyName);
+                                client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
+                            }
                         }
                     }
                 }
@@ -150,7 +158,6 @@ namespace LiveDrmOperationsV3
             {
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
-
 
             try
             {
