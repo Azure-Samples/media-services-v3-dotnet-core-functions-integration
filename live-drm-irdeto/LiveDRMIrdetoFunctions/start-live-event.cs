@@ -1,7 +1,7 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// create-live-event-output - This function creates a new live event and output (to be used with Irdeto)
+// start-live-event - This function starts a stopped live event
 //
 /*
 ```c#
@@ -14,73 +14,92 @@ Input :
 
 Output:
 {
-    "Success": true,
-    "LiveEvents": [
+  "Success": true,
+  "OperationsVersion": "1.0.0.26898",
+  "LiveEvents": [
+    {
+      "Name": "CH1",
+      "ResourceState": "Running",
+      "VanityUrl": true,
+      "Input": [
         {
-            "Name": "SRF1",
-            "ResourceState": "Running",
-            "vanityUrl": false,
-            "Input": [
-                {
-                    "Protocol": "FragmentedMP4",
-                    "Url": "http://3b83aa39a3e2433e9a15a0c20c31bcaa.channel.media.azure.net/65c3026e74734c2d9a8dce4a1ed8f95e/ingest.isml"
-                }
-            ],
-            "Preview": [
-                {
-                    "Protocol": "FragmentedMP4",
-                    "Url": "https://srf1-srgssrliveeuno.preview-euno.channel.media.azure.net/75a4a8e8-d764-4290-965e-f831c8e04b97/preview.ism/manifest"
-                }
-            ],
-            "LiveOutputs": [
-                {
-                    "Name": "output-06d00dff-c281",
-                    "ArchiveWindowLength": "00:10:00",
-                    "ResourceState": "Running",
-                    "StreamingLocatorName": "locator-06d00dff-c281",
-                    "StreamingPolicyName": "SRF1-bca5d6d7-da3a",
-                    "Drm": [
-                        {
-                            "Type": "FairPlay",
-                            "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/SRG/getckc?ContentId=SRF1&KeyId=c7175624-0fb7-4ba5-a0e1-427cafcb456d"
-                        },
-                        {
-                            "Type": "PlayReady",
-                            "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/SRG/license?ContentId=SRF1"
-                        },
-                        {
-                            "Type": "Widevine",
-                            "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/SRG/license&ContentId=SRF1"
-                        }
-                    ],
-                    "CencKeyId": "c9d2dae5-ba14-46ba-aa2c-7ec2214bedd9",
-                    "CbcsKeyId": "c7175624-0fb7-4ba5-a0e1-427cafcb456d",
-                    "Urls": [
-                        {
-                            "Url": "https://srgssrliveeuno-euno.streaming.media.azure.net/167ed1d5-a2b2-42e9-92cf-7aaa53b738cf/srf1.ism/manifest(encryption=cenc)",
-                            "Protocol": "SmoothStreaming"
-                        },
-                        {
-                            "Url": "https://srgssrliveeuno-euno.streaming.media.azure.net/167ed1d5-a2b2-42e9-92cf-7aaa53b738cf/srf1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
-                            "Protocol": "DashCsf"
-                        },
-                        {
-                            "Url": "https://srgssrliveeuno-euno.streaming.media.azure.net/167ed1d5-a2b2-42e9-92cf-7aaa53b738cf/srf1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
-                            "Protocol": "DashCmaf"
-                        },
-                        {
-                            "Url": "https://srgssrliveeuno-euno.streaming.media.azure.net/167ed1d5-a2b2-42e9-92cf-7aaa53b738cf/srf1.ism/manifest(format=m3u8-cmaf,encryption=cbcs-aapl)",
-                            "Protocol": "HlsCmaf"
-                        },
-                        {
-                            "Url": "https://srgssrliveeuno-euno.streaming.media.azure.net/167ed1d5-a2b2-42e9-92cf-7aaa53b738cf/srf1.ism/manifest(format=m3u8-aapl,encryption=cbcs-aapl)",
-                            "Protocol": "HlsTs"
-                        }
-                    ]
-                }
-            ]
+          "Protocol": "FragmentedMP4",
+          "Url": "http://CH1-customerssrlivedeveuwe-euwe.channel.media.azure.net/838afbbac2514fafa2eaed76d8a3cc74/ingest.isml"
         }
-    ]
+      ],
+      "InputACL": [
+        "192.168.0.0/24",
+        "86.246.149.14/0"
+      ],
+      "Preview": [
+        {
+          "Protocol": "FragmentedMP4",
+          "Url": "https://CH1-customerssrlivedeveuwe.preview-euwe.channel.media.azure.net/90083bd1-bed3-4019-9d54-b70e314ac9c8/preview.ism/manifest"
+        }
+      ],
+      "PreviewACL": [
+        "192.168.0.0/24",
+        "86.246.149.14/0"
+      ],
+      "LiveOutputs": [
+        {
+          "Name": "output-179744a9-3f6f",
+          "ArchiveWindowLength": 120,
+          "AssetName": "asset-179744a9-3f6f",
+          "AssetStorageAccountName": "rsilsvdeveuwe",
+          "ResourceState": "Running",
+          "StreamingLocators": [
+            {
+              "Name": "locator-179744a9-3f6f",
+              "StreamingPolicyName": "CH1-321870db-de01",
+              "CencKeyId": "58420ba1-da30-4756-b50c-fcd72a9645b7",
+              "CbcsKeyId": "ced687fd-c34b-433e-bca7-346a1d7af9f5",
+              "Drm": [
+                {
+                  "Type": "FairPlay",
+                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5"
+                },
+                {
+                  "Type": "PlayReady",
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1"
+                },
+                {
+                  "Type": "Widevine",
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1"
+                }
+              ],
+              "Urls": [
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(encryption=cenc)",
+                  "Protocol": "SmoothStreaming"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
+                  "Protocol": "DashCsf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
+                  "Protocol": "DashCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-cmaf,encryption=cenc)",
+                  "Protocol": "HlsCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-aapl,encryption=cenc)",
+                  "Protocol": "HlsTs"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "AMSAccountName": "customerssrlivedeveuwe",
+      "Region": "West Europe",
+      "ResourceGroup": "GD-INIT-DISTLSV-dev-euwe",
+      "id": "customerssrlivedeveuwe:CH1"
+    }
+  ]
 }
 ```
 */

@@ -9,6 +9,13 @@ Input :
 {
 }
 
+Output:
+{
+    "Success": true,
+    "ErrorMessage" : "",
+    "OperationsVersion": "1.0.0.26898"
+}
+
 
 ```
 */

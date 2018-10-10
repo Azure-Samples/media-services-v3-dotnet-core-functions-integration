@@ -14,8 +14,10 @@ Input :
 Output:
 {
     "Success": true,
-    "ErrorMessage" : ""
+    "ErrorMessage" : "",
+    "OperationsVersion": "1.0.0.26898"
 }
+
 
 ```
 */
@@ -94,7 +96,8 @@ namespace LiveDrmOperationsV3
                                                             {
                                                                 { "streamingLocatorName", streamingLocatorName },
                                                                 { "Success", true },
-                                                                };
+                                                                { "OperationsVersion", AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString() }
+                                                             };
 
                 return (ActionResult)new OkObjectResult(
                        response.ToString()

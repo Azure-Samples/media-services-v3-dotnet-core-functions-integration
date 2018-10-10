@@ -7,7 +7,7 @@
 ```c#
 Input :
 {
-    "liveEventName": "FPOC",
+    "liveEventName": "CH1",
     "deleteAsset" : false, // optional, default is True
     "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
