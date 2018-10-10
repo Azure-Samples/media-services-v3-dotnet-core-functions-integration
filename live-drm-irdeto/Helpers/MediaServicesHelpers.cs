@@ -1,8 +1,5 @@
 ﻿using Microsoft.Azure.Management.Media;
 using Microsoft.Rest;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Rest.Azure.Authentication;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;

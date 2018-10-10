@@ -103,7 +103,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.Management.Media;
@@ -113,7 +112,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
@@ -186,7 +184,6 @@ namespace LiveDrmOperationsV3
             }
 
             string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
-            string streamingLocatorName = "locator-" + uniqueness;
             string manifestName = liveEventName.ToLower();
 
 
@@ -199,7 +196,8 @@ namespace LiveDrmOperationsV3
             LiveEvent liveEvent = null;
             LiveOutput liveOutput = null;
             Task<LiveOutput> taskLiveOutputCreation = null;
-            string streamingPolicyName = null;
+
+            Dictionary<string, string> streamingLocatorsPolicies = new Dictionary<string, string>(); // locator name, policy name 
             string storageAccountName = null;
 
             Task taskReset = null;
@@ -224,33 +222,34 @@ namespace LiveDrmOperationsV3
                 }
 
                 // get live output(s) - it should be one
-                var ps = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
+                var myLiveOutputs = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
 
 
-                // get the name of the streaming policy. If not possible, recreate it
-                if (ps.First() != null)
+                // get the names of the streaming policies. If not possible, recreate it
+                if (myLiveOutputs.First() != null)
                 {
-                    asset = client.Assets.Get(config.ResourceGroup, config.AccountName, ps.First().AssetName);
+                    asset = client.Assets.Get(config.ResourceGroup, config.AccountName, myLiveOutputs.First().AssetName);
 
-                    streamingLocatorName = IrdetoHelpers.ReturnLocatorNameFromDescription(asset).FirstOrDefault();
-                    if (streamingLocatorName != null)
+                    var streamingLocatorNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
+                    foreach (var locatorName in streamingLocatorNames)
                     {
-                        var sp = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, streamingLocatorName);
-                        if (sp != null)
+                        var locator = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
+                        if (locator != null)
                         {
-                            streamingPolicyName = sp.StreamingPolicyName;
+                            streamingLocatorsPolicies.Add(locatorName, locator.StreamingPolicyName);
                         }
                     }
                 }
-                if (streamingPolicyName == null) // no way to get the streaming policy, let's create a new one
+
+                if (streamingLocatorsPolicies.Count == 0) // no way to get the streaming policy, let's create a new one
                 {
                     log.LogInformation("Creating streaming policy.");
                     var streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(liveEventName, config, client);
-                    streamingPolicyName = streamingPolicy.Name;
+                    streamingLocatorsPolicies.Add("", streamingPolicy.Name);
                 }
 
                 // let's purge all live output for now
-                foreach (var p in ps)
+                foreach (var p in myLiveOutputs)
                 {
                     string assetName = p.AssetName;
 
@@ -289,7 +288,7 @@ namespace LiveDrmOperationsV3
             try
             {
                 log.LogInformation("Asset creation...");
-                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName, description: IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName)));
+                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName, "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName, description: null));
 
                 Hls hlsParam = null;
                 liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes((double)eventInfoFromCosmos.archiveWindowLength), null, "output-" + uniqueness, null, null, manifestName, hlsParam); //we put the streaming locator in description
@@ -364,12 +363,33 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                // streaming locator creation
+                // streaming locator(s) creation
                 log.LogInformation("Locator creation...");
 
-                StreamingLocator locator = await IrdetoHelpers.SetupDRMAndCreateLocator(config, streamingPolicyName, streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
+                foreach (var entryLocPol in streamingLocatorsPolicies)
+                {
+                    string streamingLocatorName;
 
-                log.LogInformation("locator : " + locator.Name);
+                    if (entryLocPol.Value == PredefinedStreamingPolicy.ClearStreamingOnly)
+                    {
+                        string uniqueness2 = Guid.NewGuid().ToString().Substring(0, 13);
+                        streamingLocatorName = "locator-" + uniqueness2; // another uniqueness
+                        log.LogInformation("creating clear locator : " + streamingLocatorName);
+                        StreamingLocator locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset);
+
+                    }
+                    else // DRM content
+                    {
+                        streamingLocatorName = "locator-" + uniqueness; // sae uniqueness that asset or output
+                        log.LogInformation("creating DRM locator : " + streamingLocatorName);
+                        StreamingLocator locator = await IrdetoHelpers.SetupDRMAndCreateLocator(config, entryLocPol.Value, streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
+                    }
+
+                    log.LogInformation("locator : " + streamingLocatorName);
+                    asset.Description = IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName, asset.Description);
+
+                }
+                await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
 
                 await taskLiveOutputCreation;
             }
@@ -385,7 +405,8 @@ namespace LiveDrmOperationsV3
             // let's build info for the live event and output
             try
             {
-                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent>() { liveEvent });
+                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent>() { liveEvent
+});
             }
 
             catch (Exception ex)
@@ -404,8 +425,9 @@ namespace LiveDrmOperationsV3
             }
 
             return (ActionResult)new OkObjectResult(
-             JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
-               );
+              JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+
+                );
 
 
         }

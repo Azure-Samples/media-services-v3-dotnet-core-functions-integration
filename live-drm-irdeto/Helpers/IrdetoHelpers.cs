@@ -1,22 +1,17 @@
 ﻿using Microsoft.Azure.Management.Media;
-using Microsoft.Rest;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Rest.Azure.Authentication;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System.Net.Http;
-using Microsoft.Azure.WebJobs.Host;
 using System.Security.Cryptography;
 using System.Linq;
 using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
-using LiveDrmOperationsV3.Models;
 using Newtonsoft.Json;
+using System.Reflection;
 
 namespace LiveDrmOperationsV3.Helpers
 {
@@ -176,6 +171,8 @@ namespace LiveDrmOperationsV3.Helpers
                                                         {
                                                                 { "Success", false },
                                                                 { "ErrorMessage", message },
+                                                                { "OperationsVersion", AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString() }
+
                                                         }
                   ).ToString());
         }
@@ -231,8 +228,15 @@ namespace LiveDrmOperationsV3.Helpers
         public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset)
         {
 
+            try
+            {
+                return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
+            }
 
-            return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
+            catch
+            {
+                return new List<string>();
+            }
 
             /*
             if (liveOutput.Description.Length > 9)
@@ -270,7 +274,7 @@ namespace LiveDrmOperationsV3.Helpers
         {
             var streamingEndpoints = client.StreamingEndpoints.List(config.ResourceGroup, config.AccountName);
 
-            string encString = "(encryption=cenc";
+            string encString = "(encryption=cenc)";
             string encString2 = ",encryption=cenc";
 
             if (locator.StreamingPolicyName == PredefinedStreamingPolicy.ClearStreamingOnly)

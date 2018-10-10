@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Management.Media.Models;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace LiveDrmOperationsV3.Models
 {
@@ -45,15 +46,20 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("Name")]
         public string Name { get; set; }
 
-        [JsonProperty("Drm")]
-        public List<Drm> Drm { get; set; }
-
         [JsonProperty("StreamingPolicyName")]
         public string StreamingPolicyName { get; set; }
 
+        [JsonProperty("CencKeyId")]
+        public string CencKeyId { get; set; }
+
+        [JsonProperty("CbcsKeyId")]
+        public string CbcsKeyId { get; set; }
+
+        [JsonProperty("Drm")]
+        public List<Drm> Drm { get; set; }
+
         [JsonProperty("Urls")]
         public List<UrlEntry> Urls { get; set; }
-
     }
 
     public class LiveOutputEntry
@@ -70,19 +76,11 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("AssetStorageAccountName")]
         public string AssetStorageAccountName { get; set; }
 
-
         [JsonProperty("ResourceState")]
         public LiveOutputResourceState? ResourceState { get; set; }
 
         [JsonProperty("StreamingLocators")]
         public List<StreamingLocatorEntry> StreamingLocators { get; set; }
-
-        [JsonProperty("CencKeyId")]
-        public string CencKeyId { get; set; }
-
-        [JsonProperty("CbcsKeyId")]
-        public string CbcsKeyId { get; set; }
-
     }
 
     public class LiveEventEntry
@@ -135,7 +133,17 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("Success")]
         public bool Success { get; set; }
 
+        [JsonProperty("OperationsVersion")]
+        public string OperationsCodeVersion
+        {
+            get
+            {
+                return AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString();
+            }
+        }
+
         [JsonProperty("LiveEvents")]
         public List<LiveEventEntry> LiveEvents { get; set; }
+
     }
 }

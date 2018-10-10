@@ -30,7 +30,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.Management.Media;
@@ -38,9 +37,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Management.Media.Models;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
@@ -110,8 +107,6 @@ namespace LiveDrmOperationsV3
 
             Asset asset = null;
             LiveEvent liveEvent = null;
-            string streamingPolicyName = null;
-            string storageAccountName = null;
             LiveOutput liveOutput = null;
 
             if (data.archiveWindowLength != null)

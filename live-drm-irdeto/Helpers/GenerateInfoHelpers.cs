@@ -1,20 +1,8 @@
 ﻿using Microsoft.Azure.Management.Media;
-using Microsoft.Rest;
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Rest.Azure.Authentication;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System.Net.Http;
-using Microsoft.Azure.WebJobs.Host;
-using System.Security.Cryptography;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Extensions.Logging;
 using LiveDrmOperationsV3.Models;
 
 
@@ -67,8 +55,6 @@ namespace LiveDrmOperationsV3.Helpers
                 {
                     List<InputUrl> urls = new List<InputUrl>();
                     string streamingPolicyName = null;
-                    string cenckeyId = null;
-                    string cbcskeyId = null;
                     StreamingPolicy streamingPolicy = null;
 
                     var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, liveOutput.AssetName);
@@ -81,9 +67,7 @@ namespace LiveDrmOperationsV3.Helpers
                         ArchiveWindowLength = (int)liveOutput.ArchiveWindowLength.TotalMinutes,
                         AssetName = liveOutput.AssetName,
                         AssetStorageAccountName = asset?.StorageAccountName,
-                        StreamingLocators = new List<StreamingLocatorEntry>(),
-                        CencKeyId = cenckeyId,
-                        CbcsKeyId = cbcskeyId,
+                        StreamingLocators = new List<StreamingLocatorEntry>()
                     };
                     liveEventInfo.LiveOutputs.Add(liveOutputInfo);
 
@@ -92,6 +76,9 @@ namespace LiveDrmOperationsV3.Helpers
                     var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
                     foreach (var locatorName in streamingLocatorsNames)
                     {
+                        string cenckeyId = null;
+                        string cbcskeyId = null;
+
                         if (locatorName != null)
                         {
                             var streamingLocator = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
@@ -114,7 +101,7 @@ namespace LiveDrmOperationsV3.Helpers
                         }
 
                         var drmlist = new List<Drm>();
-                        if (streamingPolicy!=null)
+                        if (streamingPolicy != null)
                         {
                             if (streamingPolicy.CommonEncryptionCbcs != null)
                             {
@@ -131,6 +118,8 @@ namespace LiveDrmOperationsV3.Helpers
                         {
                             Name = locatorName,
                             StreamingPolicyName = streamingPolicyName,
+                            CencKeyId = cenckeyId,
+                            CbcsKeyId = cbcskeyId,
                             Drm = drmlist,
                             Urls = urls.Select(url => new UrlEntry() { Protocol = url.Protocol, Url = url.Url }).ToList()
                         };

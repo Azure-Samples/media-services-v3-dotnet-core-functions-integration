@@ -28,20 +28,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.Management.Media;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Media.Models;
 using System;
-using System.Collections.Generic;
-using System.Net;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
 using LiveDrmOperationsV3.Models;
 using LiveDrmOperationsV3.Helpers;
-using System.Linq;
+using System.Reflection;
 
 namespace LiveDrmOperationsV3
 {
@@ -121,17 +118,17 @@ namespace LiveDrmOperationsV3
                                 streamingPolicyName = streamingLocator.StreamingPolicyName;
                             }
                         }
-                        log.LogInformation("deleting live output : " + p.Name);
-                        await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
-                        if (deleteAsset)
+                    }
+                    log.LogInformation("deleting live output : " + p.Name);
+                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
+                    if (deleteAsset)
+                    {
+                        log.LogInformation("deleting asset : " + assetName);
+                        client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                        if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)) // let's delete the streaming policy if custom
                         {
-                            log.LogInformation("deleting asset : " + assetName);
-                            client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
-                            if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)) // let's delete the streaming policy if custom
-                            {
-                                log.LogInformation("deleting streaming policy : " + streamingPolicyName);
-                                client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
-                            }
+                            log.LogInformation("deleting streaming policy : " + streamingPolicyName);
+                            client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
                         }
                     }
                 }
@@ -173,6 +170,7 @@ namespace LiveDrmOperationsV3
                                                             {
                                                                 { "LiveEventName", liveEventName },
                                                                 { "Success", true },
+                                                                { "OperationsVersion", AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString() }
                                                                 };
 
             return (ActionResult)new OkObjectResult(
