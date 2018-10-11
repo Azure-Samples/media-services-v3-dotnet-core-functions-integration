@@ -1,29 +1,31 @@
-﻿using Microsoft.Azure.Management.Media;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Linq;
-using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Reflection;
+using Newtonsoft.Json.Linq;
 
 namespace LiveDrmOperationsV3.Helpers
 {
-    class IrdetoHelpers
+    internal class IrdetoHelpers
     {
         public const string labelCenc = "cencDefaultKey";
         public const string labelCbcs = "cbcsDefaultKey";
         public const string assetprefix = "nb:cid:UUID:";
 
-        public static async Task<HttpResponseMessage> CreateSoapEnvelopRegisterKeys(string url, string contentId, ConfigWrapper config, string keyId, string contentKey, string IV, bool fairPlay = false, ILogger log = null)
+        public static async Task<HttpResponseMessage> CreateSoapEnvelopRegisterKeys(string url, string contentId,
+            ConfigWrapper config, string keyId, string contentKey, string IV, bool fairPlay = false, ILogger log = null)
         {
-            string soapString = @"<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:liv=""http://man.entriq.net/livedrmservice/"">
+            var soapString =
+                @"<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:liv=""http://man.entriq.net/livedrmservice/"">
 <soapenv:Header>
 <liv:LiveDrmServiceHeader m_sPassword = ""IrdetoPasswordToReplace"" m_sUsername = ""IrdetoUserNameToReplace"" KMSUsername = """" KMSPassword = """" />
 </soapenv:Header>
@@ -42,33 +44,35 @@ namespace LiveDrmOperationsV3.Helpers
 </soapenv:Envelope>";
 
 
-            string cencxml = @"<liv:string>Playready</liv:string>
+            var cencxml = @"<liv:string>Playready</liv:string>
 <liv:string>Widevine</liv:string>";
 
-            string fairplayxml = @"<liv:string>Streaming</liv:string>";
+            var fairplayxml = @"<liv:string>Streaming</liv:string>";
 
-            soapString = fairPlay ? soapString.Replace("<toreplacewithdrmtech>", fairplayxml) : soapString.Replace("<toreplacewithdrmtech>", cencxml);
+            soapString = fairPlay
+                ? soapString.Replace("<toreplacewithdrmtech>", fairplayxml)
+                : soapString.Replace("<toreplacewithdrmtech>", cencxml);
             soapString = soapString
                 .Replace("contentidtoreplace", contentId)
                 .Replace("IrdetoUserNameToReplace", config.IrdetoUserName)
                 .Replace("IrdetoPasswordToReplace", config.IrdetoPassword)
                 .Replace("IrdetoAccountIdToReplace", config.IrdetoAccountId)
-            .Replace("KeyIdToReplace", keyId)
-            .Replace("ContentKeyToReplace", contentKey)
-            .Replace("IVToReplace", IV);
+                .Replace("KeyIdToReplace", keyId)
+                .Replace("ContentKeyToReplace", contentKey)
+                .Replace("IVToReplace", IV);
 
             if (log != null)
                 log.LogInformation(soapString);
 
-            HttpResponseMessage response = await PostXmlRequestRegisterKeys(url, soapString);
+            var response = await PostXmlRequestRegisterKeys(url, soapString);
             return response;
-
-
         }
 
-        public static async Task<string> CreateSoapEnvelopGenerateKeys(string url, string contentId, ConfigWrapper config, bool fairPlay = false)
+        public static async Task<string> CreateSoapEnvelopGenerateKeys(string url, string contentId,
+            ConfigWrapper config, bool fairPlay = false)
         {
-            string soapString = @"<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:liv=""http://man.entriq.net/livedrmservice/"">
+            var soapString =
+                @"<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:liv=""http://man.entriq.net/livedrmservice/"">
 <soapenv:Header>
 <liv:LiveDrmServiceHeader m_sPassword = ""IrdetoPasswordToReplace"" m_sUsername = ""IrdetoUserNameToReplace"" KMSUsername = """" KMSPassword = """" />
 </soapenv:Header>
@@ -83,19 +87,21 @@ namespace LiveDrmOperationsV3.Helpers
 </soapenv:Body>
 </soapenv:Envelope>";
 
-            string cencxml = @"<liv:string >Playready</liv:string>
+            var cencxml = @"<liv:string >Playready</liv:string>
 <liv:string >Widevine</liv:string>";
 
-            string fairplayxml = @"<liv:string >Streaming</liv:string>";
+            var fairplayxml = @"<liv:string >Streaming</liv:string>";
 
-            soapString = fairPlay ? soapString.Replace("<toreplacewithdrmtech>", fairplayxml) : soapString.Replace("<toreplacewithdrmtech>", cencxml);
+            soapString = fairPlay
+                ? soapString.Replace("<toreplacewithdrmtech>", fairplayxml)
+                : soapString.Replace("<toreplacewithdrmtech>", cencxml);
             soapString = soapString
                 .Replace("contentidtoreplace", contentId).Replace("IrdetoUserNameToReplace", config.IrdetoUserName)
                 .Replace("IrdetoAccountIdToReplace", config.IrdetoAccountId)
                 .Replace("IrdetoPasswordToReplace", config.IrdetoPassword);
 
-            HttpResponseMessage response = await PostXmlRequestGenerateKeys(url, soapString);
-            string content = await response.Content.ReadAsStringAsync();
+            var response = await PostXmlRequestGenerateKeys(url, soapString);
+            var content = await response.Content.ReadAsStringAsync();
 
             return content;
         }
@@ -125,17 +131,17 @@ namespace LiveDrmOperationsV3.Helpers
         public static string ReturnDataFromSoapResponse(string xmlsoap, string item)
         {
             var position1 = xmlsoap.IndexOf(item, 0);
-            int p1 = position1 + item.Length + 1;
+            var p1 = position1 + item.Length + 1;
             var position2 = xmlsoap.IndexOf(@"""", p1);
 
             return position1 > 0 ? xmlsoap.Substring(position1 + item.Length + 1, position2 - p1) : null;
         }
 
 
-        static public byte[] GetRandomBuffer(int size)
+        public static byte[] GetRandomBuffer(int size)
         {
-            byte[] randomBytes = new byte[size];
-            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+            var randomBytes = new byte[size];
+            using (var rng = new RNGCryptoServiceProvider())
             {
                 rng.GetBytes(randomBytes);
             }
@@ -146,91 +152,96 @@ namespace LiveDrmOperationsV3.Helpers
         public static byte[] HexStringToByteArray(string hex)
         {
             return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                .ToArray();
         }
 
         public static IActionResult ReturnErrorException(ILogger log, Exception ex, string prefixMessage = null)
         {
-            string message = "";
+            var message = "";
             if (ex.GetType() == typeof(ApiErrorException))
             {
-                var exapi = (ApiErrorException)ex;
+                var exapi = (ApiErrorException) ex;
                 if (exapi.Response != null)
                     message = exapi.Response.Content;
             }
-            return ReturnErrorException(log, ((prefixMessage == null) ? string.Empty : prefixMessage + " : ") + ex.Message + message);
+
+            return ReturnErrorException(log,
+                (prefixMessage == null ? string.Empty : prefixMessage + " : ") + ex.Message + message);
         }
 
         public static IActionResult ReturnErrorException(ILogger log, string message)
         {
             log.LogError(message);
             return new BadRequestObjectResult(
-                  (new JObject()
-                                                        {
-                                                                { "Success", false },
-                                                                { "ErrorMessage", message },
-                                                                { "OperationsVersion", AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString() }
-
-                                                        }
-                  ).ToString());
+                new JObject
+                {
+                    {"Success", false},
+                    {"ErrorMessage", message},
+                    {
+                        "OperationsVersion",
+                        AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()
+                    }
+                }.ToString());
         }
 
-        public static async Task<StreamingPolicy> CreateStreamingPolicyIrdeto(string contentId, ConfigWrapper config, IAzureMediaServicesClient client)
+        public static async Task<StreamingPolicy> CreateStreamingPolicyIrdeto(string contentId, ConfigWrapper config,
+            IAzureMediaServicesClient client)
         {
-            string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
+            var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
 
             var dash_smooth_protocol = new EnabledProtocols(false, true, false, true);
             var hls_dash_protocol = new EnabledProtocols(false, true, true, false);
             var cenc_config = new CencDrmConfiguration(
-                new StreamingPolicyPlayReadyConfiguration()
+                new StreamingPolicyPlayReadyConfiguration
                 {
                     CustomLicenseAcquisitionUrlTemplate = config.IrdetoPlayReadyLAURL.Replace("{0}", contentId)
                 },
-                new StreamingPolicyWidevineConfiguration()
+                new StreamingPolicyWidevineConfiguration
                 {
                     CustomLicenseAcquisitionUrlTemplate = config.IrdetoWidevineLAURL.Replace("{0}", contentId)
                 }
-                );
+            );
             var cbcs_config = new CbcsDrmConfiguration(
-                new StreamingPolicyFairPlayConfiguration()
+                new StreamingPolicyFairPlayConfiguration
                 {
                     CustomLicenseAcquisitionUrlTemplate = config.IrdetoFairPlayLAURL.Replace("{0}", contentId)
                 }
-                );
+            );
 
-            var ContentKeysEnc = new StreamingPolicyContentKeys()
+            var ContentKeysEnc = new StreamingPolicyContentKeys
             {
-                DefaultKey = new DefaultKey()
+                DefaultKey = new DefaultKey
                 {
-                    Label = labelCenc// + contentId
+                    Label = labelCenc // + contentId
                 }
             };
 
-            var ContentKeysCbcsc = new StreamingPolicyContentKeys()
+            var ContentKeysCbcsc = new StreamingPolicyContentKeys
             {
-                DefaultKey = new DefaultKey()
+                DefaultKey = new DefaultKey
                 {
-                    Label = labelCbcs// + contentId
+                    Label = labelCbcs // + contentId
                 }
             };
 
-            var cenc = new CommonEncryptionCenc(enabledProtocols: dash_smooth_protocol, clearTracks: null, contentKeys: ContentKeysEnc, drm: cenc_config);
-            var cbcs = new CommonEncryptionCbcs(enabledProtocols: hls_dash_protocol, clearTracks: null, contentKeys: ContentKeysCbcsc, drm: cbcs_config);
+            var cenc = new CommonEncryptionCenc(dash_smooth_protocol, null, ContentKeysEnc, cenc_config);
+            var cbcs = new CommonEncryptionCbcs(hls_dash_protocol, null, ContentKeysCbcsc, cbcs_config);
 
-            string policyname = contentId + "-" + uniqueness;
-            var streamingPolicy = new StreamingPolicy(Guid.NewGuid().ToString(), policyname, null, DateTime.Now, null, null, cenc, cbcs, null);
-            streamingPolicy = await client.StreamingPolicies.CreateAsync(config.ResourceGroup, config.AccountName, policyname, streamingPolicy);
+            var policyname = contentId + "-" + uniqueness;
+            var streamingPolicy = new StreamingPolicy(Guid.NewGuid().ToString(), policyname, null, DateTime.Now, null,
+                null, cenc, cbcs, null);
+            streamingPolicy = await client.StreamingPolicies.CreateAsync(config.ResourceGroup, config.AccountName,
+                policyname, streamingPolicy);
             return streamingPolicy;
         }
 
         public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset)
         {
-
             try
             {
-                return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
+                return (List<string>) JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
             }
 
             catch
@@ -254,53 +265,56 @@ namespace LiveDrmOperationsV3.Helpers
         {
             var mylist = new List<string>();
             if (!string.IsNullOrEmpty(existingDescription))
-            {
-                mylist = (List<string>)JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
-            }
+                mylist = (List<string>) JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
             mylist.Add(locatorName);
-            return JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
+            return
+                JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
         }
 
 
-        public static async Task<StreamingLocator> SetupDRMAndCreateLocator(ConfigWrapper config, string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset, string cenckeyId, string cenccontentKey, string cbcskeyId, string cbcscontentKey)
+        public static async Task<StreamingLocator> SetupDRMAndCreateLocator(ConfigWrapper config,
+            string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,
+            string cenckeyId, string cenccontentKey, string cbcskeyId, string cbcscontentKey)
         {
-            StreamingLocatorContentKey keyCenc = new StreamingLocatorContentKey()
+            var keyCenc = new StreamingLocatorContentKey
             {
                 Id = Guid.Parse(cenckeyId),
-                LabelReferenceInStreamingPolicy = labelCenc,// + contentId,
+                LabelReferenceInStreamingPolicy = labelCenc, // + contentId,
                 Value = cenccontentKey
             };
-            StreamingLocatorContentKey keyCbcs = new StreamingLocatorContentKey()
+            var keyCbcs = new StreamingLocatorContentKey
             {
                 Id = Guid.Parse(cbcskeyId),
-                LabelReferenceInStreamingPolicy = labelCbcs,// + contentId,
+                LabelReferenceInStreamingPolicy = labelCbcs, // + contentId,
                 Value = cbcscontentKey
             };
 
-            StreamingLocator locator = new StreamingLocator(
-                  assetName: asset.Name,
-                  streamingPolicyName: streamingPolicyName,
-                  defaultContentKeyPolicyName: null,
-                  contentKeys: new List<StreamingLocatorContentKey>() { keyCenc, keyCbcs },
-                  streamingLocatorId: null
-                  );
+            var locator = new StreamingLocator(
+                asset.Name,
+                streamingPolicyName,
+                defaultContentKeyPolicyName: null,
+                contentKeys: new List<StreamingLocatorContentKey> {keyCenc, keyCbcs},
+                streamingLocatorId: null
+            );
 
-            locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, locator);
+            locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName,
+                streamingLocatorName, locator);
             return locator;
         }
 
-        public static async Task<StreamingLocator> CreateClearLocator(ConfigWrapper config, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset)
+        public static async Task<StreamingLocator> CreateClearLocator(ConfigWrapper config, string streamingLocatorName,
+            IAzureMediaServicesClient client, Asset asset)
         {
+            var locator = new StreamingLocator(
+                asset.Name,
+                PredefinedStreamingPolicy.ClearStreamingOnly,
+                defaultContentKeyPolicyName: null,
+                contentKeys: null,
+                streamingLocatorId: null
+            );
 
-            StreamingLocator locator = new StreamingLocator(
-               assetName: asset.Name,
-               streamingPolicyName: PredefinedStreamingPolicy.ClearStreamingOnly,
-               defaultContentKeyPolicyName: null,
-               contentKeys: null,
-               streamingLocatorId: null
-               );
-
-            locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, locator);
+            locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName,
+                streamingLocatorName, locator);
             return locator;
         }
     }

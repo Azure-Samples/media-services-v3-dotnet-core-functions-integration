@@ -24,44 +24,47 @@ Output:
 //
 //
 
+using System;
 using System.IO;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using LiveDrmOperationsV3.Helpers;
+using LiveDrmOperationsV3.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Azure.Management.Media;
-using System.Threading.Tasks;
-using Microsoft.Azure.Management.Media.Models;
-using System;
-using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDrmOperationsV3.Models;
-using LiveDrmOperationsV3.Helpers;
-using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace LiveDrmOperationsV3
 {
     public static class DeleteChannel
     {
         [FunctionName("delete-live-event-output")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+            HttpRequest req, ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
             ConfigWrapper config = null;
             try
             {
                 config = new ConfigWrapper(new ConfigurationBuilder()
-                                             .SetBasePath(Directory.GetCurrentDirectory())
-                                             .AddEnvironmentVariables()
-                                             .Build(),
-                                               data.azureRegion != null ? (string)data.azureRegion : null
-             );
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddEnvironmentVariables()
+                        .Build(),
+                    data.azureRegion != null ? (string) data.azureRegion : null
+                );
             }
             catch (Exception ex)
             {
@@ -70,17 +73,14 @@ namespace LiveDrmOperationsV3
 
             log.LogInformation("config loaded.");
 
-            string liveEventName = (string)data.liveEventName;
+            var liveEventName = (string) data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
-            bool deleteAsset = true;
-            if (data.deleteAsset != null)
-            {
-                deleteAsset = (bool)data.deleteAsset;
-            }
+            var deleteAsset = true;
+            if (data.deleteAsset != null) deleteAsset = (bool) data.deleteAsset;
 
-            IAzureMediaServicesClient client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
@@ -91,16 +91,14 @@ namespace LiveDrmOperationsV3
                 var liveEvent = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEventName);
 
                 if (liveEvent == null)
-                {
                     return IrdetoHelpers.ReturnErrorException(log, $"Live event {liveEventName}  does not exist.");
-                }
 
                 // let's purge all live output for now
 
                 var ps = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
                 foreach (var p in ps)
                 {
-                    string assetName = p.AssetName;
+                    var assetName = p.AssetName;
                     var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, assetName);
 
                     // let's store name of the streaming policy
@@ -108,31 +106,32 @@ namespace LiveDrmOperationsV3
                     var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
 
                     foreach (var locatorName in streamingLocatorsNames)
-                    {
                         if (locatorName != null)
                         {
                             //StreamingLocator streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup, config.AccountName, streamingLocatorName);
-                            var streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup, config.AccountName, locatorName);
+                            var streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup,
+                                config.AccountName, locatorName);
 
-                            if (streamingLocator != null)
-                            {
-                                streamingPolicyName = streamingLocator.StreamingPolicyName;
-                            }
+                            if (streamingLocator != null) streamingPolicyName = streamingLocator.StreamingPolicyName;
                         }
-                    }
+
                     log.LogInformation("deleting live output : " + p.Name);
-                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
+                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name,
+                        p.Name);
                     if (deleteAsset)
                     {
                         log.LogInformation("deleting asset : " + assetName);
                         client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
-                        if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)) // let's delete the streaming policy if custom
+                        if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)
+                        ) // let's delete the streaming policy if custom
                         {
                             log.LogInformation("deleting streaming policy : " + streamingPolicyName);
-                            client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
+                            client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName,
+                                streamingPolicyName);
                         }
                     }
                 }
+
                 if (liveEvent.ResourceState == LiveEventResourceState.Running)
                 {
                     log.LogInformation("stopping live event : " + liveEvent.Name);
@@ -143,7 +142,7 @@ namespace LiveDrmOperationsV3
                     var liveevt = liveEvent;
                     while (liveevt.ResourceState == LiveEventResourceState.Stopping)
                     {
-                        System.Threading.Thread.Sleep(2000);
+                        Thread.Sleep(2000);
                         liveevt = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEvent.Name);
                     }
                 }
@@ -159,26 +158,28 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry() { Name = liveEventName, AMSAccountName = config.AccountName }))
-                {
+                if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry
+                    {Name = liveEventName, AMSAccountName = config.AccountName}))
                     log.LogWarning("Cosmos access not configured.");
-                }
             }
             catch (Exception ex)
             {
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
-            var response = new JObject()
-                                                            {
-                                                                { "LiveEventName", liveEventName },
-                                                                { "Success", true },
-                                                                { "OperationsVersion", AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString() }
-                                                                };
+            var response = new JObject
+            {
+                {"LiveEventName", liveEventName},
+                {"Success", true},
+                {
+                    "OperationsVersion",
+                    AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()
+                }
+            };
 
-            return (ActionResult)new OkObjectResult(
-                   response.ToString()
-                    );
+            return new OkObjectResult(
+                response.ToString()
+            );
         }
     }
 }

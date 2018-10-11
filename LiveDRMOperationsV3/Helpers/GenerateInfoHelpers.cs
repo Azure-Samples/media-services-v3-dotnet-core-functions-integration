@@ -12,9 +12,7 @@ namespace LiveDrmOperationsV3.Helpers
     {
         public static GeneralOutputInfo GenerateOutputInformation(ConfigWrapper config, IAzureMediaServicesClient client, List<LiveEvent> liveEvents)
         {
-            var generalOutputInfo = new GeneralOutputInfo();
-            generalOutputInfo.Success = true;
-            generalOutputInfo.LiveEvents = new List<LiveEventEntry>();
+            var generalOutputInfo = new GeneralOutputInfo() {Success = true, LiveEvents = new List<LiveEventEntry>() };
 
             foreach (var liveEventenum in liveEvents)
             {

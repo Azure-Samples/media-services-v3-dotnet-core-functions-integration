@@ -119,21 +119,21 @@ Output:
 //
 //
 
-using System.IO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Azure.Management.Media;
-using System.Threading.Tasks;
-using Microsoft.Azure.Management.Media.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
+using System.IO;
+using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3
 {
@@ -142,23 +142,25 @@ namespace LiveDrmOperationsV3
         // This version registers keys in irdeto backend. For FairPlay and rpv3
 
         [FunctionName("start-live-event")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+            HttpRequest req, ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
             ConfigWrapper config = null;
             try
             {
                 config = new ConfigWrapper(
-                     new ConfigurationBuilder()
-                     .SetBasePath(Directory.GetCurrentDirectory())
-                     .AddEnvironmentVariables()
-                     .Build(),
-                      data.azureRegion != null ? (string)data.azureRegion : null
-             );
+                    new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddEnvironmentVariables()
+                        .Build(),
+                    data.azureRegion != null ? (string) data.azureRegion : null
+                );
             }
             catch (Exception ex)
             {
@@ -167,19 +169,16 @@ namespace LiveDrmOperationsV3
 
             log.LogInformation("config loaded.");
 
-            string liveEventName = (string)data.liveEventName;
+            var liveEventName = (string) data.liveEventName;
             if (liveEventName == null)
-            {
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
-            }
 
-            IAzureMediaServicesClient client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
 
             LiveEvent liveEvent = null;
-
 
 
             // LIVE EVENT START
@@ -189,10 +188,7 @@ namespace LiveDrmOperationsV3
             {
                 // let's check that the channel does not exist already
                 liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent == null)
-                {
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event not found !");
-                }
+                if (liveEvent == null) return IrdetoHelpers.ReturnErrorException(log, "Error : live event not found !");
 
                 await client.LiveEvents.StartAsync(config.ResourceGroup, config.AccountName, liveEventName);
             }
@@ -208,7 +204,8 @@ namespace LiveDrmOperationsV3
             // let's build info for the live event and output
             try
             {
-                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent>() { liveEvent });
+                generalOutputInfo =
+                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> {liveEvent});
             }
 
             catch (Exception ex)
@@ -219,18 +216,16 @@ namespace LiveDrmOperationsV3
             try
             {
                 if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
-                {
                     log.LogWarning("Cosmos access not configured.");
-                }
             }
             catch (Exception ex)
             {
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
-            return (ActionResult)new OkObjectResult(
-                 JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
-                   );
+            return new OkObjectResult(
+                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+            );
         }
     }
 }

@@ -157,44 +157,45 @@ with some live events:
 //
 //
 
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using LiveDrmOperationsV3.Helpers;
+using LiveDrmOperationsV3.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Azure.Management.Media;
-using System.Threading.Tasks;
-using System;
-using System.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDrmOperationsV3.Models;
-using LiveDrmOperationsV3.Helpers;
-using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3
 {
     public static class CheckChannels
     {
-
         [FunctionName("check-all-live-event-output")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+            HttpRequest req, ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
             ConfigWrapper config = null;
             try
             {
                 config = new ConfigWrapper(new ConfigurationBuilder()
-                                             .SetBasePath(Directory.GetCurrentDirectory())
-                                             .AddEnvironmentVariables()
-                                             .Build(),
-                                              data.azureRegion != null ? (string)data.azureRegion : null
-             );
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddEnvironmentVariables()
+                        .Build(),
+                    data.azureRegion != null ? (string) data.azureRegion : null
+                );
             }
             catch (Exception ex)
             {
@@ -203,7 +204,7 @@ namespace LiveDrmOperationsV3
 
             log.LogInformation("config loaded.");
 
-            IAzureMediaServicesClient client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
@@ -226,26 +227,20 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                List<bool> success = new List<bool>();
+                var success = new List<bool>();
                 foreach (var le in generalOutputInfo.LiveEvents)
-                {
                     success.Add(await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(le));
-                }
 
-                if (success.Any(b => b == false))
-                {
-                    log.LogWarning("Cosmos access not configured.");
-                }
-
+                if (success.Any(b => b == false)) log.LogWarning("Cosmos access not configured.");
             }
             catch (Exception ex)
             {
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
-            return (ActionResult)new OkObjectResult(
-                 JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
-                   );
+            return new OkObjectResult(
+                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+            );
         }
     }
 }
