@@ -1,21 +1,29 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// start-live-event - This function starts a stopped live event
+// check-all-live-event-output - This function lists all live events and live outputs
 //
 /*
 ```c#
-Input :
+Input : (can be empty)
 {
-    "liveEventName": "SFPOC",
     "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
 }
 
+output :
+if no live event:
+{
 
-Output:
+  "Success": true,
+
+  "LiveEvents": []
+
+}
+
+with some live events:
 {
   "Success": true,
-  "OperationsVersion": "1.0.0.26898",
+  "OperationsVersion": "1.0.0.1",
   "LiveEvents": [
     {
       "Name": "CH1",
@@ -57,15 +65,28 @@ Output:
               "Drm": [
                 {
                   "Type": "FairPlay",
-                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5"
+                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
+                  "Protocols": [
+                    "DashCmaf",
+                    "HlsCmaf",
+                    "HlsTs"
+                  ]
                 },
                 {
                   "Type": "PlayReady",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1"
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
                 },
                 {
                   "Type": "Widevine",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1"
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
                 }
               ],
               "Urls": [
@@ -90,6 +111,35 @@ Output:
                   "Protocol": "HlsTs"
                 }
               ]
+            },
+            {
+              "Name": "locator-92259edd-db65",
+              "StreamingPolicyName": "Predefined_ClearStreamingOnly",
+              "CencKeyId": null,
+              "CbcsKeyId": null,
+              "Drm": [],
+              "Urls": [
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest",
+                  "Protocol": "SmoothStreaming"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-csf)",
+                  "Protocol": "DashCsf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-cmaf)",
+                  "Protocol": "DashCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-cmaf)",
+                  "Protocol": "HlsCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-aapl)",
+                  "Protocol": "HlsTs"
+                }
+              ]
             }
           ]
         }
@@ -101,6 +151,7 @@ Output:
     }
   ]
 }
+
 ```
 */
 //
@@ -115,20 +166,19 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.Management.Media;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.Media.Models;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
-using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
+using LiveDrmOperationsV3.Helpers;
+using System.Collections.Generic;
 
 namespace LiveDrmOperationsV3
 {
-    public static class StartChannel
+    public static class CheckChannels
     {
-        // This version registers keys in irdeto backend. For FairPlay and rpv3
 
-        [FunctionName("start-live-event")]
+        [FunctionName("check-all-live-event-output")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -139,63 +189,34 @@ namespace LiveDrmOperationsV3
             ConfigWrapper config = null;
             try
             {
-                config = new ConfigWrapper(
-                     new ConfigurationBuilder()
-                     .SetBasePath(Directory.GetCurrentDirectory())
-                     .AddEnvironmentVariables()
-                     .Build(),
-                      data.azureRegion != null ? (string)data.azureRegion : null
+                config = new ConfigWrapper(new ConfigurationBuilder()
+                                             .SetBasePath(Directory.GetCurrentDirectory())
+                                             .AddEnvironmentVariables()
+                                             .Build(),
+                                              data.azureRegion != null ? (string)data.azureRegion : null
              );
             }
             catch (Exception ex)
             {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
+                return IrdetoHelpers.ReturnErrorException(log, ex, "Error");
             }
 
             log.LogInformation("config loaded.");
-
-            string liveEventName = (string)data.liveEventName;
-            if (liveEventName == null)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
-            }
 
             IAzureMediaServicesClient client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
 
-            LiveEvent liveEvent = null;
-
-
-
-            // LIVE EVENT START
-            log.LogInformation("Live event starting...");
-
-            try
-            {
-                // let's check that the channel does not exist already
-                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent == null)
-                {
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event not found !");
-                }
-
-                await client.LiveEvents.StartAsync(config.ResourceGroup, config.AccountName, liveEventName);
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "live event creation error");
-            }
-
+            var liveEvents = client.LiveEvents.List(config.ResourceGroup, config.AccountName);
 
             // object to store the output of the function
             var generalOutputInfo = new GeneralOutputInfo();
 
-            // let's build info for the live event and output
+            // let's list live events
             try
             {
-                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent>() { liveEvent });
+                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, liveEvents.ToList());
             }
 
             catch (Exception ex)
@@ -205,8 +226,17 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var helper = new CosmosHelpers(log,config);
-                await helper.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]);
+                List<bool> success = new List<bool>();
+                foreach (var le in generalOutputInfo.LiveEvents)
+                {
+                    success.Add(await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(le));
+                }
+
+                if (success.Any(b => b == false))
+                {
+                    log.LogWarning("Cosmos access not configured.");
+                }
+
             }
             catch (Exception ex)
             {

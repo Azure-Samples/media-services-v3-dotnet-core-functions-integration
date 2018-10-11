@@ -16,7 +16,7 @@ Output:
 {
     "Success": true,
     "ErrorMessage" : "",
-    "OperationsVersion": "1.0.0.26898"
+    "OperationsVersion": "1.0.0.1"
 }
 
 ```
@@ -159,8 +159,10 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                await helper.DeleteGeneralInfoDocument(new LiveEventEntry() { Name = liveEventName, AMSAccountName = config.AccountName });
+                if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry() { Name = liveEventName, AMSAccountName = config.AccountName }))
+                {
+                    log.LogWarning("Cosmos access not configured.");
+                }
             }
             catch (Exception ex)
             {

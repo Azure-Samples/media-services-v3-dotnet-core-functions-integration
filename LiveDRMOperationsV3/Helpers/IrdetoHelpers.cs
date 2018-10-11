@@ -261,52 +261,6 @@ namespace LiveDrmOperationsV3.Helpers
             return JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
         }
 
-        public static List<InputUrl> GetUrls(ConfigWrapper config,
-                                            IAzureMediaServicesClient client,
-                                            StreamingLocator locator,
-                                            string manifestFileName,
-                                            bool smoothStreaming = true,
-                                            bool dashCsf = true,
-                                            bool hlsTs = true,
-                                            bool dashCmaf = true,
-                                            bool hlsCmaf = true
-            )
-        {
-            var streamingEndpoints = client.StreamingEndpoints.List(config.ResourceGroup, config.AccountName);
-
-            string encString = "(encryption=cenc)";
-            string encString2 = ",encryption=cenc";
-
-            if (locator.StreamingPolicyName == PredefinedStreamingPolicy.ClearStreamingOnly)
-            {
-                encString = "";
-                encString2 = "";
-            }
-
-
-            // Get the URls to stream the output
-            List<InputUrl> urls = new List<InputUrl>();
-
-            foreach (var se in streamingEndpoints)
-            {
-                if (se.ResourceState == StreamingEndpointResourceState.Running)
-                {
-                    UriBuilder uriBuilder = new UriBuilder();
-                    uriBuilder.Scheme = "https";
-                    uriBuilder.Host = se.HostName;
-                    uriBuilder.Path = "/" + locator.StreamingLocatorId + "/" + manifestFileName + ".ism/manifest";
-                    var myPath = uriBuilder.ToString();
-                    if (smoothStreaming) urls.Add(new InputUrl() { Url = myPath + encString, Protocol = "SmoothStreaming" });
-                    if (dashCsf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-csf" + encString2 + ")", Protocol = "DashCsf" });
-                    if (dashCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=mpd-time-cmaf" + encString2 + ")", Protocol = "DashCmaf" });
-                    if (hlsCmaf) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-cmaf" + encString2 + ")", Protocol = "HlsCmaf" });
-                    if (hlsTs) urls.Add(new InputUrl() { Url = myPath + "(format=m3u8-aapl" + encString2 + ")", Protocol = "HlsTs" });
-                }
-            }
-
-            return urls;
-        }
-
 
         public static async Task<StreamingLocator> SetupDRMAndCreateLocator(ConfigWrapper config, string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset, string cenckeyId, string cenccontentKey, string cbcskeyId, string cbcscontentKey)
         {

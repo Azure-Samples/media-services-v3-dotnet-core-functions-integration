@@ -83,8 +83,10 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                await helper.CreateOrUpdateSettingsDocument(settings);
+                if (!await CosmosHelpers.CreateOrUpdateSettingsDocument(settings))
+                {
+                    log.LogWarning("Cosmos access not configured.");
+                }
             }
             catch (Exception ex)
             {

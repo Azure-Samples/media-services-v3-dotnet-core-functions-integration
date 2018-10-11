@@ -53,7 +53,8 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
     "IrdetoFairPlayLAURL": "value",
-    "CosmosConnectionString": "value",
+    "CosmosDBAccountEndpoint": "value",
+    "CosmosDBAccountKey": "value",
     "CosmosDB": "liveDRMStreaming",
     "CosmosCollectionSettings": "liveEventSettings",
     "CosmosCollectionOutputs": "liveEventOutputInfo"

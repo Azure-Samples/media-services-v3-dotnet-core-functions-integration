@@ -53,7 +53,7 @@ namespace LiveDrmOperationsV3.Helpers
 
                 foreach (var liveOutput in liveOutputs)
                 {
-                    List<InputUrl> urls = new List<InputUrl>();
+                    List<OutputUrl> urls = new List<OutputUrl>();
                     string streamingPolicyName = null;
                     StreamingPolicy streamingPolicy = null;
 
@@ -91,7 +91,7 @@ namespace LiveDrmOperationsV3.Helpers
                                     cenckeyId = streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault().Id.ToString();
                                     cbcskeyId = streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault().Id.ToString();
                                 }
-                                urls = IrdetoHelpers.GetUrls(config, client, streamingLocator, liveOutput.ManifestName, true, true, true, true, true);
+                                urls = MediaServicesHelpers.GetUrls(config, client, streamingLocator, liveOutput.ManifestName, true, true, true, true, true);
                             }
                         }
 
@@ -105,12 +105,16 @@ namespace LiveDrmOperationsV3.Helpers
                         {
                             if (streamingPolicy.CommonEncryptionCbcs != null)
                             {
-                                drmlist.Add(new Drm() { Type = "FairPlay", LicenseUrl = streamingPolicy?.CommonEncryptionCbcs?.Drm.FairPlay.CustomLicenseAcquisitionUrlTemplate.Replace("{ContentKeyId}", cbcskeyId) });
+                                var enProt = MediaServicesHelpers.ReturnOutputProtocolsListCbcs( streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
+                                drmlist.Add(new Drm() { Type = "FairPlay", LicenseUrl = streamingPolicy?.CommonEncryptionCbcs?.Drm.FairPlay.CustomLicenseAcquisitionUrlTemplate.Replace("{ContentKeyId}", cbcskeyId) , Protocols = enProt });
                             }
                             if (streamingPolicy.CommonEncryptionCenc != null)
                             {
-                                drmlist.Add(new Drm() { Type = "PlayReady", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.PlayReady.CustomLicenseAcquisitionUrlTemplate });
-                                drmlist.Add(new Drm() { Type = "Widevine", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.Widevine.CustomLicenseAcquisitionUrlTemplate });
+                                var enProtW = MediaServicesHelpers.ReturnOutputProtocolsListCencWidevine(streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
+                                var enProtP = MediaServicesHelpers.ReturnOutputProtocolsListCencPlayReady(streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
+
+                                drmlist.Add(new Drm() { Type = "PlayReady", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.PlayReady.CustomLicenseAcquisitionUrlTemplate, Protocols = enProtP });
+                                drmlist.Add(new Drm() { Type = "Widevine", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.Widevine.CustomLicenseAcquisitionUrlTemplate, Protocols = enProtW });
                             }
                         }
 
@@ -121,7 +125,7 @@ namespace LiveDrmOperationsV3.Helpers
                             CencKeyId = cenckeyId,
                             CbcsKeyId = cbcskeyId,
                             Drm = drmlist,
-                            Urls = urls.Select(url => new UrlEntry() { Protocol = url.Protocol, Url = url.Url }).ToList()
+                            Urls = urls.Select(url => new UrlEntry() { Protocol = url.Protocol.ToString(), Url = url.Url }).ToList()
                         };
 
                         liveOutputInfo.StreamingLocators.Add(StreamingLocatorInfo);

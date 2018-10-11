@@ -15,7 +15,7 @@ Output:
 {
     "Success": true,
     "ErrorMessage" : "",
-    "OperationsVersion": "1.0.0.26898"
+    "OperationsVersion": "1.0.0.1"
 }
 
 
@@ -45,7 +45,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
 using LiveDrmOperationsV3.Helpers;
-
+using System.Reflection;
 
 namespace LiveDrmOperationsV3
 {

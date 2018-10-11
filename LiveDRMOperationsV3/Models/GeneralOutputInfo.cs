@@ -5,6 +5,8 @@ using System.Reflection;
 
 namespace LiveDrmOperationsV3.Models
 {
+
+
     public class Input
     {
         [JsonProperty("Protocol")]
@@ -30,6 +32,9 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("LicenseUrl")]
         public string LicenseUrl { get; set; }
+
+        [JsonProperty("Protocols")]
+        public List<string> Protocols { get; set; }
     }
 
     public class UrlEntry

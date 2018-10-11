@@ -16,81 +16,105 @@ Input :
 
 Output:
 {
-    "Success": true,
-    "LiveEvents": [
+  "Success": true,
+  "OperationsVersion": "1.0.0.1",
+  "LiveEvents": [
+    {
+      "Name": "CH1",
+      "ResourceState": "Running",
+      "VanityUrl": true,
+      "Input": [
         {
-            "Name": "TEST",
-            "ResourceState": "Running",
-            "vanityUrl": true,
-            "Input": [
-                {
-                    "Protocol": "FragmentedMP4",
-                    "Url": "http://test-prodliveeuwe-euwe.channel.media.azure.net/fe21a7147fb64498b52f024c41a3298e/ingest.isml"
-                }
-            ],
-            "InputACL": [
-                "192.168.0.1/24"
-            ],
-            "Preview": [
-                {
-                    "Protocol": "DashCsf",
-                    "Url": "https://test-prodliveeuwe.preview-euwe.channel.media.azure.net/fbc40c48-07bd-4938-92f2-3375597d8ce3/preview.ism/manifest(format=mpd-time-csf)"
-                }
-            ],
-            "PreviewACL": [
-                "192.168.0.0/24"
-            ],
-            "LiveOutputs": [
-                {
-                    "Name": "output-8b49c322-8429",
-                    "ArchiveWindowLength": 10,
-                    "AssetName": "asset-8b49c322-8429",
-                    "AssetStorageAccountName": "lsvdefaultdeveuwe",
-                    "ResourceState": "Running",
-                    "StreamingLocatorName": "locator-8b49c322-8429",
-                    "StreamingPolicyName": "TEST-dd5a9c6b-b159",
-                    "Drm": [
-                        {
-                            "Type": "FairPlay",
-                            "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/SRG/getckc?ContentId=SRF2&KeyId=dd5a9130-9734-45b4-945b-57516ee80945"
-                        },
-                        {
-                            "Type": "PlayReady",
-                            "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=ID2"
-                        },
-                        {
-                            "Type": "Widevine",
-                            "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=ID2"
-                        }
-                    ],
-                    "CencKeyId": "3391a2a8-43e1-48e6-9d0b-39dd12a1d300",
-                    "CbcsKeyId": "dd5a9130-9734-45b4-945b-57516ee80945",
-                    "Urls": [
-                        {
-                            "Url": "https://prodliveeuwe-prodliveeuwe-euwe.streaming.media.azure.net/8d61c393-87dc-488b-a886-9adf9ba5bafc/test.ism/manifest(encryption=cenc)",
-                            "Protocol": "SmoothStreaming"
-                        },
-                        {
-                            "Url": "https://prodliveeuwe-prodliveeuwe-euwe.streaming.media.azure.net/8d61c393-87dc-488b-a886-9adf9ba5bafc/test.ism/manifest(format=mpd-time-csf,encryption=cenc)",
-                            "Protocol": "DashCsf"
-                        },
-                        {
-                            "Url": "https://prodliveeuwe-prodliveeuwe-euwe.streaming.media.azure.net/8d61c393-87dc-488b-a886-9adf9ba5bafc/test.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
-                            "Protocol": "DashCmaf"
-                        },
-                        {
-                            "Url": "https://prodliveeuwe-prodliveeuwe-euwe.streaming.media.azure.net/8d61c393-87dc-488b-a886-9adf9ba5bafc/test.ism/manifest(format=m3u8-cmaf,encryption=cbcs-aapl)",
-                            "Protocol": "HlsCmaf"
-                        },
-                        {
-                            "Url": "https://prodliveeuwe-prodliveeuwe-euwe.streaming.media.azure.net/8d61c393-87dc-488b-a886-9adf9ba5bafc/test.ism/manifest(format=m3u8-aapl,encryption=cbcs-aapl)",
-                            "Protocol": "HlsTs"
-                        }
-                    ]
-                }
-            ]
+          "Protocol": "FragmentedMP4",
+          "Url": "http://CH1-customerssrlivedeveuwe-euwe.channel.media.azure.net/838afbbac2514fafa2eaed76d8a3cc74/ingest.isml"
         }
-    ]
+      ],
+      "InputACL": [
+        "192.168.0.0/24",
+        "86.246.149.14/0"
+      ],
+      "Preview": [
+        {
+          "Protocol": "FragmentedMP4",
+          "Url": "https://CH1-customerssrlivedeveuwe.preview-euwe.channel.media.azure.net/90083bd1-bed3-4019-9d54-b70e314ac9c8/preview.ism/manifest"
+        }
+      ],
+      "PreviewACL": [
+        "192.168.0.0/24",
+        "86.246.149.14/0"
+      ],
+      "LiveOutputs": [
+        {
+          "Name": "output-179744a9-3f6f",
+          "ArchiveWindowLength": 120,
+          "AssetName": "asset-179744a9-3f6f",
+          "AssetStorageAccountName": "rsilsvdeveuwe",
+          "ResourceState": "Running",
+          "StreamingLocators": [
+            {
+              "Name": "locator-179744a9-3f6f",
+              "StreamingPolicyName": "CH1-321870db-de01",
+              "CencKeyId": "58420ba1-da30-4756-b50c-fcd72a9645b7",
+              "CbcsKeyId": "ced687fd-c34b-433e-bca7-346a1d7af9f5",
+              "Drm": [
+                {
+                  "Type": "FairPlay",
+                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
+                  "Protocols": [
+                    "DashCmaf",
+                    "HlsCmaf",
+                    "HlsTs"
+                  ]
+                },
+                {
+                  "Type": "PlayReady",
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
+                },
+                {
+                  "Type": "Widevine",
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
+                }
+              ],
+              "Urls": [
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(encryption=cenc)",
+                  "Protocol": "SmoothStreaming"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
+                  "Protocol": "DashCsf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
+                  "Protocol": "DashCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-cmaf,encryption=cenc)",
+                  "Protocol": "HlsCmaf"
+                },
+                {
+                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-aapl,encryption=cenc)",
+                  "Protocol": "HlsTs"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "AMSAccountName": "customerssrlivedeveuwe",
+      "Region": "West Europe",
+      "ResourceGroup": "GD-INIT-DISTLSV-dev-euwe",
+      "id": "customerssrlivedeveuwe:CH1"
+    }
+  ]
 }
 
 ```
@@ -166,8 +190,13 @@ namespace LiveDrmOperationsV3
             // Load config from Cosmos
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                eventInfoFromCosmos = await helper.ReadSettingsDocument(liveEventName) ?? eventInfoFromCosmos;
+                var setting = await CosmosHelpers.ReadSettingsDocument(liveEventName);
+                eventInfoFromCosmos = setting ?? eventInfoFromCosmos;
+
+                if (setting == null)
+                {
+                    log.LogWarning("Settings not read from Cosmos.");
+                }
             }
             catch (Exception ex)
             {
@@ -416,8 +445,10 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                await helper.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]);
+                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                {
+                    log.LogWarning("Cosmos access not configured.");
+                }
             }
             catch (Exception ex)
             {

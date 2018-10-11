@@ -27,7 +27,7 @@ Input :
 Output:
 {
   "Success": true,
-  "OperationsVersion": "1.0.0.26898",
+  "OperationsVersion": "1.0.0.1",
   "LiveEvents": [
     {
       "Name": "CH1",
@@ -69,15 +69,28 @@ Output:
               "Drm": [
                 {
                   "Type": "FairPlay",
-                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5"
+                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
+                  "Protocols": [
+                    "DashCmaf",
+                    "HlsCmaf",
+                    "HlsTs"
+                  ]
                 },
                 {
                   "Type": "PlayReady",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1"
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
                 },
                 {
                   "Type": "Widevine",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1"
+                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
+                  "Protocols": [
+                    "DashCmaf",
+                    "DashCsf"
+                  ]
                 }
               ],
               "Urls": [
@@ -185,8 +198,13 @@ namespace LiveDrmOperationsV3
             // Load config from Cosmos
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                eventInfoFromCosmos = await helper.ReadSettingsDocument(liveEventName) ?? eventInfoFromCosmos;
+                var setting = await CosmosHelpers.ReadSettingsDocument(liveEventName);
+                eventInfoFromCosmos = setting ?? eventInfoFromCosmos;
+
+                if (setting == null)
+                {
+                    log.LogWarning("Settings not read from Cosmos.");
+                }
             }
             catch (Exception ex)
             {
@@ -473,8 +491,10 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var helper = new CosmosHelpers(log, config);
-                await helper.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]);
+                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                {
+                    log.LogWarning("Cosmos access not configured.");
+                }
             }
             catch (Exception ex)
             {

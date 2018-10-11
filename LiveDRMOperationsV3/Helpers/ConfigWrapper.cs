@@ -5,7 +5,7 @@ namespace LiveDrmOperationsV3.Helpers
 {
     public class ConfigWrapper
     {
-        private readonly IConfiguration _config;
+        private  readonly IConfiguration _config;
         private readonly string _azureRegionCode;
 
         public ConfigWrapper(IConfiguration config, string azureRegionCode = null)

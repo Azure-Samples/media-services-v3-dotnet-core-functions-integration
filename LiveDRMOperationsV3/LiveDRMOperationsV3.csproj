@@ -2,10 +2,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AzureFunctionsVersion>v2</AzureFunctionsVersion>
-    <AssemblyVersion>1.0.0.*</AssemblyVersion>
+    <AssemblyVersion>1.0.0.2</AssemblyVersion>
     <Version>1.0.0</Version>
-    <Deterministic>False</Deterministic>
-  </PropertyGroup>
+   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.1.2" />
     <PackageReference Include="Microsoft.Azure.Management.Media" Version="2.0.0" />
