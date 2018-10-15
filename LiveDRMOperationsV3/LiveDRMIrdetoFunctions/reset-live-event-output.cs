@@ -2,6 +2,8 @@
 // Azure Media Services REST API v3 Functions
 //
 // reset-live-event-output - This function resets a new live event and output (to be used with Irdeto)
+// keys are reused, streaming policies are reused
+// locator GUID is new (so output URLs will change)
 //
 /*
 ```c#
@@ -9,9 +11,10 @@ Input :
 {
     "liveEventName": "CH1",
     "deleteAsset" : false, // optional, default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
 }
+
 
 
 Output:
@@ -167,7 +170,7 @@ namespace LiveDrmOperationsV3
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddEnvironmentVariables()
                         .Build(),
-                    data.azureRegion != null ? (string) data.azureRegion : null
+                        (string)data.azureRegion
                 );
             }
             catch (Exception ex)
@@ -176,8 +179,9 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
+            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
-            var liveEventName = (string) data.liveEventName;
+            var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
@@ -204,7 +208,7 @@ namespace LiveDrmOperationsV3
             // init default
 
             var deleteAsset = true;
-            if (data.deleteAsset != null) deleteAsset = (bool) data.deleteAsset;
+            if (data.deleteAsset != null) deleteAsset = (bool)data.deleteAsset;
 
             var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
             var manifestName = liveEventName.ToLower();
@@ -226,7 +230,19 @@ namespace LiveDrmOperationsV3
             Task taskReset = null;
 
             if (data.archiveWindowLength != null)
-                eventInfoFromCosmos.archiveWindowLength = (int) data.archiveWindowLength;
+                eventInfoFromCosmos.archiveWindowLength = (int)data.archiveWindowLength;
+
+            /*
+            string cenckeyId = null;
+            string cenccontentKey = null;
+            string cbcskeyId = null;
+            string cbcscontentKey = null;
+            */
+            var cencKey = new StreamingLocatorContentKey();
+            var cbcsKey = new StreamingLocatorContentKey();
+
+            bool createKeys = true;
+
 
             try
             {
@@ -243,17 +259,27 @@ namespace LiveDrmOperationsV3
 
 
                 // get the names of the streaming policies. If not possible, recreate it
-                if (myLiveOutputs.First() != null)
+                if (myLiveOutputs.FirstOrDefault() != null)
                 {
                     asset = client.Assets.Get(config.ResourceGroup, config.AccountName,
                         myLiveOutputs.First().AssetName);
 
-                    var streamingLocatorNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
+                    var streamingLocatorNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, myLiveOutputs.First());
                     foreach (var locatorName in streamingLocatorNames)
                     {
                         var locator =
                             client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
-                        if (locator != null) streamingLocatorsPolicies.Add(locatorName, locator.StreamingPolicyName);
+                        if (locator != null)
+                        {
+                            streamingLocatorsPolicies.Add(locatorName, locator.StreamingPolicyName);
+                            if (locator.StreamingPolicyName != PredefinedStreamingPolicy.ClearStreamingOnly) // let's backup the keys to reuse them
+                            {
+                                var keys = client.StreamingLocators.ListContentKeys(config.ResourceGroup, config.AccountName, locatorName).ContentKeys;
+                                cencKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault();
+                                cbcsKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault();
+                                createKeys = false;
+                            }
+                        }
                     }
                 }
 
@@ -327,57 +353,55 @@ namespace LiveDrmOperationsV3
                 return IrdetoHelpers.ReturnErrorException(log, ex, "live output creation error");
             }
 
-            string cenckeyId;
-            string cenccontentKey;
-            string cbcskeyId;
-            string cbcscontentKey;
-
-            try
+            if (createKeys)
             {
-                log.LogInformation("Irdeto call...");
+                try
+                {
+                    log.LogInformation("Irdeto call...");
 
-                // CENC Key
-                var cencGuid = Guid.NewGuid();
-                cenckeyId = cencGuid.ToString();
-                cenccontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                var cencIV = Convert.ToBase64String(cencGuid.ToByteArray());
-                var responsecenc = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                    liveEventName, config, cenckeyId, cenccontentKey, cencIV, false);
-                var contentcenc = await responsecenc.Content.ReadAsStringAsync();
+                    // CENC Key
+                    cencKey.Id = Guid.NewGuid();
+                    cencKey.Value = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
+                    var cencIV = Convert.ToBase64String(cencKey.Id.ToByteArray());
+                    var responsecenc = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
+                        liveEventName, config, cencKey.Id.ToString(), cencKey.Value, cencIV, false);
+                    var contentcenc = await responsecenc.Content.ReadAsStringAsync();
 
-                if (responsecenc.StatusCode != HttpStatusCode.OK)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cenc - " + contentcenc);
+                    if (responsecenc.StatusCode != HttpStatusCode.OK)
+                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cenc - " + contentcenc);
 
-                var cenckeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "KeyId=");
-                var cenccontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "ContentKey=");
+                    var cenckeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "KeyId=");
+                    var cenccontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "ContentKey=");
 
-                if (cenckeyId != cenckeyIdFromIrdeto || cenccontentKey != cenccontentKeyFromIrdeto)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error CENC not same key - " + contentcenc);
+                    if (cencKey.Id.ToString() != cenckeyIdFromIrdeto || cencKey.Value != cenccontentKeyFromIrdeto)
+                        return IrdetoHelpers.ReturnErrorException(log, "Error CENC not same key - " + contentcenc);
 
-                // CBCS Key
-                var cbcsGuid = Guid.NewGuid();
-                cbcskeyId = cbcsGuid.ToString();
-                cbcscontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                var cbcsIV =
-                    Convert.ToBase64String(
-                        IrdetoHelpers.HexStringToByteArray(cbcsGuid.ToString().Replace("-", string.Empty)));
-                var responsecbcs = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                    liveEventName, config, cbcskeyId, cbcscontentKey, cbcsIV, true);
-                var contentcbcs = await responsecbcs.Content.ReadAsStringAsync();
+                    // CBCS Key
+                    cbcsKey.Id = Guid.NewGuid();
+                    cbcsKey.Value = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
+                    var cbcsIV =
+                        Convert.ToBase64String(
+                            IrdetoHelpers.HexStringToByteArray(cbcsKey.Id.ToString().Replace("-", string.Empty)));
+                    var responsecbcs = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
+                        liveEventName, config, cbcsKey.Id.ToString(), cbcsKey.Value, cbcsIV, true);
+                    var contentcbcs = await responsecbcs.Content.ReadAsStringAsync();
 
-                if (responsecbcs.StatusCode != HttpStatusCode.OK)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cbcs - " + contentcbcs);
+                    if (responsecbcs.StatusCode != HttpStatusCode.OK)
+                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cbcs - " + contentcbcs);
 
-                var cbcskeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "KeyId=");
-                var cbcscontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "ContentKey=");
+                    var cbcskeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "KeyId=");
+                    var cbcscontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "ContentKey=");
 
-                if (cbcskeyId != cbcskeyIdFromIrdeto || cbcscontentKey != cbcscontentKeyFromIrdeto)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error CBCS not same key - " + contentcbcs);
+                    if (cbcsKey.Id.ToString() != cbcskeyIdFromIrdeto || cbcsKey.Value != cbcscontentKeyFromIrdeto)
+                        return IrdetoHelpers.ReturnErrorException(log, "Error CBCS not same key - " + contentcbcs);
+                }
+                catch (Exception ex)
+                {
+                    return IrdetoHelpers.ReturnErrorException(log, ex, "Irdeto response error");
+                }
             }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "Irdeto response error");
-            }
+
+
 
             try
             {
@@ -400,8 +424,23 @@ namespace LiveDrmOperationsV3
                     {
                         streamingLocatorName = "locator-" + uniqueness; // sae uniqueness that asset or output
                         log.LogInformation("creating DRM locator : " + streamingLocatorName);
-                        var locator = await IrdetoHelpers.SetupDRMAndCreateLocator(config, entryLocPol.Value,
-                            streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
+
+                        if (createKeys)
+                        {
+                            log.LogInformation("using new keys.");
+
+                            var locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(
+                                config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey.Id.ToString(), cencKey.Value, cbcsKey.Id.ToString(), cbcsKey.Value);
+
+                        }
+                        else // no need to create new keys, let's use the exiting one
+                        {
+                            log.LogInformation("using existing keys.");
+
+                            var locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithExistingKeys(
+                                config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey, cbcsKey);
+
+                        }
                     }
 
                     log.LogInformation("locator : " + streamingLocatorName);

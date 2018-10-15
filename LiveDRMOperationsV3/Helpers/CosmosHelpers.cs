@@ -1,20 +1,20 @@
-﻿using LiveDrmOperationsV3.Models;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
-using System;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using LiveDrmOperationsV3.Models;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Configuration;
-using System.IO;
 
 namespace LiveDrmOperationsV3.Helpers
 {
-    class CosmosHelpers
+    internal class CosmosHelpers
     {
         private static readonly IConfigurationRoot Config = new ConfigurationBuilder()
-                                                     .SetBasePath(Directory.GetCurrentDirectory())
-                                                     .AddEnvironmentVariables()
-                                                     .Build();
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddEnvironmentVariables()
+            .Build();
 
         private static readonly string EndpointUrl = Config["CosmosDBAccountEndpoint"];
         private static readonly string AuthorizationKey = Config["CosmosDBAccountKey"];
@@ -23,29 +23,32 @@ namespace LiveDrmOperationsV3.Helpers
         private static readonly string CollectionOutputs = Config["CosmosCollectionOutputs"];
         private static readonly string CollectionSettings = Config["CosmosCollectionSettings"];
 
-        private static readonly bool NotInit = string.IsNullOrEmpty(EndpointUrl) || string.IsNullOrEmpty(AuthorizationKey);
-        private static DocumentClient _client = NotInit ? null : new DocumentClient(new Uri(EndpointUrl), AuthorizationKey);
+        private static readonly bool NotInit =
+            string.IsNullOrEmpty(EndpointUrl) || string.IsNullOrEmpty(AuthorizationKey);
 
-        public static async Task<bool> CreateOrUpdateGeneralInfoDocument(LiveEventEntry liveEvent)  // true if success
+        private static readonly DocumentClient _client =
+            NotInit ? null : new DocumentClient(new Uri(EndpointUrl), AuthorizationKey);
+
+        public static async Task<bool> CreateOrUpdateGeneralInfoDocument(LiveEventEntry liveEvent) // true if success
         {
             if (NotInit) return false;
 
             try
             {
-                await _client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionOutputs, liveEvent.Id), liveEvent);
+                await _client.ReplaceDocumentAsync(
+                    UriFactory.CreateDocumentUri(Database, CollectionOutputs, liveEvent.Id), liveEvent);
                 return true;
             }
             catch (DocumentClientException de)
             {
                 if (de.StatusCode == HttpStatusCode.NotFound)
                 {
-                    await _client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(Database, CollectionOutputs), liveEvent);
+                    await _client.CreateDocumentAsync(
+                        UriFactory.CreateDocumentCollectionUri(Database, CollectionOutputs), liveEvent);
                     return true;
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
@@ -55,7 +58,8 @@ namespace LiveDrmOperationsV3.Helpers
 
             try
             {
-                await _client.DeleteDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionOutputs, liveEvent.Id));
+                await _client.DeleteDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionOutputs,
+                    liveEvent.Id));
                 return true;
             }
             catch
@@ -70,13 +74,13 @@ namespace LiveDrmOperationsV3.Helpers
 
             try
             {
-                var result = await _client.ReadDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionSettings, liveEventName));
-                return (dynamic)result.Resource;
-
+                var result =
+                    await _client.ReadDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionSettings,
+                        liveEventName));
+                return (dynamic) result.Resource;
             }
             catch
             {
-
                 return null;
             }
         }
@@ -87,20 +91,20 @@ namespace LiveDrmOperationsV3.Helpers
 
             try
             {
-                await _client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(Database, CollectionSettings, liveEvenSettings.Id), liveEvenSettings);
+                await _client.ReplaceDocumentAsync(
+                    UriFactory.CreateDocumentUri(Database, CollectionSettings, liveEvenSettings.Id), liveEvenSettings);
                 return true;
             }
             catch (DocumentClientException de)
             {
                 if (de.StatusCode == HttpStatusCode.NotFound)
                 {
-                    await _client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(Database, CollectionSettings), liveEvenSettings);
+                    await _client.CreateDocumentAsync(
+                        UriFactory.CreateDocumentCollectionUri(Database, CollectionSettings), liveEvenSettings);
                     return true;
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
     }

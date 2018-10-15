@@ -9,7 +9,7 @@ Input :
 {
     "liveEventName":"CH1",
     "deleteAsset" : false // optional, default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -63,7 +63,7 @@ namespace LiveDrmOperationsV3
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddEnvironmentVariables()
                         .Build(),
-                    data.azureRegion != null ? (string) data.azureRegion : null
+                        (string)data.azureRegion
                 );
             }
             catch (Exception ex)
@@ -72,13 +72,14 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
+            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
-            var liveEventName = (string) data.liveEventName;
+            var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
             var deleteAsset = true;
-            if (data.deleteAsset != null) deleteAsset = (bool) data.deleteAsset;
+            if (data.deleteAsset != null) deleteAsset = (bool)data.deleteAsset;
 
             var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
@@ -103,7 +104,7 @@ namespace LiveDrmOperationsV3
 
                     // let's store name of the streaming policy
                     string streamingPolicyName = null;
-                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
+                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, p);
 
                     foreach (var locatorName in streamingLocatorsNames)
                         if (locatorName != null)
@@ -159,7 +160,7 @@ namespace LiveDrmOperationsV3
             try
             {
                 if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry
-                    {Name = liveEventName, AMSAccountName = config.AccountName}))
+                { Name = liveEventName, AMSAccountName = config.AccountName }))
                     log.LogWarning("Cosmos access not configured.");
             }
             catch (Exception ex)

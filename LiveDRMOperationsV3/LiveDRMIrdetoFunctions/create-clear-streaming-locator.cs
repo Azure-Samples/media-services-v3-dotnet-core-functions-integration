@@ -10,7 +10,7 @@ Input :
     "liveEventName": "CH1",
     "storageAccountName" : "" // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -189,7 +189,7 @@ namespace LiveDrmOperationsV3
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddEnvironmentVariables()
                         .Build(),
-                    data.azureRegion != null ? (string) data.azureRegion : null
+                        (string)data.azureRegion
                 );
             }
             catch (Exception ex)
@@ -198,8 +198,9 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
+            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
-            var liveEventName = (string) data.liveEventName;
+            var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
@@ -238,7 +239,7 @@ namespace LiveDrmOperationsV3
             LiveOutput liveOutput = null;
 
             if (data.archiveWindowLength != null)
-                eventInfoFromCosmos.archiveWindowLength = (int) data.archiveWindowLength;
+                eventInfoFromCosmos.archiveWindowLength = (int)data.archiveWindowLength;
 
             try
             {
@@ -297,7 +298,7 @@ namespace LiveDrmOperationsV3
             try
             {
                 generalOutputInfo =
-                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> {liveEvent});
+                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
             }
 
             catch (Exception ex)

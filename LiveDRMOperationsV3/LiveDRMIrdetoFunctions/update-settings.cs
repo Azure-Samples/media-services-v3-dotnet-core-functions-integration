@@ -55,7 +55,7 @@ namespace LiveDrmOperationsV3
             LiveEventSettingsInfo settings = null;
             try
             {
-                settings = (LiveEventSettingsInfo) JsonConvert.DeserializeObject(requestBody,
+                settings = (LiveEventSettingsInfo)JsonConvert.DeserializeObject(requestBody,
                     typeof(LiveEventSettingsInfo));
             }
             catch (Exception ex)
@@ -80,7 +80,6 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
-
 
             try
             {

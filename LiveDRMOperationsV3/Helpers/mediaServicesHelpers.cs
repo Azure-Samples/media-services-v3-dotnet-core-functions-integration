@@ -1,19 +1,19 @@
-﻿using Microsoft.Azure.Management.Media;
-using Microsoft.Rest;
-using System.Threading.Tasks;
-using Microsoft.Rest.Azure.Authentication;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using System.Threading.Tasks;
+using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Rest;
+using Microsoft.Rest.Azure.Authentication;
 
 namespace LiveDrmOperationsV3.Helpers
 {
-    class MediaServicesHelpers
+    internal class MediaServicesHelpers
     {
         /// <summary>
-        /// Create the ServiceClientCredentials object based on the credentials
-        /// supplied in local configuration file.
+        ///     Create the ServiceClientCredentials object based on the credentials
+        ///     supplied in local configuration file.
         /// </summary>
         /// <param name="config">The parm is of type ConfigWrapper. This class reads values from local configuration file.</param>
         /// <returns></returns>
@@ -29,15 +29,16 @@ namespace LiveDrmOperationsV3.Helpers
             //// ApplicationTokenProvider.LoginSilentWithCertificateAsync
 
             // Use ApplicationTokenProvider.LoginSilentAsync to get a token using a service principal with symetric key
-            ClientCredential clientCredential = new ClientCredential(config.AadClientId, config.AadSecret);
-            return await ApplicationTokenProvider.LoginSilentAsync(config.AadTenantId, clientCredential, ActiveDirectoryServiceSettings.Azure);
+            var clientCredential = new ClientCredential(config.AadClientId, config.AadSecret);
+            return await ApplicationTokenProvider.LoginSilentAsync(config.AadTenantId, clientCredential,
+                ActiveDirectoryServiceSettings.Azure);
         }
 
         // </GetCredentialsAsync>
 
         /// <summary>
-        /// Creates the AzureMediaServicesClient object based on the credentials
-        /// supplied in local configuration file.
+        ///     Creates the AzureMediaServicesClient object based on the credentials
+        ///     supplied in local configuration file.
         /// </summary>
         /// <param name="config">The parm is of type ConfigWrapper. This class reads values from local configuration file.</param>
         /// <returns></returns>
@@ -48,27 +49,27 @@ namespace LiveDrmOperationsV3.Helpers
 
             return new AzureMediaServicesClient(config.ArmEndpoint, credentials)
             {
-                SubscriptionId = config.SubscriptionId,
+                SubscriptionId = config.SubscriptionId
             };
         }
         // </CreateMediaServicesClient>
 
 
         public static List<OutputUrl> GetUrls(ConfigWrapper config,
-                                   IAzureMediaServicesClient client,
-                                   StreamingLocator locator,
-                                   string manifestFileName,
-                                   bool smoothStreaming = true,
-                                   bool dashCsf = true,
-                                   bool hlsTs = true,
-                                   bool dashCmaf = true,
-                                   bool hlsCmaf = true
-   )
+            IAzureMediaServicesClient client,
+            StreamingLocator locator,
+            string manifestFileName,
+            bool smoothStreaming = true,
+            bool dashCsf = true,
+            bool hlsTs = true,
+            bool dashCmaf = true,
+            bool hlsCmaf = true
+        )
         {
             var streamingEndpoints = client.StreamingEndpoints.List(config.ResourceGroup, config.AccountName);
 
-            string encString = "(encryption=cenc)";
-            string encString2 = ",encryption=cenc";
+            var encString = "(encryption=cenc)";
+            var encString2 = ",encryption=cenc";
 
             if (locator.StreamingPolicyName == PredefinedStreamingPolicy.ClearStreamingOnly)
             {
@@ -78,55 +79,75 @@ namespace LiveDrmOperationsV3.Helpers
 
 
             // Get the URls to stream the output
-            List<OutputUrl> urls = new List<OutputUrl>();
+            var urls = new List<OutputUrl>();
 
             foreach (var se in streamingEndpoints)
-            {
                 if (se.ResourceState == StreamingEndpointResourceState.Running)
                 {
-                    UriBuilder uriBuilder = new UriBuilder();
+                    var uriBuilder = new UriBuilder();
                     uriBuilder.Scheme = "https";
                     uriBuilder.Host = se.HostName;
                     uriBuilder.Path = "/" + locator.StreamingLocatorId + "/" + manifestFileName + ".ism/manifest";
                     var myPath = uriBuilder.ToString();
-                    if (smoothStreaming) urls.Add(new OutputUrl() { Url = myPath + encString, Protocol = OutputtProtocol.SmoothStreaming });
-                    if (dashCsf) urls.Add(new OutputUrl() { Url = myPath + "(format=mpd-time-csf" + encString2 + ")", Protocol = OutputtProtocol.DashCsf });
-                    if (dashCmaf) urls.Add(new OutputUrl() { Url = myPath + "(format=mpd-time-cmaf" + encString2 + ")", Protocol = OutputtProtocol.DashCmaf });
-                    if (hlsCmaf) urls.Add(new OutputUrl() { Url = myPath + "(format=m3u8-cmaf" + encString2 + ")", Protocol = OutputtProtocol.HlsCmaf });
-                    if (hlsTs) urls.Add(new OutputUrl() { Url = myPath + "(format=m3u8-aapl" + encString2 + ")", Protocol = OutputtProtocol.HlsTs });
+                    if (smoothStreaming)
+                        urls.Add(new OutputUrl {Url = myPath + encString, Protocol = OutputtProtocol.SmoothStreaming});
+                    if (dashCsf)
+                        urls.Add(new OutputUrl
+                        {
+                            Url = myPath + "(format=mpd-time-csf" + encString2 + ")", Protocol = OutputtProtocol.DashCsf
+                        });
+                    if (dashCmaf)
+                        urls.Add(new OutputUrl
+                        {
+                            Url = myPath + "(format=mpd-time-cmaf" + encString2 + ")",
+                            Protocol = OutputtProtocol.DashCmaf
+                        });
+                    if (hlsCmaf)
+                        urls.Add(new OutputUrl
+                        {
+                            Url = myPath + "(format=m3u8-cmaf" + encString2 + ")", Protocol = OutputtProtocol.HlsCmaf
+                        });
+                    if (hlsTs)
+                        urls.Add(new OutputUrl
+                            {Url = myPath + "(format=m3u8-aapl" + encString2 + ")", Protocol = OutputtProtocol.HlsTs});
                 }
-            }
 
             return urls;
         }
 
         public static List<string> ReturnOutputProtocolsListCbcs(EnabledProtocols protocols)
         {
-            var protLict = new List<string>();
+            var protList = new List<string>();
 
-            if (protocols.Dash) protLict.AddRange(new List<string>() { OutputtProtocol.DashCmaf.ToString() });
-            if (protocols.Hls) protLict.AddRange(new List<string>() { OutputtProtocol.HlsCmaf.ToString(), OutputtProtocol.HlsTs.ToString() });
+            if (protocols.Dash) protList.AddRange(new List<string> {OutputtProtocol.DashCmaf.ToString()});
+            if (protocols.Hls)
+                protList.AddRange(new List<string>
+                    {OutputtProtocol.HlsCmaf.ToString(), OutputtProtocol.HlsTs.ToString()});
 
-            return protLict;
+            return protList;
         }
 
         public static List<string> ReturnOutputProtocolsListCencPlayReady(EnabledProtocols protocols)
         {
-            var protLict = new List<string>();
+            var protList = new List<string>();
 
-            if (protocols.Dash) protLict.AddRange(new List<string>() { OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString() });
-            if (protocols.SmoothStreaming) protLict.Add(OutputtProtocol.SmoothStreaming.ToString());
+            if (protocols.Dash)
+                protList.AddRange(new List<string>
+                    {OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString()});
+            if (protocols.SmoothStreaming) protList.Add(OutputtProtocol.SmoothStreaming.ToString());
 
-            return protLict;
+            return protList;
         }
 
         public static List<string> ReturnOutputProtocolsListCencWidevine(EnabledProtocols protocols)
         {
-            var protLict = new List<string>();
+            var protList = new List<string>();
 
-            if (protocols.Dash) protLict.AddRange(new List<string>() { OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString() });
+            if (protocols.Dash)
+                protList.AddRange(new List<string>
+                    {OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString()});
 
-            return protLict;
+            return protList;
         }
     }
 
@@ -145,5 +166,4 @@ namespace LiveDrmOperationsV3.Helpers
         HlsCmaf,
         HlsTs
     }
-
 }

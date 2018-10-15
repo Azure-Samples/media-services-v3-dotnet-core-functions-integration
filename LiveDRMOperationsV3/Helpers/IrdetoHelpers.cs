@@ -162,7 +162,7 @@ namespace LiveDrmOperationsV3.Helpers
             var message = "";
             if (ex.GetType() == typeof(ApiErrorException))
             {
-                var exapi = (ApiErrorException) ex;
+                var exapi = (ApiErrorException)ex;
                 if (exapi.Response != null)
                     message = exapi.Response.Content;
             }
@@ -229,71 +229,74 @@ namespace LiveDrmOperationsV3.Helpers
             var cenc = new CommonEncryptionCenc(dash_smooth_protocol, null, ContentKeysEnc, cenc_config);
             var cbcs = new CommonEncryptionCbcs(hls_dash_protocol, null, ContentKeysCbcsc, cbcs_config);
 
-            var policyname = contentId + "-" + uniqueness;
-            var streamingPolicy = new StreamingPolicy(Guid.NewGuid().ToString(), policyname, null, DateTime.Now, null,
+            var policyName = contentId + "-" + uniqueness;
+            var streamingPolicy = new StreamingPolicy(Guid.NewGuid().ToString(), policyName, null, DateTime.Now, null,
                 null, cenc, cbcs, null);
             streamingPolicy = await client.StreamingPolicies.CreateAsync(config.ResourceGroup, config.AccountName,
-                policyname, streamingPolicy);
+                policyName, streamingPolicy);
             return streamingPolicy;
         }
 
-        public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset)
+        public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset, LiveOutput liveOutput)
         {
+            if (liveOutput.Description != null && liveOutput.Description.StartsWith("locator:")) // old mode
+            {
+                return new List<string>() { liveOutput.Description.Substring(8) };
+            }
             try
             {
-                return (List<string>) JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
+                return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
             }
 
             catch
             {
                 return new List<string>();
             }
-
-            /*
-            if (liveOutput.Description.Length > 9)
-            {
-                return liveOutput.Description.Substring(8); // for now we store the locator name in the live outpiut description
-            }
-            else
-            {
-                return null;
-            }
-            */
         }
 
         public static string SetLocatorNameInDescription(string locatorName, string existingDescription = null)
         {
             var mylist = new List<string>();
             if (!string.IsNullOrEmpty(existingDescription))
-                mylist = (List<string>) JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
+                mylist = (List<string>)JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
             mylist.Add(locatorName);
             return
                 JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
         }
 
 
-        public static async Task<StreamingLocator> SetupDRMAndCreateLocator(ConfigWrapper config,
+        public static async Task<StreamingLocator> SetupDRMAndCreateLocatorWithNewKeys(ConfigWrapper config,
             string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,
             string cenckeyId, string cenccontentKey, string cbcskeyId, string cbcscontentKey)
         {
+
             var keyCenc = new StreamingLocatorContentKey
             {
                 Id = Guid.Parse(cenckeyId),
-                LabelReferenceInStreamingPolicy = labelCenc, // + contentId,
+                LabelReferenceInStreamingPolicy = labelCenc,
                 Value = cenccontentKey
             };
+
+
             var keyCbcs = new StreamingLocatorContentKey
             {
                 Id = Guid.Parse(cbcskeyId),
-                LabelReferenceInStreamingPolicy = labelCbcs, // + contentId,
+                LabelReferenceInStreamingPolicy = labelCbcs,
                 Value = cbcscontentKey
             };
 
+            return await SetupDRMAndCreateLocatorWithExistingKeys(config, streamingPolicyName, streamingLocatorName, client, asset, keyCenc, keyCbcs);
+        }
+
+        public static async Task<StreamingLocator> SetupDRMAndCreateLocatorWithExistingKeys(ConfigWrapper config,
+           string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,
+          StreamingLocatorContentKey cencKey, StreamingLocatorContentKey cbcsKey)
+        {
             var locator = new StreamingLocator(
                 asset.Name,
                 streamingPolicyName,
                 defaultContentKeyPolicyName: null,
-                contentKeys: new List<StreamingLocatorContentKey> {keyCenc, keyCbcs},
+                contentKeys: new List<StreamingLocatorContentKey> { cencKey, cbcsKey },
                 streamingLocatorId: null
             );
 

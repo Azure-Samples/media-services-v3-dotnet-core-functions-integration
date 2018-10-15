@@ -13,7 +13,7 @@ Input :
     "vanityUrl" : true // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
     "liveEventAutoStart": False  // optional. Default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
     "useDRM" : true // optional. Default is true. Specify false if you don't want to use dynamic encryption
     "InputACL": [  // optional
                 "192.168.0.1/24"
@@ -169,12 +169,11 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                config = new ConfigWrapper(
-                    new ConfigurationBuilder()
+                config = new ConfigWrapper(new ConfigurationBuilder()
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddEnvironmentVariables()
                         .Build(),
-                    data.azureRegion != null ? (string) data.azureRegion : null
+                        (string)data.azureRegion
                 );
             }
             catch (Exception ex)
@@ -183,8 +182,9 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
+            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
-            var liveEventName = (string) data.liveEventName;
+            var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
@@ -214,28 +214,28 @@ namespace LiveDrmOperationsV3
             var streamingLocatorName = "locator-" + uniqueness;
             var manifestName = liveEventName.ToLower();
 
-            var useDRM = data.useDRM != null ? (bool) data.useDRM : true;
+            var useDRM = data.useDRM != null ? (bool)data.useDRM : true;
             Asset asset = null;
             LiveEvent liveEvent = null;
             LiveOutput liveOutput = null;
 
 
             if (data.archiveWindowLength != null)
-                eventInfoFromCosmos.archiveWindowLength = (int) data.archiveWindowLength;
+                eventInfoFromCosmos.archiveWindowLength = (int)data.archiveWindowLength;
 
             if (eventInfoFromCosmos.baseStorageName != null)
                 eventInfoFromCosmos.StorageName = eventInfoFromCosmos.baseStorageName + config.AzureRegionCode;
 
-            if (data.storageAccountName != null) eventInfoFromCosmos.StorageName = (string) data.storageAccountName;
+            if (data.storageAccountName != null) eventInfoFromCosmos.StorageName = (string)data.storageAccountName;
 
-            if (data.inputProtocol != null && ((string) data.inputProtocol).ToUpper() == "RTMP")
+            if (data.inputProtocol != null && ((string)data.inputProtocol).ToUpper() == "RTMP")
                 eventInfoFromCosmos.inputProtocol = LiveEventInputProtocol.RTMP;
 
-            if (data.liveEventAutoStart != null) eventInfoFromCosmos.autoStart = (bool) data.liveEventAutoStart;
+            if (data.liveEventAutoStart != null) eventInfoFromCosmos.autoStart = (bool)data.liveEventAutoStart;
 
-            if (data.InputACL != null) eventInfoFromCosmos.liveEventInputACL = (List<string>) data.InputACL;
+            if (data.InputACL != null) eventInfoFromCosmos.liveEventInputACL = (List<string>)data.InputACL;
 
-            if (data.PreviewACL != null) eventInfoFromCosmos.liveEventPreviewACL = (List<string>) data.PreviewACL;
+            if (data.PreviewACL != null) eventInfoFromCosmos.liveEventPreviewACL = (List<string>)data.PreviewACL;
 
             var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
@@ -261,7 +261,7 @@ namespace LiveDrmOperationsV3
                 {
                     log.LogInformation("preview all");
                     var ip = new IPRange
-                        {Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0};
+                    { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
                     ipsPreview.Add(ip);
                 }
                 else
@@ -272,7 +272,9 @@ namespace LiveDrmOperationsV3
                         var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
                         var ip = new IPRange
                         {
-                            Name = "ip", Address = IPAddress.Parse(ipaclcomp[0]).ToString(), SubnetPrefixLength = subnet
+                            Name = "ip",
+                            Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
+                            SubnetPrefixLength = subnet
                         };
                         ipsPreview.Add(ip);
                     }
@@ -294,7 +296,7 @@ namespace LiveDrmOperationsV3
                 {
                     log.LogInformation("input all");
                     var ip = new IPRange
-                        {Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0};
+                    { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
                     ipsInput.Add(ip);
                 }
                 else
@@ -305,7 +307,9 @@ namespace LiveDrmOperationsV3
                         var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
                         var ip = new IPRange
                         {
-                            Name = "ip", Address = IPAddress.Parse(ipaclcomp[0]).ToString(), SubnetPrefixLength = subnet
+                            Name = "ip",
+                            Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
+                            SubnetPrefixLength = subnet
                         };
                         ipsInput.Add(ip);
                     }
@@ -318,7 +322,7 @@ namespace LiveDrmOperationsV3
                     location: config.Region,
                     description: "",
                     vanityUrl: eventInfoFromCosmos.vanityUrl,
-                    encoding: new LiveEventEncoding {EncodingType = LiveEventEncodingType.None},
+                    encoding: new LiveEventEncoding { EncodingType = LiveEventEncodingType.None },
                     input: liveEventInput,
                     preview: liveEventPreview,
                     streamOptions: new List<StreamOptionsFlag?>
@@ -445,7 +449,7 @@ namespace LiveDrmOperationsV3
                 StreamingLocator locator = null;
                 if (useDRM)
                 {
-                    locator = await IrdetoHelpers.SetupDRMAndCreateLocator(config, streamingPolicy.Name,
+                    locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(config, streamingPolicy.Name,
                         streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
                 }
                 else // no DRM
@@ -471,7 +475,7 @@ namespace LiveDrmOperationsV3
             try
             {
                 generalOutputInfo =
-                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> {liveEvent});
+                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
             }
 
             catch (Exception ex)

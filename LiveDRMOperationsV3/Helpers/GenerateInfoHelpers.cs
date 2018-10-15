@@ -1,27 +1,29 @@
-﻿using Microsoft.Azure.Management.Media;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Management.Media.Models;
 using LiveDrmOperationsV3.Models;
-
+using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
 
 namespace LiveDrmOperationsV3.Helpers
 {
-    class GenerateInfoHelpers
+    internal class GenerateInfoHelpers
     {
-        public static GeneralOutputInfo GenerateOutputInformation(ConfigWrapper config, IAzureMediaServicesClient client, List<LiveEvent> liveEvents)
+        public static GeneralOutputInfo GenerateOutputInformation(ConfigWrapper config,
+            IAzureMediaServicesClient client, List<LiveEvent> liveEvents)
         {
-            var generalOutputInfo = new GeneralOutputInfo() {Success = true, LiveEvents = new List<LiveEventEntry>() };
+            var generalOutputInfo = new GeneralOutputInfo { Success = true, LiveEvents = new List<LiveEventEntry>() };
 
             foreach (var liveEventenum in liveEvents)
             {
-                var liveEvent = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEventenum.Name); // we refresh the object
+                var liveEvent =
+                    client.LiveEvents.Get(config.ResourceGroup, config.AccountName,
+                        liveEventenum.Name); // we refresh the object
 
                 var liveOutputs = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEvent.Name);
 
                 // let's provide DASH format for preview
-                var previewE = liveEvent.Preview.Endpoints.Select(a => new PreviewInfo() { Protocol = a.Protocol, Url = a.Url }).ToList();
+                var previewE = liveEvent.Preview.Endpoints
+                    .Select(a => new PreviewInfo { Protocol = a.Protocol, Url = a.Url }).ToList();
                 /*
                 // Code to expose Preview DASH and not Smooth
                 if (previewE.Count == 1 && previewE[0].Protocol == "FragmentedMP4")
@@ -33,15 +35,19 @@ namespace LiveDrmOperationsV3.Helpers
 
 
                 // output info
-                var liveEventInfo = new LiveEventEntry()
+                var liveEventInfo = new LiveEventEntry
                 {
                     Name = liveEvent.Name,
                     ResourceState = liveEvent.ResourceState.ToString(),
                     VanityUrl = liveEvent.VanityUrl,
-                    Input = liveEvent.Input.Endpoints.Select(endPoint => new Input() { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
-                    InputACL = liveEvent.Input.AccessControl?.Ip.Allow.Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
-                    Preview = previewE.Select(endPoint => new Preview() { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
-                    PreviewACL = liveEvent.Preview.AccessControl?.Ip.Allow.Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
+                    Input = liveEvent.Input.Endpoints
+                        .Select(endPoint => new Input { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
+                    InputACL = liveEvent.Input.AccessControl?.Ip.Allow
+                        .Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
+                    Preview = previewE
+                        .Select(endPoint => new Preview { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
+                    PreviewACL = liveEvent.Preview.AccessControl?.Ip.Allow
+                        .Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
                     LiveOutputs = new List<LiveOutputEntry>(),
                     AMSAccountName = config.AccountName,
                     Region = config.Region,
@@ -51,14 +57,14 @@ namespace LiveDrmOperationsV3.Helpers
 
                 foreach (var liveOutput in liveOutputs)
                 {
-                    List<OutputUrl> urls = new List<OutputUrl>();
+                    var urls = new List<OutputUrl>();
                     string streamingPolicyName = null;
                     StreamingPolicy streamingPolicy = null;
 
                     var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, liveOutput.AssetName);
 
                     // output info
-                    var liveOutputInfo = new LiveOutputEntry()
+                    var liveOutputInfo = new LiveOutputEntry
                     {
                         Name = liveOutput.Name,
                         ResourceState = liveOutput.ResourceState,
@@ -71,7 +77,7 @@ namespace LiveDrmOperationsV3.Helpers
 
                     //var locators = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, liveOutput.AssetName);
                     //streamingLocatorName = locators.StreamingLocators.FirstOrDefault().Name;
-                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset);
+                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, liveOutput);
                     foreach (var locatorName in streamingLocatorsNames)
                     {
                         string cenckeyId = null;
@@ -79,57 +85,95 @@ namespace LiveDrmOperationsV3.Helpers
 
                         if (locatorName != null)
                         {
-                            var streamingLocator = client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
+                            var streamingLocator = client.StreamingLocators.Get(config.ResourceGroup,
+                                config.AccountName, locatorName);
                             if (streamingLocator != null)
                             {
                                 streamingPolicyName = streamingLocator.StreamingPolicyName;
 
-                                if (streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault() != null && streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault() != null)
+                                if (streamingLocator.ContentKeys
+                                        .Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc)
+                                        .FirstOrDefault() != null && streamingLocator.ContentKeys
+                                        .Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs)
+                                        .FirstOrDefault() != null)
                                 {
-                                    cenckeyId = streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault().Id.ToString();
-                                    cbcskeyId = streamingLocator.ContentKeys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault().Id.ToString();
+                                    cenckeyId = streamingLocator.ContentKeys
+                                        .Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc)
+                                        .FirstOrDefault().Id.ToString();
+                                    cbcskeyId = streamingLocator.ContentKeys
+                                        .Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs)
+                                        .FirstOrDefault().Id.ToString();
                                 }
-                                urls = MediaServicesHelpers.GetUrls(config, client, streamingLocator, liveOutput.ManifestName, true, true, true, true, true);
+
+                                urls = MediaServicesHelpers.GetUrls(config, client, streamingLocator,
+                                    liveOutput.ManifestName, true, true, true, true, true);
                             }
                         }
 
                         if (streamingPolicyName != null)
-                        {
-                            streamingPolicy = client.StreamingPolicies.Get(config.ResourceGroup, config.AccountName, streamingPolicyName);
-                        }
+                            streamingPolicy = client.StreamingPolicies.Get(config.ResourceGroup, config.AccountName,
+                                streamingPolicyName);
 
                         var drmlist = new List<Drm>();
                         if (streamingPolicy != null)
                         {
                             if (streamingPolicy.CommonEncryptionCbcs != null)
                             {
-                                var enProt = MediaServicesHelpers.ReturnOutputProtocolsListCbcs( streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
-                                drmlist.Add(new Drm() { Type = "FairPlay", LicenseUrl = streamingPolicy?.CommonEncryptionCbcs?.Drm.FairPlay.CustomLicenseAcquisitionUrlTemplate.Replace("{ContentKeyId}", cbcskeyId) , Protocols = enProt });
+                                var enProt =
+                                    MediaServicesHelpers.ReturnOutputProtocolsListCbcs(streamingPolicy
+                                        .CommonEncryptionCbcs.EnabledProtocols);
+                                drmlist.Add(new Drm
+                                {
+                                    Type = "FairPlay",
+                                    LicenseUrl =
+                                        streamingPolicy?.CommonEncryptionCbcs?.Drm.FairPlay
+                                            .CustomLicenseAcquisitionUrlTemplate.Replace("{ContentKeyId}", cbcskeyId),
+                                    Protocols = enProt
+                                });
                             }
+
                             if (streamingPolicy.CommonEncryptionCenc != null)
                             {
-                                var enProtW = MediaServicesHelpers.ReturnOutputProtocolsListCencWidevine(streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
-                                var enProtP = MediaServicesHelpers.ReturnOutputProtocolsListCencPlayReady(streamingPolicy.CommonEncryptionCbcs.EnabledProtocols);
+                                var enProtW =
+                                    MediaServicesHelpers.ReturnOutputProtocolsListCencWidevine(streamingPolicy
+                                        .CommonEncryptionCbcs.EnabledProtocols);
+                                var enProtP =
+                                    MediaServicesHelpers.ReturnOutputProtocolsListCencPlayReady(streamingPolicy
+                                        .CommonEncryptionCbcs.EnabledProtocols);
 
-                                drmlist.Add(new Drm() { Type = "PlayReady", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.PlayReady.CustomLicenseAcquisitionUrlTemplate, Protocols = enProtP });
-                                drmlist.Add(new Drm() { Type = "Widevine", LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.Widevine.CustomLicenseAcquisitionUrlTemplate, Protocols = enProtW });
+                                drmlist.Add(new Drm
+                                {
+                                    Type = "PlayReady",
+                                    LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.PlayReady
+                                        .CustomLicenseAcquisitionUrlTemplate,
+                                    Protocols = enProtP
+                                });
+                                drmlist.Add(new Drm
+                                {
+                                    Type = "Widevine",
+                                    LicenseUrl = streamingPolicy?.CommonEncryptionCenc?.Drm.Widevine
+                                        .CustomLicenseAcquisitionUrlTemplate,
+                                    Protocols = enProtW
+                                });
                             }
                         }
 
-                        var StreamingLocatorInfo = new StreamingLocatorEntry()
+                        var StreamingLocatorInfo = new StreamingLocatorEntry
                         {
                             Name = locatorName,
                             StreamingPolicyName = streamingPolicyName,
                             CencKeyId = cenckeyId,
                             CbcsKeyId = cbcskeyId,
                             Drm = drmlist,
-                            Urls = urls.Select(url => new UrlEntry() { Protocol = url.Protocol.ToString(), Url = url.Url }).ToList()
+                            Urls = urls.Select(url => new UrlEntry { Protocol = url.Protocol.ToString(), Url = url.Url })
+                                .ToList()
                         };
 
                         liveOutputInfo.StreamingLocators.Add(StreamingLocatorInfo);
                     }
                 }
             }
+
             return generalOutputInfo;
         }
 

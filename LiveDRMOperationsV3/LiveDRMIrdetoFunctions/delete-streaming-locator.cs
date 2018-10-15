@@ -8,7 +8,7 @@
 Input :
 {
     "streamingLocatorName": "locator-c03de9fe-dd04",
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Usefull if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -55,7 +55,7 @@ namespace LiveDrmOperationsV3
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
 
-            var streamingLocatorName = (string) data.streamingLocatorName;
+            var streamingLocatorName = (string)data.streamingLocatorName;
             if (streamingLocatorName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass streamingLocatorName in the JSON");
 
@@ -66,7 +66,7 @@ namespace LiveDrmOperationsV3
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddEnvironmentVariables()
                         .Build(),
-                    data.azureRegion != null ? (string) data.azureRegion : null
+                        (string)data.azureRegion
                 );
             }
             catch (Exception ex)
@@ -75,6 +75,7 @@ namespace LiveDrmOperationsV3
             }
 
             log.LogInformation("config loaded.");
+            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
             var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.

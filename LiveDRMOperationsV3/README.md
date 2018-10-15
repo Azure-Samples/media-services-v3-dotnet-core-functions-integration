@@ -5,9 +5,22 @@ author: xpouyat
 ---
 
 # Media Services v3 Dynamic Encryption with Irdeto license delivery service
-This Visual Studio 2017 Solution exposes several Azure functions that can be used to protect live or on-demand assets with DRM, using Irdeto back-end to deliver the licenses. The functions dialog with Irdeto using SOAP. There is a function to create a streaming policy, a function to setup DRM and create a locator on an asset, and a function to delete a locator.
+This Visual Studio 2017 Solution exposes several Azure functions that can be used to manage live streaming with DRM, using Irdeto back-end to deliver the licenses. The functions communicate with Irdeto backend using SOAP. Optionaly, a Cosmos database can be used to store the result of the functions, and to specify the settings of the live event(s) to be created :ArchiveWindow, baseStorageName, ACLs, autostart, Vanity URL mode.
 
-This Media Services Functions example is based on AMS REST API v3 on Azure Functions v2.
+Here are the list of functions:
+
+- check-all-live-event-output
+- create-clear-streaming-locator
+- create-live-event-output
+- delete-live-event-output
+- delete-streaming-locator
+- reset-live-event-output
+- start-live-event
+- update-settings
+
+As an option, two AMS accounts ad two Azure functions deployment can be created in two different datacenters. An Azure function deployment could manage either AMS account. Fot this, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
+
+This Media Services Functions code is based on AMS REST API v3 on Azure Functions v2.
 
 ## Prerequisites for a sample Logic Apps deployments
 
@@ -44,7 +57,9 @@ local.settings.json will look like (please replace 'value' with the correct data
     "ArmAadAudience": "https://management.core.windows.net/",
     "ArmEndpoint": "https://management.azure.com/",
     "Region": "value",
+    "AzureRegion" : "euwe", // optional entry. Default extension to be added to AMS account name, baseStorageName in settings, and Resource Group
     "ResourceGroup": "value",
+    "ResourceGroupFinalName" : "true", // optional entry. Tells the code to not append the AzureRegion code the Resource Group. Put any non empty string
     "SubscriptionId": "value",
     "IrdetoUserName": "value",
     "IrdetoPassword": "value",
@@ -53,11 +68,11 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
     "IrdetoFairPlayLAURL": "value",
-    "CosmosDBAccountEndpoint": "value",
-    "CosmosDBAccountKey": "value",
-    "CosmosDB": "liveDRMStreaming",
-    "CosmosCollectionSettings": "liveEventSettings",
-    "CosmosCollectionOutputs": "liveEventOutputInfo"
+    "CosmosDBAccountEndpoint": "value", // optional but needed for Cosmos support
+    "CosmosDBAccountKey": "value", // optional but needed for Cosmos support
+    "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
+    "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
+    "CosmosCollectionOutputs": "liveEventOutputInfo" // optional but needed for storing the output to Cosmos
   }
 }
 ```

@@ -5,141 +5,70 @@ namespace LiveDrmOperationsV3.Helpers
 {
     public class ConfigWrapper
     {
-        private  readonly IConfiguration _config;
-        private readonly string _azureRegionCode;
+        private readonly IConfiguration _config;
 
-        public ConfigWrapper(IConfiguration config, string azureRegionCode = null)
+        public ConfigWrapper(IConfiguration config, string azureRegion = null)
         {
             _config = config;
-            _azureRegionCode = azureRegionCode;
+            AzureRegionCode = azureRegion ?? _config["AzureRegion"];
         }
 
-        public string SubscriptionId
-        {
-            get { return _config["SubscriptionId"]; }
-        }
+        public string SubscriptionId => _config["SubscriptionId"];
 
-        public string ResourceGroup
-        {
-            get { return _config["ResourceGroup"] + _azureRegionCode; }
-        }
+        public string ResourceGroupFinalName => _config["ResourceGroupFinalName"];
 
-        public string AccountName
-        {
-            get { return _config["AccountName"] + _azureRegionCode; }
-        }
+        public string ResourceGroup => _config["ResourceGroup"] + (string.IsNullOrEmpty(ResourceGroupFinalName) ? AzureRegionCode : "");
 
-        public string AadTenantId
-        {
-            get { return _config["AadTenantId"]; }
-        }
+        public string AccountName => _config["AccountName"] + AzureRegionCode;
 
-        public string AadClientId
-        {
-            get { return _config["AadClientId"]; }
-        }
+        public string AadTenantId => _config["AadTenantId"];
 
-        public string AadSecret
-        {
-            get { return _config["AadSecret"]; }
-        }
+        public string AadClientId => _config["AadClientId"];
 
-        public Uri ArmAadAudience
-        {
-            get { return new Uri(_config["ArmAadAudience"]); }
-        }
+        public string AadSecret => _config["AadSecret"];
 
-        public Uri AadEndpoint
-        {
-            get { return new Uri(_config["AadEndpoint"]); }
-        }
+        public Uri ArmAadAudience => new Uri(_config["ArmAadAudience"]);
 
-        public Uri ArmEndpoint
-        {
-            get { return new Uri(_config["ArmEndpoint"]); }
-        }
+        public Uri AadEndpoint => new Uri(_config["AadEndpoint"]);
+
+        public Uri ArmEndpoint => new Uri(_config["ArmEndpoint"]);
 
         public string Region
         {
             get
             {
-
-                if (_azureRegionCode == null)
-                {
+                if (AzureRegionCode == null)
                     return _config["Region"];
-                }
-                else
+                switch (AzureRegionCode) // codes as defined in AMS Streaming Endpoint hostname - to be completed
                 {
-                    switch (_azureRegionCode)  // codes as defined in AMS Streaming Endpoint hostname - to be completed
-                    {
-                        case "euno":
-                        case "eu":
-                            return "North Europe";
+                    case "euno":
+                    case "no":
+                        return "North Europe";
 
-                        case "euwe":
-                        case "we":
-                            return "West Europe";
+                    case "euwe":
+                    case "we":
+                        return "West Europe";
 
-                        default:
-                            return _config["Region"];
-
-                    }
+                    default:
+                        return _config["Region"];
                 }
             }
         }
 
-        public string AzureRegionCode
-        {
-            get
-            {
-                return _azureRegionCode;
-            }
-        }
+        public string AzureRegionCode { get; }
 
+        public string IrdetoUserName => _config["IrdetoUserName"];
 
-        public string IrdetoUserName
-        {
-            get { return _config["IrdetoUserName"]; }
-        }
-        public string IrdetoPassword
-        {
-            get { return _config["IrdetoPassword"]; }
-        }
-        public string IrdetoAccountId
-        {
-            get { return _config["IrdetoAccountId"]; }
-        }
-        public string IrdetoSoapService
-        {
-            get { return _config["IrdetoSoapService"]; }
-        }
-        public string IrdetoPlayReadyLAURL
-        {
-            get { return _config["IrdetoPlayReadyLAURL"]; }
-        }
-        public string IrdetoWidevineLAURL
-        {
-            get { return _config["IrdetoWidevineLAURL"]; }
-        }
-        public string IrdetoFairPlayLAURL
-        {
-            get { return _config["IrdetoFairPlayLAURL"]; }
-        }
-        public string CosmosConnectionString
-        {
-            get { return _config["CosmosConnectionString"]; }
-        }
-        public string CosmosDB
-        {
-            get { return _config["CosmosDB"]; }
-        }
-        public string CosmosCollectionOutputs
-        {
-            get { return _config["CosmosCollectionOutputs"]; }
-        }
-        public string CosmosCollectionSettings
-        {
-            get { return _config["CosmosCollectionSettings"]; }
-        }
+        public string IrdetoPassword => _config["IrdetoPassword"];
+
+        public string IrdetoAccountId => _config["IrdetoAccountId"];
+
+        public string IrdetoSoapService => _config["IrdetoSoapService"];
+
+        public string IrdetoPlayReadyLAURL => _config["IrdetoPlayReadyLAURL"];
+
+        public string IrdetoWidevineLAURL => _config["IrdetoWidevineLAURL"];
+
+        public string IrdetoFairPlayLAURL => _config["IrdetoFairPlayLAURL"];
     }
 }
