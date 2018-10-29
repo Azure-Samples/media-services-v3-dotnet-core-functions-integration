@@ -51,12 +51,12 @@ namespace advanced_vod_functions_v3.SharedLibs
             List<PublishStreamingUrls> psUrls = new List<PublishStreamingUrls>();
             foreach (var path in paths.StreamingPaths)
             {
-                var s = new PublishStreamingUrls();
-                s.streamingProtocol = path.StreamingProtocol;
-                s.encryptionScheme = path.EncryptionScheme;
+                PublishStreamingUrls s = new PublishStreamingUrls();
+                s.streamingProtocol = path.StreamingProtocol.ToString();
+                s.encryptionScheme = path.EncryptionScheme.ToString();
                 s.urls = new string[path.Paths.Count];
                 for (int i = 0; i < path.Paths.Count; i++) s.urls[i] = "https://" + streamingUrlPrefx + path.Paths[i];
-                if (path.StreamingProtocol == "SmoothStreaming")
+                if (path.StreamingProtocol.ToString() == "SmoothStreaming")
                     output.streamingUrl = "https://" + streamingUrlPrefx + path.Paths[0];
                 psUrls.Add(s);
             }

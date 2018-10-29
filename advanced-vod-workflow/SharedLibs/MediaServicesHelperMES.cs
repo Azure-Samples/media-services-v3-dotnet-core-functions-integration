@@ -59,18 +59,18 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Bitrate = s.Bitrate * 1000;
             d.Channels = s.Channels;
             d.Label = s.Label;
-            d.Profile = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.AacAudioProfile), s.Profile);
+            d.Profile = (Microsoft.Azure.Management.Media.Models.AacAudioProfile)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.AacAudioProfile), s.Profile);
             d.SamplingRate = s.SamplingRate;
             return d;
         }
         public static Microsoft.Azure.Management.Media.Models.H264Video convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.H264Video s)
         {
             Microsoft.Azure.Management.Media.Models.H264Video d = new Microsoft.Azure.Management.Media.Models.H264Video();
-            d.Complexity = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.H264Complexity), s.Complexity);
+            d.Complexity = (Microsoft.Azure.Management.Media.Models.H264Complexity)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.H264Complexity), s.Complexity);
             d.KeyFrameInterval = s.KeyFrameInterval;
             d.Label = s.Label;
             d.SceneChangeDetection = s.SceneChangeDetection;
-            d.StretchMode = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
+            d.StretchMode = (Microsoft.Azure.Management.Media.Models.StretchMode)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
             if (s.H264Layers != null)
             {
                 d.Layers = new List<Microsoft.Azure.Management.Media.Models.H264Layer>();
@@ -90,7 +90,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Range = s.Range;
             d.Start = s.Start;
             d.Step = s.Step;
-            d.StretchMode = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
+            d.StretchMode = (Microsoft.Azure.Management.Media.Models.StretchMode)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
             if (s.JpgLayers != null)
             {
                 d.Layers = new List<Microsoft.Azure.Management.Media.Models.JpgLayer>();
@@ -110,7 +110,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Range = s.Range;
             d.Start = s.Start;
             d.Step = s.Step;
-            d.StretchMode = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
+            d.StretchMode = (Microsoft.Azure.Management.Media.Models.StretchMode)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.StretchMode), s.StretchMode);
             if (s.PngLayers != null)
             {
                 d.Layers = new List<Microsoft.Azure.Management.Media.Models.PngLayer>();
@@ -129,13 +129,13 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.BFrames = s.BFrames;
             d.Bitrate = s.Bitrate * 1000;
             d.BufferWindow = s.BufferWindow;
-            d.EntropyMode = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.EntropyMode), s.EntropyMode);
+            d.EntropyMode = (Microsoft.Azure.Management.Media.Models.EntropyMode)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.EntropyMode), s.EntropyMode);
             d.FrameRate = s.FrameRate;
             d.Height = s.Height;
             d.Label = s.Label;
             d.Level = s.Level;
             d.MaxBitrate = s.MaxBitrate * 1000;
-            d.Profile = (string)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.H264VideoProfile), s.Profile);
+            d.Profile = (Microsoft.Azure.Management.Media.Models.H264VideoProfile)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.H264VideoProfile), s.Profile);
             d.ReferenceFrames = s.ReferenceFrames;
             d.Slices = s.Slices;
             d.Width = s.Width;
@@ -186,14 +186,14 @@ namespace advanced_vod_functions_v3.SharedLibs
         private class MediaModelsFieldConversion
         {
             public Type t;
-            public Dictionary<string, string> rules;
+            public Dictionary<string, Object> rules;
         }
         static List<MediaModelsFieldConversion> fieldConversions = new List<MediaModelsFieldConversion>
         {
             new MediaModelsFieldConversion
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.AacAudioProfile),
-                rules = new Dictionary<string, string>()
+                rules = new Dictionary<string, Object>()
                 {
                     { "AACLC", Microsoft.Azure.Management.Media.Models.AacAudioProfile.AacLc },
                     { "HEAACV1", Microsoft.Azure.Management.Media.Models.AacAudioProfile.HeAacV1 },
@@ -203,7 +203,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             new MediaModelsFieldConversion
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.EntropyMode),
-                rules = new Dictionary<string, string>()
+                rules = new Dictionary<string, Object>()
                 {
                     { "Cabac", Microsoft.Azure.Management.Media.Models.EntropyMode.Cabac },
                     { "Cavlc", Microsoft.Azure.Management.Media.Models.EntropyMode.Cavlc }
@@ -212,7 +212,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             new MediaModelsFieldConversion
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.H264Complexity),
-                rules = new Dictionary<string, string>()
+                rules = new Dictionary<string, Object>()
                 {
                     { "Balanced", Microsoft.Azure.Management.Media.Models.H264Complexity.Balanced },
                     { "Quality", Microsoft.Azure.Management.Media.Models.H264Complexity.Quality },
@@ -222,7 +222,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             new MediaModelsFieldConversion
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.H264VideoProfile),
-                rules = new Dictionary<string, string>()
+                rules = new Dictionary<string, Object>()
                 {
                     { "Auto", Microsoft.Azure.Management.Media.Models.H264VideoProfile.Auto },
                     { "Baseline", Microsoft.Azure.Management.Media.Models.H264VideoProfile.Baseline },
@@ -235,7 +235,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             new MediaModelsFieldConversion
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.StretchMode),
-                rules = new Dictionary<string, string>()
+                rules = new Dictionary<string, Object>()
                 {
                     { "AutoFit", Microsoft.Azure.Management.Media.Models.StretchMode.AutoFit },
                     { "AutoSize", Microsoft.Azure.Management.Media.Models.StretchMode.AutoSize },

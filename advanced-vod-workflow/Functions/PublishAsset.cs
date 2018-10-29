@@ -83,7 +83,7 @@ namespace advanced_vod_functions_v3
             string defaultContentKeyPolicyName = null;
             if (data.defaultContentKeyPolicyName != null)
                 defaultContentKeyPolicyName = data.defaultContentKeyPolicyName;
-            List<StreamingLocatorUserDefinedContentKey> contentKeys = new List<StreamingLocatorUserDefinedContentKey>();
+            List<StreamingLocatorContentKey> contentKeys = new List<StreamingLocatorContentKey>();
 
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             string streamingLocatorName = "streaminglocator-" + streamingLocatorId.ToString();
