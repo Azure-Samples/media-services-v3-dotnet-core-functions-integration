@@ -68,11 +68,12 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
     "IrdetoFairPlayLAURL": "value",
-    "CosmosDBAccountEndpoint": "value", // optional but needed for Cosmos support
+    "CosmosDBAccountEndpoint": "value", /* optional but needed for Cosmos support */
     "CosmosDBAccountKey": "value", // optional but needed for Cosmos support
     "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
     "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
-    "CosmosCollectionOutputs": "liveEventOutputInfo" // optional but needed for storing the output to Cosmos
+    "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
+    "PreferredStreamingEndpoint" : "" // optional, use only by redirector
   }
 }
 ```

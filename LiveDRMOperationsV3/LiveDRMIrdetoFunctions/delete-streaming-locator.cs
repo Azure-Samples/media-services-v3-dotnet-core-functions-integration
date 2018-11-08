@@ -13,9 +13,9 @@ Input :
 
 Output:
 {
-    "Success": true,
-    "ErrorMessage" : "",
-    "OperationsVersion": "1.0.0.1"
+    "success": true,
+    "errorMessage" : "",
+    "operationsVersion": "1.0.0.5"
 }
 
 
@@ -89,9 +89,9 @@ namespace LiveDrmOperationsV3
                 var response = new JObject
                 {
                     {"streamingLocatorName", streamingLocatorName},
-                    {"Success", true},
+                    {"success", true},
                     {
-                        "OperationsVersion",
+                        "operationsVersion",
                         AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()
                     }
                 };

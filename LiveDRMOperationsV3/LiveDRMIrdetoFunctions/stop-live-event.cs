@@ -1,33 +1,25 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// check-all-live-event-output - This function lists all live events and live outputs
+// stop-live-event - This function stops a running live event
 //
 /*
 ```c#
-Input : (can be empty)
+Input :
 {
+    "liveEventName": "SFPOC",
     "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
 }
 
-output :
-if no live event:
-{
 
-  "success": true,
-
-  "liveEvents": []
-
-}
-
-with some live events:
+Output:
 {
   "success": true,
   "operationsVersion": "1.0.0.5",
   "liveEvents": [
     {
       "liveEventName": "CH1",
-      "resourceState": "Running",
+      "resourceState": "Stopped",
       "vanityUrl": true,
       "amsAccountName": "customerssrlivedeveuwe",
       "region": "West Europe",
@@ -116,35 +108,6 @@ with some live events:
                   "protocol": "HlsTs"
                 }
               ]
-            },
-            {
-              "streamingLocatorName": "locator-92259edd-db65",
-              "streamingPolicyName": "Predefined_ClearStreamingOnly",
-              "cencKeyId": null,
-              "cbcsKeyId": null,
-              "drm": [],
-              "urls": [
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest",
-                  "protocol": "SmoothStreaming"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-csf)",
-                  "protocol": "DashCsf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-cmaf)",
-                  "protocol": "DashCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-cmaf)",
-                  "protocol": "HlsCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-aapl)",
-                  "protocol": "HlsTs"
-                }
-              ]
             }
           ]
         }
@@ -152,7 +115,6 @@ with some live events:
     }
   ]
 }
-
 ```
 */
 //
@@ -161,13 +123,13 @@ with some live events:
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
@@ -176,9 +138,11 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3
 {
-    public static class CheckChannels
+    public static class StopChannel
     {
-        [FunctionName("check-all-live-event-output")]
+        // This version registers keys in irdeto backend. For FairPlay and rpv3
+
+        [FunctionName("stop-live-event")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
@@ -200,26 +164,50 @@ namespace LiveDrmOperationsV3
             }
             catch (Exception ex)
             {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "Error");
+                return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
             log.LogInformation("config loaded.");
             log.LogInformation("connecting to AMS account : " + config.AccountName);
+
+            var liveEventName = (string)data.liveEventName;
+            if (liveEventName == null)
+                return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
             var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
 
-            var liveEvents = client.LiveEvents.List(config.ResourceGroup, config.AccountName);
+            LiveEvent liveEvent = null;
+
+
+            // LIVE EVENT START
+            log.LogInformation("Live event stopping...");
+
+            try
+            {
+                // let's check that the channel does not exist already
+                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                if (liveEvent == null) return IrdetoHelpers.ReturnErrorException(log, "Error : live event not found !");
+                if (liveEvent.ResourceState == LiveEventResourceState.Stopped) return IrdetoHelpers.ReturnErrorException(log, "Error : live event already stopped !");
+
+                await client.LiveEvents.StopAsync(config.ResourceGroup, config.AccountName, liveEventName);
+            }
+            catch (Exception ex)
+            {
+                return IrdetoHelpers.ReturnErrorException(log, ex, "live event stopping error");
+            }
+
 
             // object to store the output of the function
             var generalOutputInfo = new GeneralOutputInfo();
 
-            // let's list live events
+            // let's build info for the live event and output
             try
             {
-                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, liveEvents.ToList());
+                generalOutputInfo =
+                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
             }
 
             catch (Exception ex)
@@ -229,11 +217,8 @@ namespace LiveDrmOperationsV3
 
             try
             {
-                var success = new List<bool>();
-                foreach (var le in generalOutputInfo.LiveEvents)
-                    success.Add(await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(le));
-
-                if (success.Any(b => b == false)) log.LogWarning("Cosmos access not configured.");
+                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                    log.LogWarning("Cosmos access not configured.");
             }
             catch (Exception ex)
             {

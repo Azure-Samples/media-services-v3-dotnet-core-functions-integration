@@ -14,9 +14,9 @@ Input :
 
 Output:
 {
-    "Success": true,
-    "ErrorMessage" : "",
-    "OperationsVersion": "1.0.0.1"
+    "success": true,
+    "errorMessage" : "",
+    "operationsVersion": "1.0.0.5"
 }
 
 ```
@@ -26,6 +26,7 @@ Output:
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -104,7 +105,7 @@ namespace LiveDrmOperationsV3
 
                     // let's store name of the streaming policy
                     string streamingPolicyName = null;
-                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, p);
+                    var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, assetName).StreamingLocators.Select(l => l.Name);
 
                     foreach (var locatorName in streamingLocatorsNames)
                         if (locatorName != null)
@@ -160,7 +161,7 @@ namespace LiveDrmOperationsV3
             try
             {
                 if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry
-                { Name = liveEventName, AMSAccountName = config.AccountName }))
+                { LiveEventName = liveEventName, AMSAccountName = config.AccountName }))
                     log.LogWarning("Cosmos access not configured.");
             }
             catch (Exception ex)
@@ -170,10 +171,10 @@ namespace LiveDrmOperationsV3
 
             var response = new JObject
             {
-                {"LiveEventName", liveEventName},
-                {"Success", true},
+                {"liveEventName", liveEventName},
+                {"success", true},
                 {
-                    "OperationsVersion",
+                    "operationsVersion",
                     AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()
                 }
             };

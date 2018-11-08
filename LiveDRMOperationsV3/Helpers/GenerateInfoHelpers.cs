@@ -37,21 +37,22 @@ namespace LiveDrmOperationsV3.Helpers
                 // output info
                 var liveEventInfo = new LiveEventEntry
                 {
-                    Name = liveEvent.Name,
+                    LiveEventName = liveEvent.Name,
                     ResourceState = liveEvent.ResourceState.ToString(),
                     VanityUrl = liveEvent.VanityUrl,
                     Input = liveEvent.Input.Endpoints
-                        .Select(endPoint => new Input { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
+                        .Select(endPoint => new UrlEntry { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
                     InputACL = liveEvent.Input.AccessControl?.Ip.Allow
                         .Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
                     Preview = previewE
-                        .Select(endPoint => new Preview { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
+                        .Select(endPoint => new UrlEntry { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
                     PreviewACL = liveEvent.Preview.AccessControl?.Ip.Allow
                         .Select(ip => ip.Address + "/" + ip.SubnetPrefixLength).ToList(),
                     LiveOutputs = new List<LiveOutputEntry>(),
                     AMSAccountName = config.AccountName,
                     Region = config.Region,
-                    ResourceGroup = config.ResourceGroup
+                    ResourceGroup = config.ResourceGroup,
+                    LowLatency = liveEvent.StreamOptions?.Contains(StreamOptionsFlag.LowLatency)
                 };
                 generalOutputInfo.LiveEvents.Add(liveEventInfo);
 
@@ -66,7 +67,7 @@ namespace LiveDrmOperationsV3.Helpers
                     // output info
                     var liveOutputInfo = new LiveOutputEntry
                     {
-                        Name = liveOutput.Name,
+                        LiveOutputName = liveOutput.Name,
                         ResourceState = liveOutput.ResourceState,
                         ArchiveWindowLength = (int)liveOutput.ArchiveWindowLength.TotalMinutes,
                         AssetName = liveOutput.AssetName,
@@ -75,9 +76,7 @@ namespace LiveDrmOperationsV3.Helpers
                     };
                     liveEventInfo.LiveOutputs.Add(liveOutputInfo);
 
-                    //var locators = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, liveOutput.AssetName);
-                    //streamingLocatorName = locators.StreamingLocators.FirstOrDefault().Name;
-                    var streamingLocatorsNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, liveOutput);
+                    var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, liveOutput.AssetName).StreamingLocators.Select(l => l.Name);
                     foreach (var locatorName in streamingLocatorsNames)
                     {
                         string cenckeyId = null;
@@ -128,7 +127,8 @@ namespace LiveDrmOperationsV3.Helpers
                                     LicenseUrl =
                                         streamingPolicy?.CommonEncryptionCbcs?.Drm.FairPlay
                                             .CustomLicenseAcquisitionUrlTemplate.Replace("{ContentKeyId}", cbcskeyId),
-                                    Protocols = enProt
+                                    Protocols = enProt,
+                                    CertificateUrl = config.IrdetoFairPlayCertificateUrl
                                 });
                             }
 
@@ -160,7 +160,7 @@ namespace LiveDrmOperationsV3.Helpers
 
                         var StreamingLocatorInfo = new StreamingLocatorEntry
                         {
-                            Name = locatorName,
+                            StreamingLocatorName = locatorName,
                             StreamingPolicyName = streamingPolicyName,
                             CencKeyId = cenckeyId,
                             CbcsKeyId = cbcskeyId,

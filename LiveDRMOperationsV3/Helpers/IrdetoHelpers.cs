@@ -177,10 +177,10 @@ namespace LiveDrmOperationsV3.Helpers
             return new BadRequestObjectResult(
                 new JObject
                 {
-                    {"Success", false},
-                    {"ErrorMessage", message},
+                    {"success", false},
+                    {"errorMessage", message},
                     {
-                        "OperationsVersion",
+                        "operationsVersion",
                         AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()
                     }
                 }.ToString());
@@ -236,34 +236,6 @@ namespace LiveDrmOperationsV3.Helpers
                 policyName, streamingPolicy);
             return streamingPolicy;
         }
-
-        public static List<string> ReturnLocatorNameFromDescription(Asset liveAsset, LiveOutput liveOutput)
-        {
-            if (liveOutput.Description != null && liveOutput.Description.StartsWith("locator:")) // old mode
-            {
-                return new List<string>() { liveOutput.Description.Substring(8) };
-            }
-            try
-            {
-                return (List<string>)JsonConvert.DeserializeObject(liveAsset.Description, typeof(List<string>));
-            }
-
-            catch
-            {
-                return new List<string>();
-            }
-        }
-
-        public static string SetLocatorNameInDescription(string locatorName, string existingDescription = null)
-        {
-            var mylist = new List<string>();
-            if (!string.IsNullOrEmpty(existingDescription))
-                mylist = (List<string>)JsonConvert.DeserializeObject(existingDescription, typeof(List<string>));
-            mylist.Add(locatorName);
-            return
-                JsonConvert.SerializeObject(mylist); // for now we store the locator name in the live output description
-        }
-
 
         public static async Task<StreamingLocator> SetupDRMAndCreateLocatorWithNewKeys(ConfigWrapper config,
             string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,

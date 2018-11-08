@@ -2,15 +2,16 @@
 // Azure Media Services REST API v3 Functions
 //
 // reset-live-event-output - This function resets a new live event and output (to be used with Irdeto)
-// keys are reused, streaming policies are reused
+// keys are reused when possible, streaming policies are reused
 // locator GUID is new (so output URLs will change)
 //
+// if live event is stopped, then it will still "reset" the live output (recreate a new one)
 /*
 ```c#
 Input :
 {
     "liveEventName": "CH1",
-    "deleteAsset" : false, // optional, default is True
+    "deleteAsset" : false, // optional, default is True - if asset is not deleted then we cannot reuse the keys for the new asset. New keys will be used for the new asset.
     "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
 }
@@ -19,103 +20,133 @@ Input :
 
 Output:
 {
-  "Success": true,
-  "OperationsVersion": "1.0.0.1",
-  "LiveEvents": [
+  "success": true,
+  "operationsVersion": "1.0.0.5",
+  "liveEvents": [
     {
-      "Name": "CH1",
-      "ResourceState": "Running",
-      "VanityUrl": true,
-      "Input": [
+      "liveEventName": "CH1",
+      "resourceState": "Running",
+      "vanityUrl": true,
+      "amsAccountName": "customerssrlivedeveuwe",
+      "region": "West Europe",
+      "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
+      "lowLatency": false,
+      "id": "customerssrlivedeveuwe:CH1",
+      "input": [
         {
-          "Protocol": "FragmentedMP4",
-          "Url": "http://CH1-customerssrlivedeveuwe-euwe.channel.media.azure.net/838afbbac2514fafa2eaed76d8a3cc74/ingest.isml"
+          "protocol": "FragmentedMP4",
+          "url": "http://CH1-customerssrlivedeveuwe-euwe.channel.media.azure.net/838afbbac2514fafa2eaed76d8a3cc74/ingest.isml"
         }
       ],
-      "InputACL": [
+      "inputACL": [
         "192.168.0.0/24",
         "86.246.149.14/0"
       ],
-      "Preview": [
+      "preview": [
         {
-          "Protocol": "FragmentedMP4",
-          "Url": "https://CH1-customerssrlivedeveuwe.preview-euwe.channel.media.azure.net/90083bd1-bed3-4019-9d54-b70e314ac9c8/preview.ism/manifest"
+          "protocol": "FragmentedMP4",
+          "url": "https://CH1-customerssrlivedeveuwe.preview-euwe.channel.media.azure.net/90083bd1-bed3-4019-9d54-b70e314ac9c8/preview.ism/manifest"
         }
       ],
-      "PreviewACL": [
+      "previewACL": [
         "192.168.0.0/24",
         "86.246.149.14/0"
       ],
-      "LiveOutputs": [
+      "liveOutputs": [
         {
-          "Name": "output-179744a9-3f6f",
-          "ArchiveWindowLength": 120,
-          "AssetName": "asset-179744a9-3f6f",
-          "AssetStorageAccountName": "rsilsvdeveuwe",
-          "ResourceState": "Running",
-          "StreamingLocators": [
+          "liveOutputName": "output-179744a9-3f6f",
+          "archiveWindowLength": 120,
+          "assetName": "asset-179744a9-3f6f",
+          "assetStorageAccountName": "rsilsvdeveuwe",
+          "resourceState": "Running",
+          "streamingLocators": [
             {
-              "Name": "locator-179744a9-3f6f",
-              "StreamingPolicyName": "CH1-321870db-de01",
-              "CencKeyId": "58420ba1-da30-4756-b50c-fcd72a9645b7",
-              "CbcsKeyId": "ced687fd-c34b-433e-bca7-346a1d7af9f5",
-              "Drm": [
+              "streamingLocatorName": "locator-179744a9-3f6f",
+              "streamingPolicyName": "CH1-321870db-de01",
+              "cencKeyId": "58420ba1-da30-4756-b50c-fcd72a9645b7",
+              "cbcsKeyId": "ced687fd-c34b-433e-bca7-346a1d7af9f5",
+              "drm": [
                 {
-                  "Type": "FairPlay",
-                  "LicenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
-                  "Protocols": [
+                  "type": "FairPlay",
+                  "licenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
+                  "protocols": [
                     "DashCmaf",
                     "HlsCmaf",
                     "HlsTs"
                   ]
                 },
                 {
-                  "Type": "PlayReady",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
-                  "Protocols": [
+                  "type": "PlayReady",
+                  "licenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
+                  "protocols": [
                     "DashCmaf",
                     "DashCsf"
                   ]
                 },
                 {
-                  "Type": "Widevine",
-                  "LicenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
-                  "Protocols": [
+                  "type": "Widevine",
+                  "licenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
+                  "protocols": [
                     "DashCmaf",
                     "DashCsf"
                   ]
                 }
               ],
-              "Urls": [
+              "urls": [
                 {
-                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(encryption=cenc)",
-                  "Protocol": "SmoothStreaming"
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(encryption=cenc)",
+                  "protocol": "SmoothStreaming"
                 },
                 {
-                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
-                  "Protocol": "DashCsf"
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
+                  "protocol": "DashCsf"
                 },
                 {
-                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
-                  "Protocol": "DashCmaf"
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
+                  "protocol": "DashCmaf"
                 },
                 {
-                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-cmaf,encryption=cenc)",
-                  "Protocol": "HlsCmaf"
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-cmaf,encryption=cenc)",
+                  "protocol": "HlsCmaf"
                 },
                 {
-                  "Url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-aapl,encryption=cenc)",
-                  "Protocol": "HlsTs"
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-aapl,encryption=cenc)",
+                  "protocol": "HlsTs"
+                }
+              ]
+            },
+            {
+              "streamingLocatorName": "locator-92259edd-db65",
+              "streamingPolicyName": "Predefined_ClearStreamingOnly",
+              "cencKeyId": null,
+              "cbcsKeyId": null,
+              "drm": [],
+              "urls": [
+                {
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest",
+                  "protocol": "SmoothStreaming"
+                },
+                {
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-csf)",
+                  "protocol": "DashCsf"
+                },
+                {
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-cmaf)",
+                  "protocol": "DashCmaf"
+                },
+                {
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-cmaf)",
+                  "protocol": "HlsCmaf"
+                },
+                {
+                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-aapl)",
+                  "protocol": "HlsTs"
                 }
               ]
             }
           ]
         }
-      ],
-      "AMSAccountName": "customerssrlivedeveuwe",
-      "Region": "West Europe",
-      "ResourceGroup": "GD-INIT-DISTLSV-dev-euwe",
-      "id": "customerssrlivedeveuwe:CH1"
+      ]
     }
   ]
 }
@@ -188,7 +219,7 @@ namespace LiveDrmOperationsV3
             // default settings
             var eventInfoFromCosmos = new LiveEventSettingsInfo
             {
-                liveEventName = liveEventName
+                LiveEventName = liveEventName
             };
 
             // Load config from Cosmos
@@ -230,7 +261,7 @@ namespace LiveDrmOperationsV3
             Task taskReset = null;
 
             if (data.archiveWindowLength != null)
-                eventInfoFromCosmos.archiveWindowLength = (int)data.archiveWindowLength;
+                eventInfoFromCosmos.ArchiveWindowLength = (int)data.archiveWindowLength;
 
             /*
             string cenckeyId = null;
@@ -251,8 +282,8 @@ namespace LiveDrmOperationsV3
                 if (liveEvent == null)
                     return IrdetoHelpers.ReturnErrorException(log, "Error : live event does not exist !");
 
-                if (liveEvent.ResourceState != LiveEventResourceState.Running)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event is not running !");
+                if (liveEvent.ResourceState != LiveEventResourceState.Running && liveEvent.ResourceState != LiveEventResourceState.Stopped)
+                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event should be in Running or Stopped state !");
 
                 // get live output(s) - it should be one
                 var myLiveOutputs = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
@@ -264,8 +295,8 @@ namespace LiveDrmOperationsV3
                     asset = client.Assets.Get(config.ResourceGroup, config.AccountName,
                         myLiveOutputs.First().AssetName);
 
-                    var streamingLocatorNames = IrdetoHelpers.ReturnLocatorNameFromDescription(asset, myLiveOutputs.First());
-                    foreach (var locatorName in streamingLocatorNames)
+                    var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, asset.Name).StreamingLocators.Select(l => l.Name);
+                    foreach (var locatorName in streamingLocatorsNames)
                     {
                         var locator =
                             client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
@@ -277,7 +308,7 @@ namespace LiveDrmOperationsV3
                                 var keys = client.StreamingLocators.ListContentKeys(config.ResourceGroup, config.AccountName, locatorName).ContentKeys;
                                 cencKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault();
                                 cbcsKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault();
-                                createKeys = false;
+                                if (deleteAsset) createKeys = false; // we can reuse the keys only if the previous asset is deleted
                             }
                         }
                     }
@@ -318,7 +349,7 @@ namespace LiveDrmOperationsV3
                 }
                 else
                 {
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event is not running !");
+                    log.LogInformation("Skipping the reset of live event " + liveEvent.Name + " as it is stopped.");
                 }
             }
             catch (Exception ex)
@@ -337,12 +368,12 @@ namespace LiveDrmOperationsV3
                     "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName, description: null));
 
                 Hls hlsParam = null;
-                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.archiveWindowLength),
+                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.ArchiveWindowLength),
                     null, "output-" + uniqueness, null, null, manifestName,
                     hlsParam); //we put the streaming locator in description
                 log.LogInformation("await task reset...");
 
-                await taskReset; // let's wait for the reset to complete
+                if (taskReset != null) await taskReset; // let's wait for the reset to complete
 
                 log.LogInformation("create live output...");
                 taskLiveOutputCreation = client.LiveOutputs.CreateAsync(config.ResourceGroup, config.AccountName,
@@ -444,8 +475,6 @@ namespace LiveDrmOperationsV3
                     }
 
                     log.LogInformation("locator : " + streamingLocatorName);
-                    asset.Description =
-                        IrdetoHelpers.SetLocatorNameInDescription(streamingLocatorName, asset.Description);
                 }
 
                 await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
