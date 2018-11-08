@@ -3,7 +3,9 @@
 //
 // Redirector - This function reads the Cosmos DB and redirect players to the right output URL
 //
-// A proxies.json should be used jointly with the function. For example:
+// A proxies.json should be used jointly with the function. In that case, the recirector will be called :
+// https://redirector-euno.azurewebsites.net/live?/channel/mpd (to get dash)
+// https://redirector-euno.azurewebsites.net/live?/channel/m3u8 (to get hls)
 //
 //
 // proxies.json

@@ -8,13 +8,14 @@
 Input :
 {
     "liveEventName": "CH1",
-    "storageAccountName" : "" // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
-    "inputProtocol" : "FragmentedMP4" or "RTMP"  // value is optional. Default is FragmentedMP4
-    "vanityUrl" : true // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
-    "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
-    "liveEventAutoStart": False  // optional. Default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
-    "useDRM" : true // optional. Default is true. Specify false if you don't want to use dynamic encryption
+    "storageAccountName" : "", // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
+    "inputProtocol" : "FragmentedMP4" or "RTMP",  // value is optional. Default is FragmentedMP4
+    "vanityUrl" : true, // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
+    "archiveWindowLength" : 20,  // value in minutes, optional. Default is 10 (minutes)
+    "liveEventAutoStart": False,  // optional. Default is True
+    "azureRegion": "euwe" or "we" or "euno" or "no", // optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "useDRM" : true, // optional. Default is true. Specify false if you don't want to use dynamic encryption
+    "lowLatency" : false, // optional. Set to true for low latency
     "InputACL": [  // optional
                 "192.168.0.1/24"
             ],
