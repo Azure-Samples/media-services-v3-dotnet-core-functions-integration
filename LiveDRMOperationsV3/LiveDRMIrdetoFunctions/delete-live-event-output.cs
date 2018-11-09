@@ -123,12 +123,12 @@ namespace LiveDrmOperationsV3
                     if (deleteAsset)
                     {
                         log.LogInformation("deleting asset : " + assetName);
-                        client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                        var task = client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
                         if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)
                         ) // let's delete the streaming policy if custom
                         {
                             log.LogInformation("deleting streaming policy : " + streamingPolicyName);
-                            client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName,
+                            var task2 = client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName,
                                 streamingPolicyName);
                         }
                     }

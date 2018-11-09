@@ -40,6 +40,9 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 
 ### 4. Deploy the Azure functions
 If not already done : fork the repo, download a local copy. Open the solution with Visual Studio and publish the functions to Azure.
+It is recommended to use a **dedicated plan** to avoid functions timeout.
+The redirector function (with anonymous access), if used, should be deployed on a separate plan as a **consumption plan** to get better scalability if this function is called by end-users.
+
 
 These functions have been designed to work with Irdeto back-end. It requires credentials and urls to be set in application settings. If you run the functions locally, you need to specify the values in the local settings file.
 
@@ -75,7 +78,8 @@ local.settings.json will look like (please replace 'value' with the correct data
     "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
     "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
     "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
-    "PreferredStreamingEndpoint" : "" // optional, use only by redirector
+    "PreferredStreamingEndpoint" : "", // optional, use only by redirector
+    "AllowClearStream" : "true" // optional, use only by redirector
   }
 }
 ```
@@ -235,21 +239,3 @@ Example of information in Cosmos for a live event :
     }
 ```
 
-### 6. Optional : deploy a proxies.json file
-It would be needed for the redirector function.
-
-Example:
-```json
-{
-    "$schema": "http://json.schemastore.org/proxies",
-  "proxies": {
-    "proxy1": {
-      "matchCondition": {
-        "methods": [ "GET" ],
-        "route": "/live"
-      },
-      "backendUri": "https://redirector-euno.azurewebsites.net/api/redirector?code=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=="
-    }
-  }
-}
-```

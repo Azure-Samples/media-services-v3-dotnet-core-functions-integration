@@ -338,7 +338,7 @@ namespace LiveDrmOperationsV3
                     if (deleteAsset)
                     {
                         log.LogInformation("deleting asset : " + assetName);
-                        client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                        var task = client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
                     }
                 }
 

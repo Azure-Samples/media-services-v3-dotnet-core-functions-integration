@@ -92,7 +92,7 @@ namespace LiveDrmOperationsV3.Helpers
                 await _client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(Database, collectionId), myObject);
                 return true;
             }
-            catch (DocumentClientException de)
+            catch
             {
 
             }
@@ -130,11 +130,13 @@ namespace LiveDrmOperationsV3.Helpers
             {
                 FeedOptions queryOptions = new FeedOptions { MaxItemCount = -1 };
 
-                return  _client.CreateDocumentQuery<LiveEventEntry>(
-            UriFactory.CreateDocumentCollectionUri(Database, CollectionOutputs), queryOptions)
-            .Where(f => f.LiveEventName == liveEventName);
-
-                               
+                var result = await Task.Run(() =>
+                {
+                    return _client.CreateDocumentQuery<LiveEventEntry>(
+             UriFactory.CreateDocumentCollectionUri(Database, CollectionOutputs), queryOptions)
+             .Where(f => f.LiveEventName == liveEventName);
+                });
+                return result;
             }
             catch
             {

@@ -3,29 +3,17 @@
 //
 // Redirector - This function reads the Cosmos DB and redirect players to the right output URL
 //
-// A proxies.json should be used jointly with the function. In that case, the recirector will be called :
-// https://redirector-euno.azurewebsites.net/live?/channel/mpd (to get dash)
-// https://redirector-euno.azurewebsites.net/live?/channel/m3u8 (to get hls)
+// The recirector can be called that way:
+// https://myfunctions.azurewebsites.net/api/redirector?channel/mpd (to get drm dash)
+// https://myfunctions.azurewebsites.net/api/redirector?channel/m3u8 (to get drm hls)
+// https://myfunctions.azurewebsites.net/api/redirector?channel/manifest (to get drm smooth)
 //
+// clear streams can be reported if application settings "AllowClearStream" is set to "true"
+// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/mpd (to get clear dash if such locator exists)
+// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/m3u8 (to get drm hls)
+// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/manifest (to get drm smooth)
 //
-// proxies.json
-//
-/*
-```c#
-{
-    "$schema": "http://json.schemastore.org/proxies",
-  "proxies": {
-    "proxy1": {
-      "matchCondition": {
-        "methods": [ "GET" ],
-        "route": "/live"
-      },
-      "backendUri": "https://redirector-euno.azurewebsites.net/api/redirector?code=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=="
-    }
-  }
-}
-```
-*/
+
 
 using System;
 using System.Collections.Generic;
@@ -45,14 +33,12 @@ namespace LiveDrmOperationsV3
 {
     public static class Redirector
     {
-
         [FunctionName("redirector")]
         public static async Task<HttpResponseMessage> Run(
-             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]
             HttpRequestMessage req, ILogger log)
         {
-            //string OriginUrl = req.Headers.GetValues("DISGUISED-HOST").FirstOrDefault();
-            //log.LogInformation("RequestURI org: " + OriginUrl);
+            bool clear = false;
 
             log.LogWarning("full path: " + req.RequestUri.PathAndQuery);
 
@@ -62,6 +48,19 @@ namespace LiveDrmOperationsV3
             if (preferredSE != null) preferredSE = "https://" + preferredSE;
 
             var paths = req.RequestUri.PathAndQuery.Split('?').Last().Split('/');
+
+            if ((paths.Count() > 2) && (paths[paths.Count() - 3] == "clear"))  // user wants the clear stream
+            {
+                if ((Config["AllowClearStream"] != null) && (Config["AllowClearStream"] == "true"))
+                {
+                    clear = true;
+                }
+                else
+                {
+                    return req.CreateResponse(HttpStatusCode.Forbidden);
+                }
+            }
+
             var liveEventName = paths[paths.Count() - 2];
             log.LogWarning("eventname: " + liveEventName);
 
@@ -81,15 +80,26 @@ namespace LiveDrmOperationsV3
                 var liveEvents = (await CosmosHelpers.ReadGeneralInfoDocument(liveEventName));
                 if (liveEvents == null) log.LogWarning("Live events not read from Cosmos.");
 
-                urls = liveEvents.ToList().Where(l => l.ResourceState == "Running").First()?.LiveOutputs.First()?.StreamingLocators.Where(l => l.Drm.Count > 0).First()?.Urls;
+                var ttt = liveEvents.ToList();
+
+                urls = liveEvents.ToList().Where(l => l.ResourceState == "Running").First()?.LiveOutputs.FirstOrDefault()?.StreamingLocators.Where(l => clear ? l.Drm.Count == 0 : l.Drm.Count > 0)?.FirstOrDefault()?.Urls;
+
+                if (urls == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
 
                 if (format == "mpd")
                 {
-                    protocol = "DashCsf";
+                    protocol = OutputProtocol.DashCsf.ToString();
                 }
                 else if (format == "m3u8")
                 {
-                    protocol = "HlsTs";
+                    protocol = OutputProtocol.HlsTs.ToString();
+                }
+                else if (format == "manifest")
+                {
+                    protocol = OutputProtocol.SmoothStreaming.ToString();
                 }
 
                 var urlprotocol = urls.Where(u => u.Protocol == protocol);
@@ -105,7 +115,8 @@ namespace LiveDrmOperationsV3
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                string message = ex.Message;
+                return req.CreateResponse(HttpStatusCode.InternalServerError, new { error = message });
             }
 
             //create response
