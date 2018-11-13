@@ -10,7 +10,12 @@ Input :
     "liveEventName": "CH1",
     "storageAccountName" : "" // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time
+            // Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -178,136 +183,117 @@ namespace LiveDrmOperationsV3
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-
-            ConfigWrapper config = null;
-            try
-            {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
-            // default settings
-            var eventInfoFromCosmos = new LiveEventSettingsInfo
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
             {
-                LiveEventName = liveEventName
-            };
-
-            // Load config from Cosmos
-            try
-            {
-                var setting = await CosmosHelpers.ReadSettingsDocument(liveEventName);
-                eventInfoFromCosmos = setting ?? eventInfoFromCosmos;
-
-                if (setting == null) log.LogWarning("Settings not read from Cosmos.");
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
             }
-            catch (Exception ex)
+            else
             {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
+                azureRegions.Add((string)null);
             }
-
 
             // init default
-            var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
-            var streamingLocatorName = "locator-" + uniqueness;
+            var uniquenessAssets = Guid.NewGuid().ToString().Substring(0, 13);
+
+            var streamingLocatorGuid = Guid.NewGuid(); // same locator for the two ouputs if 2 live event namle created
+            var uniquenessLocator = streamingLocatorGuid.ToString().Substring(0, 13);
+            var streamingLocatorName = "locator-" + uniquenessLocator;
+
             var manifestName = liveEventName.ToLower();
 
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
+            var clientTasks = new List<Task<LiveEventEntry>>();
 
-            Asset asset = null;
-            LiveEvent liveEvent = null;
-            LiveOutput liveOutput = null;
-
-            if (data.archiveWindowLength != null)
-                eventInfoFromCosmos.ArchiveWindowLength = (int)data.archiveWindowLength;
-
-            try
+            foreach (var region in azureRegions)
             {
-                // let's check that the channel exists
-                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent == null)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event does not exist !");
-
-                if (liveEvent.ResourceState != LiveEventResourceState.Running)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event is not running !");
-
-                var outputs =
-                    await client.LiveOutputs.ListAsync(config.ResourceGroup, config.AccountName, liveEventName);
-
-                if (outputs.FirstOrDefault() != null)
+                var task = Task<LiveEventEntry>.Run(async () =>
                 {
-                    liveOutput = outputs.FirstOrDefault();
-                    asset = await client.Assets.GetAsync(config.ResourceGroup, config.AccountName,
-                        liveOutput.AssetName);
-                }
+                    Asset asset = null;
+                    LiveOutput liveOutput = null;
 
-                if (asset == null) return IrdetoHelpers.ReturnErrorException(log, "Error - asset not found");
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            region
+                    );
+
+                    MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                    MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
+
+                    var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                    // Set the polling interval for long running operations to 2 seconds.
+                    // The default value is 30 seconds for the .NET client SDK
+                    client.LongRunningOperationRetryTimeout = 2;
+
+                    // let's check that the channel exists
+                    var liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                    if (liveEvent == null)
+                        throw new Exception($"Live event {liveEventName} does not exist.");
+
+                    var outputs =
+                        await client.LiveOutputs.ListAsync(config.ResourceGroup, config.AccountName, liveEventName);
+
+                    if (outputs.FirstOrDefault() != null)
+                    {
+                        liveOutput = outputs.FirstOrDefault();
+                        asset = await client.Assets.GetAsync(config.ResourceGroup, config.AccountName,
+                            liveOutput.AssetName);
+                    }
+
+                    if (asset == null)
+                        throw new Exception("Error - asset not found");
+
+                    try
+                    {
+                        // streaming locator creation
+                        MediaServicesHelpers.LogInformation(log, "Locator creation...", region);
+
+                        var locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset, streamingLocatorGuid);
+
+                        MediaServicesHelpers.LogInformation(log, "locator : " + locator.Name, region);
+
+                        if (liveOutput != null)
+                        {
+                            await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("locator creation error", ex);
+                    }
+
+                    // object to store the output of the function
+                    var generalOutputInfo = new GeneralOutputInfo();
+
+                    // let's build info for the live event and output
+
+                    generalOutputInfo =
+                        GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
+
+                    if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                        MediaServicesHelpers.LogWarning(log, "Cosmos access not configured.", region);
+
+                    return generalOutputInfo.LiveEvents[0];
+
+                });
+
+                clientTasks.Add(task);
             }
 
             try
             {
-                // streaming locator creation
-                log.LogInformation("Locator creation...");
-
-                var locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset);
-
-                log.LogInformation("locator : " + locator.Name);
-
-                if (liveOutput != null)
-                {
-                    await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
-                }
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "locator creation error");
-            }
-
-
-            // object to store the output of the function
-            var generalOutputInfo = new GeneralOutputInfo();
-
-            // let's build info for the live event and output
-            try
-            {
-                generalOutputInfo =
-                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
-            }
-
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            try
-            {
-                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
-                    log.LogWarning("Cosmos access not configured.");
+                Task.WaitAll(clientTasks.ToArray());
             }
             catch (Exception ex)
             {
@@ -315,7 +301,7 @@ namespace LiveDrmOperationsV3
             }
 
             return new OkObjectResult(
-                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+                 JsonConvert.SerializeObject(new GeneralOutputInfo { Success = true, LiveEvents = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
             );
         }
     }

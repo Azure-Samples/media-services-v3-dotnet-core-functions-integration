@@ -9,7 +9,12 @@ Input :
 {
     "liveEventName":"CH1",
     "deleteAsset" : false // optional, default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. With this function, the live event will be deleted from the two regions.
+            // Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -25,6 +30,7 @@ Output:
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,28 +58,12 @@ namespace LiveDrmOperationsV3
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            ConfigWrapper config = null;
-            try
-            {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
+            var generalOutputInfos = new List<GeneralOutputInfo>();
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
@@ -82,87 +72,121 @@ namespace LiveDrmOperationsV3
             var deleteAsset = true;
             if (data.deleteAsset != null) deleteAsset = (bool)data.deleteAsset;
 
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
+            {
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
+            }
+            else
+            {
+                azureRegions.Add((string)null);
+            }
+
+            var clientTasks = new List<Task>();
+
+            foreach (var region in azureRegions)
+            {
+                Task task = Task.Run(async () =>
+                   {
+                       Task LiveOutputsDeleteTask = null;
+                       Task LiveEventStopTask = null;
+
+                       ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                               .SetBasePath(Directory.GetCurrentDirectory())
+                               .AddEnvironmentVariables()
+                               .Build(),
+                               region
+                       );
+
+                       MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                       MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
+
+                       var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                       // Set the polling interval for long running operations to 2 seconds.
+                       // The default value is 30 seconds for the .NET client SDK
+                       client.LongRunningOperationRetryTimeout = 2;
+
+                       MediaServicesHelpers.LogInformation(log, "live event : " + liveEventName, region);
+                       var liveEvent = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEventName);
+
+                       if (liveEvent == null)
+                           throw new Exception($"Live event {liveEventName}  does not exist.");
+
+                       // let's purge all live output for now
+                       var ps = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
+                       foreach (var p in ps)
+                       {
+                           var assetName = p.AssetName;
+                           var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, assetName);
+
+                           // let's store name of the streaming policy
+                           string streamingPolicyName = null;
+                           var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, assetName).StreamingLocators.Select(l => l.Name);
+
+                           foreach (var locatorName in streamingLocatorsNames)
+                               if (locatorName != null)
+                               {
+                                   var streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup,
+                                       config.AccountName, locatorName);
+
+                                   if (streamingLocator != null) streamingPolicyName = streamingLocator.StreamingPolicyName;
+                               }
+
+                           MediaServicesHelpers.LogInformation(log, "deleting live output : " + p.Name, region);
+                           LiveOutputsDeleteTask = client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
+
+                           if (deleteAsset)
+                           {
+                               MediaServicesHelpers.LogInformation(log, "deleting asset : " + assetName, region);
+                               await client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                               if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)
+                               ) // let's delete the streaming policy if custom
+                               {
+                                   MediaServicesHelpers.LogInformation(log, "deleting streaming policy : " + streamingPolicyName, region);
+                                   await client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName,
+                                       streamingPolicyName);
+                               }
+                           }
+                       }
+
+                       if (LiveOutputsDeleteTask != null) await LiveOutputsDeleteTask; // live output deletion task
+
+                       if (liveEvent.ResourceState == LiveEventResourceState.Running)
+                       {
+                           MediaServicesHelpers.LogInformation(log, "stopping live event : " + liveEvent.Name, region);
+                           LiveEventStopTask = client.LiveEvents.StopAsync(config.ResourceGroup, config.AccountName, liveEvent.Name);
+                       }
+                       else if (liveEvent.ResourceState == LiveEventResourceState.Stopping)
+                       {
+                           var liveevt = liveEvent;
+                           while (liveevt.ResourceState == LiveEventResourceState.Stopping)
+                           {
+                               Thread.Sleep(2000);
+                               liveevt = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEvent.Name);
+                           }
+                       }
+
+                       if (LiveEventStopTask != null) await LiveEventStopTask; // live event stop task
+
+                       MediaServicesHelpers.LogInformation(log, "deleting live event : " + liveEventName, region);
+                       await client.LiveEvents.DeleteAsync(config.ResourceGroup, config.AccountName, liveEventName);
+
+                       if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry
+                       {
+                           LiveEventName = liveEventName,
+                           AMSAccountName = config.AccountName
+                       }))
+                           MediaServicesHelpers.LogWarning(log, "Cosmos access not configured.", region);
+
+                   });
+
+                clientTasks.Add(task);
+            }
 
             try
             {
-                log.LogInformation("live event : " + liveEventName);
-                var liveEvent = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEventName);
-
-                if (liveEvent == null)
-                    return IrdetoHelpers.ReturnErrorException(log, $"Live event {liveEventName}  does not exist.");
-
-                // let's purge all live output for now
-
-                var ps = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
-                foreach (var p in ps)
-                {
-                    var assetName = p.AssetName;
-                    var asset = client.Assets.Get(config.ResourceGroup, config.AccountName, assetName);
-
-                    // let's store name of the streaming policy
-                    string streamingPolicyName = null;
-                    var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, assetName).StreamingLocators.Select(l => l.Name);
-
-                    foreach (var locatorName in streamingLocatorsNames)
-                        if (locatorName != null)
-                        {
-                            //StreamingLocator streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup, config.AccountName, streamingLocatorName);
-                            var streamingLocator = await client.StreamingLocators.GetAsync(config.ResourceGroup,
-                                config.AccountName, locatorName);
-
-                            if (streamingLocator != null) streamingPolicyName = streamingLocator.StreamingPolicyName;
-                        }
-
-                    log.LogInformation("deleting live output : " + p.Name);
-                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name,
-                        p.Name);
-                    if (deleteAsset)
-                    {
-                        log.LogInformation("deleting asset : " + assetName);
-                        var task = client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
-                        if (streamingPolicyName != null && streamingPolicyName.StartsWith(liveEventName)
-                        ) // let's delete the streaming policy if custom
-                        {
-                            log.LogInformation("deleting streaming policy : " + streamingPolicyName);
-                            var task2 = client.StreamingPolicies.DeleteAsync(config.ResourceGroup, config.AccountName,
-                                streamingPolicyName);
-                        }
-                    }
-                }
-
-                if (liveEvent.ResourceState == LiveEventResourceState.Running)
-                {
-                    log.LogInformation("stopping live event : " + liveEvent.Name);
-                    await client.LiveEvents.StopAsync(config.ResourceGroup, config.AccountName, liveEvent.Name);
-                }
-                else if (liveEvent.ResourceState == LiveEventResourceState.Stopping)
-                {
-                    var liveevt = liveEvent;
-                    while (liveevt.ResourceState == LiveEventResourceState.Stopping)
-                    {
-                        Thread.Sleep(2000);
-                        liveevt = client.LiveEvents.Get(config.ResourceGroup, config.AccountName, liveEvent.Name);
-                    }
-                }
-
-                log.LogInformation("deleting live event : " + liveEvent.Name);
-                await client.LiveEvents.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name);
-            }
-
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            try
-            {
-                if (!await CosmosHelpers.DeleteGeneralInfoDocument(new LiveEventEntry
-                { LiveEventName = liveEventName, AMSAccountName = config.AccountName }))
-                    log.LogWarning("Cosmos access not configured.");
+                Task.WaitAll(clientTasks.ToArray());
             }
             catch (Exception ex)
             {

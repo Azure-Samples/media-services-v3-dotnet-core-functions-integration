@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Microsoft.Rest.Azure.Authentication;
@@ -160,6 +161,21 @@ namespace LiveDrmOperationsV3.Helpers
                     {OutputProtocol.DashCmaf.ToString(), OutputProtocol.DashCsf.ToString()});
 
             return protList;
+        }
+
+        public static void LogInformation(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogInformation((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
+        }
+
+        public static void LogWarning(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogWarning((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
+        }
+
+        public static void LogError(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogError((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
         }
     }
 

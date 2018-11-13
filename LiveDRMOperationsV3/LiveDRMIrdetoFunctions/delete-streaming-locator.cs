@@ -8,7 +8,12 @@
 Input :
 {
     "streamingLocatorName": "locator-c03de9fe-dd04",
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time
+            // Note: the service principal must work with all this accounts
 }
 
 Output:
@@ -26,7 +31,9 @@ Output:
 
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
@@ -49,44 +56,66 @@ namespace LiveDrmOperationsV3
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-
 
             var streamingLocatorName = (string)data.streamingLocatorName;
             if (streamingLocatorName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass streamingLocatorName in the JSON");
 
-            ConfigWrapper config = null;
-            try
+
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
             {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
             }
-            catch (Exception ex)
+            else
             {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
+                azureRegions.Add((string)null);
             }
 
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
-
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
-
-            try
+            foreach (var region in azureRegions)
             {
-                client.StreamingLocators.Delete(config.ResourceGroup, config.AccountName, streamingLocatorName);
+                ConfigWrapper config = null;
 
-                var response = new JObject
+                try
+                {
+                    config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            region
+                    );
+                }
+                catch (Exception ex)
+                {
+                    return IrdetoHelpers.ReturnErrorException(log, ex);
+                }
+
+                MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
+
+                var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                // Set the polling interval for long running operations to 2 seconds.
+                // The default value is 30 seconds for the .NET client SDK
+                client.LongRunningOperationRetryTimeout = 2;
+
+                try
+                {
+                    client.StreamingLocators.Delete(config.ResourceGroup, config.AccountName, streamingLocatorName);
+
+                }
+                catch (Exception ex)
+                {
+                    return IrdetoHelpers.ReturnErrorException(log, ex);
+                }
+
+            }
+
+            var response = new JObject
                 {
                     {"streamingLocatorName", streamingLocatorName},
                     {"success", true},
@@ -96,14 +125,10 @@ namespace LiveDrmOperationsV3
                     }
                 };
 
-                return new OkObjectResult(
-                    response.ToString()
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
+            return new OkObjectResult(
+                response.ToString()
+            );
+
         }
     }
 }

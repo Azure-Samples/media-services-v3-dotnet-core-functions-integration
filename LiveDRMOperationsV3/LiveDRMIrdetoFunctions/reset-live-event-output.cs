@@ -12,7 +12,12 @@ Input :
 {
     "liveEventName": "CH1",
     "deleteAsset" : false, // optional, default is True - if asset is not deleted then we cannot reuse the keys for the new asset. New keys will be used for the new asset.
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. This function will reset the live event in both regions.
+            // Note: the service principal must work with all this accounts
     "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
 }
 
@@ -189,28 +194,12 @@ namespace LiveDrmOperationsV3
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            ConfigWrapper config = null;
-            try
-            {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
+            var generalOutputInfos = new List<GeneralOutputInfo>();
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
@@ -235,196 +224,48 @@ namespace LiveDrmOperationsV3
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
+            {
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
+            }
+            else
+            {
+                azureRegions.Add((string)null);
+            }
 
             // init default
+            var deleteAsset = (data.deleteAsset != null) ? (bool)data.deleteAsset : true;
 
-            var deleteAsset = true;
-            if (data.deleteAsset != null) deleteAsset = (bool)data.deleteAsset;
+            var uniquenessAssets = Guid.NewGuid().ToString().Substring(0, 13);
 
-            var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
+            string uniquenessPolicyName = Guid.NewGuid().ToString().Substring(0, 13);
+
             var manifestName = liveEventName.ToLower();
-
-
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
-
-            Asset asset = null;
-            LiveEvent liveEvent = null;
-            LiveOutput liveOutput = null;
-            Task<LiveOutput> taskLiveOutputCreation = null;
-
-            var streamingLocatorsPolicies = new Dictionary<string, string>(); // locator name, policy name 
-            string storageAccountName = null;
-
-            Task taskReset = null;
 
             if (data.archiveWindowLength != null)
                 eventInfoFromCosmos.ArchiveWindowLength = (int)data.archiveWindowLength;
 
-            /*
-            string cenckeyId = null;
-            string cenccontentKey = null;
-            string cbcskeyId = null;
-            string cbcscontentKey = null;
-            */
             var cencKey = new StreamingLocatorContentKey();
             var cbcsKey = new StreamingLocatorContentKey();
 
-            bool createKeys = true;
-
-
-            try
-            {
-                // let's check that the channel exists
-                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent == null)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event does not exist !");
-
-                if (liveEvent.ResourceState != LiveEventResourceState.Running && liveEvent.ResourceState != LiveEventResourceState.Stopped)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event should be in Running or Stopped state !");
-
-                // get live output(s) - it should be one
-                var myLiveOutputs = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
-
-
-                // get the names of the streaming policies. If not possible, recreate it
-                if (myLiveOutputs.FirstOrDefault() != null)
-                {
-                    asset = client.Assets.Get(config.ResourceGroup, config.AccountName,
-                        myLiveOutputs.First().AssetName);
-
-                    var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, asset.Name).StreamingLocators.Select(l => l.Name);
-                    foreach (var locatorName in streamingLocatorsNames)
-                    {
-                        var locator =
-                            client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
-                        if (locator != null)
-                        {
-                            streamingLocatorsPolicies.Add(locatorName, locator.StreamingPolicyName);
-                            if (locator.StreamingPolicyName != PredefinedStreamingPolicy.ClearStreamingOnly) // let's backup the keys to reuse them
-                            {
-                                var keys = client.StreamingLocators.ListContentKeys(config.ResourceGroup, config.AccountName, locatorName).ContentKeys;
-                                cencKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault();
-                                cbcsKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault();
-                                if (deleteAsset) createKeys = false; // we can reuse the keys only if the previous asset is deleted
-                            }
-                        }
-                    }
-                }
-
-                if (streamingLocatorsPolicies.Count == 0) // no way to get the streaming policy, let's create a new one
-                {
-                    log.LogInformation("Creating streaming policy.");
-                    var streamingPolicy =
-                        await IrdetoHelpers.CreateStreamingPolicyIrdeto(liveEventName, config, client);
-                    streamingLocatorsPolicies.Add("", streamingPolicy.Name);
-                }
-
-                // let's purge all live output for now
-                foreach (var p in myLiveOutputs)
-                {
-                    var assetName = p.AssetName;
-
-                    var thisAsset = client.Assets.Get(config.ResourceGroup, config.AccountName, p.AssetName);
-                    if (thisAsset != null)
-                        storageAccountName =
-                            thisAsset
-                                .StorageAccountName; // let's backup storage account name to create the new asset here
-                    log.LogInformation("deleting live output : " + p.Name);
-                    await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name,
-                        p.Name);
-                    if (deleteAsset)
-                    {
-                        log.LogInformation("deleting asset : " + assetName);
-                        var task = client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
-                    }
-                }
-
-                if (liveEvent.ResourceState == LiveEventResourceState.Running)
-                {
-                    log.LogInformation("reseting live event : " + liveEvent.Name);
-                    taskReset = client.LiveEvents.ResetAsync(config.ResourceGroup, config.AccountName, liveEvent.Name);
-                }
-                else
-                {
-                    log.LogInformation("Skipping the reset of live event " + liveEvent.Name + " as it is stopped.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-
-            // LIVE OUTPUT CREATION
-            log.LogInformation("Live output creation...");
-
-            try
-            {
-                log.LogInformation("Asset creation...");
-                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
-                    "asset-" + uniqueness, new Asset(storageAccountName: storageAccountName, description: null));
-
-                Hls hlsParam = null;
-                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.ArchiveWindowLength),
-                    null, "output-" + uniqueness, null, null, manifestName,
-                    hlsParam); //we put the streaming locator in description
-                log.LogInformation("await task reset...");
-
-                if (taskReset != null) await taskReset; // let's wait for the reset to complete
-
-                log.LogInformation("create live output...");
-                taskLiveOutputCreation = client.LiveOutputs.CreateAsync(config.ResourceGroup, config.AccountName,
-                    liveEventName, liveOutput.Name, liveOutput);
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "live output creation error");
-            }
-
-            if (createKeys)
+            if (!deleteAsset) // we need to regenerate the keys if the user wants to keep the asset as keys cannot be reused for more than one asset
             {
                 try
                 {
-                    log.LogInformation("Irdeto call...");
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            null);
 
-                    // CENC Key
-                    cencKey.Id = Guid.NewGuid();
-                    cencKey.Value = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                    var cencIV = Convert.ToBase64String(cencKey.Id.ToByteArray());
-                    var responsecenc = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                        liveEventName, config, cencKey.Id.ToString(), cencKey.Value, cencIV, false);
-                    var contentcenc = await responsecenc.Content.ReadAsStringAsync();
+                    MediaServicesHelpers.LogInformation(log, "Irdeto call...");
 
-                    if (responsecenc.StatusCode != HttpStatusCode.OK)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cenc - " + contentcenc);
+                    cencKey = await IrdetoHelpers.GenerateAndRegisterCENCKeyToIrdeto(liveEventName, config);
+                    cbcsKey = await IrdetoHelpers.GenerateAndRegisterCBCSKeyToIrdeto(liveEventName, config);
 
-                    var cenckeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "KeyId=");
-                    var cenccontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "ContentKey=");
-
-                    if (cencKey.Id.ToString() != cenckeyIdFromIrdeto || cencKey.Value != cenccontentKeyFromIrdeto)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error CENC not same key - " + contentcenc);
-
-                    // CBCS Key
-                    cbcsKey.Id = Guid.NewGuid();
-                    cbcsKey.Value = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                    var cbcsIV =
-                        Convert.ToBase64String(
-                            IrdetoHelpers.HexStringToByteArray(cbcsKey.Id.ToString().Replace("-", string.Empty)));
-                    var responsecbcs = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                        liveEventName, config, cbcsKey.Id.ToString(), cbcsKey.Value, cbcsIV, true);
-                    var contentcbcs = await responsecbcs.Content.ReadAsStringAsync();
-
-                    if (responsecbcs.StatusCode != HttpStatusCode.OK)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cbcs - " + contentcbcs);
-
-                    var cbcskeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "KeyId=");
-                    var cbcscontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "ContentKey=");
-
-                    if (cbcsKey.Id.ToString() != cbcskeyIdFromIrdeto || cbcsKey.Value != cbcscontentKeyFromIrdeto)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error CBCS not same key - " + contentcbcs);
+                    MediaServicesHelpers.LogInformation(log, "Irdeto call done.");
                 }
                 catch (Exception ex)
                 {
@@ -432,82 +273,203 @@ namespace LiveDrmOperationsV3
                 }
             }
 
+            var clientTasks = new List<Task<LiveEventEntry>>();
 
-
-            try
+            // list of locators guid for the new locators
+            var locatorGuids = new List<Guid>();
+            for (int i = 0; i < 10; i++)
             {
-                // streaming locator(s) creation
-                log.LogInformation("Locator creation...");
-
-                foreach (var entryLocPol in streamingLocatorsPolicies)
-                {
-                    string streamingLocatorName;
-
-                    if (entryLocPol.Value == PredefinedStreamingPolicy.ClearStreamingOnly)
-                    {
-                        var uniqueness2 = Guid.NewGuid().ToString().Substring(0, 13);
-                        streamingLocatorName = "locator-" + uniqueness2; // another uniqueness
-                        log.LogInformation("creating clear locator : " + streamingLocatorName);
-                        var locator =
-                            await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset);
-                    }
-                    else // DRM content
-                    {
-                        streamingLocatorName = "locator-" + uniqueness; // sae uniqueness that asset or output
-                        log.LogInformation("creating DRM locator : " + streamingLocatorName);
-
-                        if (createKeys)
-                        {
-                            log.LogInformation("using new keys.");
-
-                            var locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(
-                                config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey.Id.ToString(), cencKey.Value, cbcsKey.Id.ToString(), cbcsKey.Value);
-
-                        }
-                        else // no need to create new keys, let's use the exiting one
-                        {
-                            log.LogInformation("using existing keys.");
-
-                            var locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithExistingKeys(
-                                config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey, cbcsKey);
-
-                        }
-                    }
-
-                    log.LogInformation("locator : " + streamingLocatorName);
-                }
-
-                await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
-
-                await taskLiveOutputCreation;
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "locator creation error");
+                locatorGuids.Add(Guid.NewGuid());
             }
 
-
-            // object to store the output of the function
-            var generalOutputInfo = new GeneralOutputInfo();
-
-            // let's build info for the live event and output
-            try
+            foreach (var region in azureRegions)
             {
-                generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent>
+                var task = Task<LiveEventEntry>.Run(async () =>
                 {
-                    liveEvent
+                    Asset asset = null;
+                    LiveEvent liveEvent = null;
+                    LiveOutput liveOutput = null;
+
+                    bool reuseKeys = false;
+                    string storageAccountName = null;
+                    var streamingLocatorsPolicies = new Dictionary<string, string>(); // locator name, policy name 
+
+
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            region
+                    );
+
+                    MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                    MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
+
+                    var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                    // Set the polling interval for long running operations to 2 seconds.
+                    // The default value is 30 seconds for the .NET client SDK
+                    client.LongRunningOperationRetryTimeout = 2;
+
+                    // let's check that the channel exists
+                    liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                    if (liveEvent == null)
+                        throw new Exception("Error : live event does not exist !");
+
+                    if (liveEvent.ResourceState != LiveEventResourceState.Running && liveEvent.ResourceState != LiveEventResourceState.Stopped)
+                        throw new Exception("Error : live event should be in Running or Stopped state !");
+
+                    // get live output(s) - it should be one
+                    var myLiveOutputs = client.LiveOutputs.List(config.ResourceGroup, config.AccountName, liveEventName);
+
+                    // get the names of the streaming policies. If not possible, recreate it
+                    if (myLiveOutputs.FirstOrDefault() != null)
+                    {
+                        asset = client.Assets.Get(config.ResourceGroup, config.AccountName,
+                            myLiveOutputs.First().AssetName);
+
+                        var streamingLocatorsNames = client.Assets.ListStreamingLocators(config.ResourceGroup, config.AccountName, asset.Name).StreamingLocators.Select(l => l.Name);
+                        foreach (var locatorName in streamingLocatorsNames)
+                        {
+                            var locator =
+                                client.StreamingLocators.Get(config.ResourceGroup, config.AccountName, locatorName);
+                            if (locator != null)
+                            {
+                                streamingLocatorsPolicies.Add(locatorName, locator.StreamingPolicyName);
+                                if (locator.StreamingPolicyName != PredefinedStreamingPolicy.ClearStreamingOnly) // let's backup the keys to reuse them
+                                {
+                                    if (deleteAsset) // we reuse the keys. Only possible if the previous asset is deleted
+                                    {
+                                        reuseKeys = true;
+                                        var keys = client.StreamingLocators.ListContentKeys(config.ResourceGroup, config.AccountName, locatorName).ContentKeys;
+                                        cencKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCenc).FirstOrDefault();
+                                        cbcsKey = keys.Where(k => k.LabelReferenceInStreamingPolicy == IrdetoHelpers.labelCbcs).FirstOrDefault();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (streamingLocatorsPolicies.Count == 0) // no way to get the streaming policy, let's create a new one
+                        {
+                            MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
+                            var streamingPolicy =
+                                await IrdetoHelpers.CreateStreamingPolicyIrdeto(liveEventName, config, client);
+                            streamingLocatorsPolicies.Add("", streamingPolicy.Name);
+                        }
+                    }
+
+                    // let's purge all live output for now
+                    foreach (var p in myLiveOutputs)
+                    {
+                        var assetName = p.AssetName;
+
+                        var thisAsset = client.Assets.Get(config.ResourceGroup, config.AccountName, p.AssetName);
+                        if (thisAsset != null)
+                            storageAccountName = thisAsset.StorageAccountName; // let's backup storage account name to create the new asset here
+                        MediaServicesHelpers.LogInformation(log, "deleting live output : " + p.Name, region);
+                        await client.LiveOutputs.DeleteAsync(config.ResourceGroup, config.AccountName, liveEvent.Name, p.Name);
+                        if (deleteAsset)
+                        {
+                            MediaServicesHelpers.LogInformation(log, "deleting asset : " + assetName, region);
+                            await client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, assetName);
+                        }
+                    }
+
+                    if (liveEvent.ResourceState == LiveEventResourceState.Running)
+                    {
+                        MediaServicesHelpers.LogInformation(log, "reseting live event : " + liveEvent.Name, region);
+                        await client.LiveEvents.ResetAsync(config.ResourceGroup, config.AccountName, liveEvent.Name);
+                    }
+                    else
+                    {
+                        MediaServicesHelpers.LogInformation(log, "Skipping the reset of live event " + liveEvent.Name + " as it is stopped.", region);
+                    }
+
+                    // LIVE OUTPUT CREATION
+                    MediaServicesHelpers.LogInformation(log, "Live output creation...", region);
+
+                    try
+                    {
+                        MediaServicesHelpers.LogInformation(log, "Asset creation...", region);
+                        asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
+                            "asset-" + uniquenessAssets, new Asset(storageAccountName: storageAccountName));
+
+                        Hls hlsParam = null;
+                        liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.ArchiveWindowLength),
+                            null, "output-" + uniquenessAssets, null, null, manifestName,
+                            hlsParam);
+
+                        MediaServicesHelpers.LogInformation(log, "create live output...", region);
+                        await client.LiveOutputs.CreateAsync(config.ResourceGroup, config.AccountName, liveEventName, liveOutput.Name, liveOutput);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("live output creation error", ex);
+                    }
+
+                    try
+                    {
+                        // streaming locator(s) creation
+                        MediaServicesHelpers.LogInformation(log, "Locator creation...", region);
+                        int i = 0;
+                        foreach (var entryLocPol in streamingLocatorsPolicies)
+                        {
+                            StreamingLocator locator = null;
+                            var streamingLocatorGuid = locatorGuids[i]; // same locator for the two ouputs if 2 live event namle created
+                            var uniquenessLocator = streamingLocatorGuid.ToString().Substring(0, 13);
+                            var streamingLocatorName = "locator-" + uniquenessLocator;
+
+                            if (entryLocPol.Value == PredefinedStreamingPolicy.ClearStreamingOnly)
+                            {
+                                locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset, streamingLocatorGuid);
+                            }
+                            else // DRM content
+                            {
+                                MediaServicesHelpers.LogInformation(log, "creating DRM locator : " + streamingLocatorName, region);
+
+                                if (!reuseKeys)
+                                {
+                                    MediaServicesHelpers.LogInformation(log, "using new keys.", region);
+
+                                    locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(
+                                       config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorGuid);
+
+                                }
+                                else // no need to create new keys, let's use the exiting one
+                                {
+                                    MediaServicesHelpers.LogInformation(log, "using existing keys.", region);
+
+                                    locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithExistingKeys(
+                                       config, entryLocPol.Value, streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorGuid);
+
+                                }
+                            }
+                            MediaServicesHelpers.LogInformation(log, "locator : " + streamingLocatorName, region);
+                            i++;
+                        }
+
+                        await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("locator creation error", ex);
+                    }
+
+                    var generalOutputInfo =
+                        GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
+
+                    if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                        MediaServicesHelpers.LogWarning(log, "Cosmos access not configured.", region);
+
+                    return generalOutputInfo.LiveEvents[0];
+
                 });
-            }
-
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
+                clientTasks.Add(task);
             }
 
             try
             {
-                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
-                    log.LogWarning("Cosmos access not configured.");
+                Task.WaitAll(clientTasks.ToArray());
             }
             catch (Exception ex)
             {
@@ -515,7 +477,7 @@ namespace LiveDrmOperationsV3
             }
 
             return new OkObjectResult(
-                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+                 JsonConvert.SerializeObject(new GeneralOutputInfo { Success = true, LiveEvents = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
             );
         }
     }

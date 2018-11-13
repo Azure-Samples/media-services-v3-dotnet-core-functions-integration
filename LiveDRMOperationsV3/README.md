@@ -20,7 +20,15 @@ Here are the list of functions:
 - stop-live-event
 - update-settings
 
-As an option, two AMS accounts ad two Azure functions deployment can be created in two different datacenters. An Azure function deployment could manage either AMS account. Fot this, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
+As an option, two AMS accounts and two Azure functions deployments can be created in two different Azure regions. An Azure function deployment could manage either AMS account. For this to work, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name, or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
+
+It is also possible to execute all operations in two regions at the same time. For example, the creation of a live event can be executed by the function into two different accounts simultaneously. In that case, the same live event name, ingest path, output locator name, output locator GUID, streaming policy name and DRM keys will be used ; all URLS will be similar (except the hostname, of course). To use this mode, pass the two regions to the create-live-event-output function. Example :
+```json
+{
+  "liveEventName": "Channel1",
+  "azureRegion" : "euwe,euno"
+}
+```
 
 This Media Services Functions code is based on AMS REST API v3 on Azure Functions v2.
 

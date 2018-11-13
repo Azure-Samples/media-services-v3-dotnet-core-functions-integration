@@ -13,7 +13,12 @@ Input :
     "vanityUrl" : true, // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
     "archiveWindowLength" : 20,  // value in minutes, optional. Default is 10 (minutes)
     "liveEventAutoStart": False,  // optional. Default is True
-    "azureRegion": "euwe" or "we" or "euno" or "no", // optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. With this function, two live events will be created.
+            // Note: the service principal must work with all this accounts
     "useDRM" : true, // optional. Default is true. Specify false if you don't want to use dynamic encryption
     "lowLatency" : false, // optional. Set to true for low latency
     "InputACL": [  // optional
@@ -167,24 +172,7 @@ namespace LiveDrmOperationsV3
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            ConfigWrapper config;
-
-            try
-            {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
+            var generalOutputInfos = new List<GeneralOutputInfo>();
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
@@ -209,26 +197,32 @@ namespace LiveDrmOperationsV3
                 return IrdetoHelpers.ReturnErrorException(log, ex);
             }
 
-            // init default
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
+            {
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
+            }
+            else
+            {
+                azureRegions.Add((string)null);
+            }
 
-            StreamingPolicy streamingPolicy = null;
-            var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
-            var streamingLocatorName = "locator-" + uniqueness;
+            // init default
+            var uniquenessAssets = Guid.NewGuid().ToString().Substring(0, 13);
+
+            var streamingLocatorGuid = Guid.NewGuid(); // same locator for the two ouputs if 2 live event namle created
+            var uniquenessLocator = streamingLocatorGuid.ToString().Substring(0, 13);
+            var streamingLocatorName = "locator-" + uniquenessLocator;
+
+            string uniquenessPolicyName = Guid.NewGuid().ToString().Substring(0, 13);
+
             var manifestName = liveEventName.ToLower();
 
             var useDRM = data.useDRM != null ? (bool)data.useDRM : true;
-            Asset asset = null;
-            LiveEvent liveEvent = null;
-            LiveOutput liveOutput = null;
-
 
             if (data.archiveWindowLength != null)
                 eventInfoFromCosmos.ArchiveWindowLength = (int)data.archiveWindowLength;
-
-            if (eventInfoFromCosmos.BaseStorageName != null)
-                eventInfoFromCosmos.StorageName = eventInfoFromCosmos.BaseStorageName + config.AzureRegionCode;
-
-            if (data.storageAccountName != null) eventInfoFromCosmos.StorageName = (string)data.storageAccountName;
 
             if (data.inputProtocol != null && ((string)data.inputProtocol).ToUpper() == "RTMP")
                 eventInfoFromCosmos.InputProtocol = LiveEventInputProtocol.RTMP;
@@ -241,259 +235,239 @@ namespace LiveDrmOperationsV3
 
             if (data.lowLatency != null) eventInfoFromCosmos.LowLatency = (bool)data.lowLatency;
 
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
-
-
-            // LIVE EVENT CREATION
-            log.LogInformation("Live event creation...");
-
-            try
-            {
-                // let's check that the channel does not exist already
-                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent != null)
-                    return IrdetoHelpers.ReturnErrorException(log, "Error : live event already exists !");
-
-                // IP ACL for preview URL
-                //var ipAclListPreview = config.LiveEventPreviewACL?.Trim().Split(';').ToList();
-                var ipsPreview = new List<IPRange>();
-                if (eventInfoFromCosmos.LiveEventPreviewACL == null ||
-                    eventInfoFromCosmos.LiveEventPreviewACL.Count == 0)
-                {
-                    log.LogInformation("preview all");
-                    var ip = new IPRange
-                    { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
-                    ipsPreview.Add(ip);
-                }
-                else
-                {
-                    foreach (var ipacl in eventInfoFromCosmos.LiveEventPreviewACL)
-                    {
-                        var ipaclcomp = ipacl.Split('/'); // notation can be "192.168.0.1" or "192.168.0.1/32"
-                        var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
-                        var ip = new IPRange
-                        {
-                            Name = "ip",
-                            Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
-                            SubnetPrefixLength = subnet
-                        };
-                        ipsPreview.Add(ip);
-                    }
-                }
-
-                var liveEventPreview = new LiveEventPreview
-                {
-                    AccessControl = new LiveEventPreviewAccessControl(new IPAccessControl(ipsPreview))
-                };
-
-                // IP ACL for input URL
-                //var ipAclListInput = config.LiveEventInputACL?.Trim().Split(';').ToList();
-                var ipsInput = new List<IPRange>();
-
-                //  if (config.LiveEventInputACL == null || config.LiveEventInputACL.Trim() == "" || ipAclListInput == null || ipAclListInput.Count == 0)
-                if (eventInfoFromCosmos.LiveEventInputACL == null || eventInfoFromCosmos.LiveEventInputACL.Count == 0)
-                {
-                    log.LogInformation("input all");
-                    var ip = new IPRange
-                    { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
-                    ipsInput.Add(ip);
-                }
-                else
-                {
-                    foreach (var ipacl in eventInfoFromCosmos.LiveEventInputACL)
-                    {
-                        var ipaclcomp = ipacl.Split('/'); // notation can be "192.168.0.1" or "192.168.0.1/32"
-                        var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
-                        var ip = new IPRange
-                        {
-                            Name = "ip",
-                            Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
-                            SubnetPrefixLength = subnet
-                        };
-                        ipsInput.Add(ip);
-                    }
-                }
-
-                var liveEventInput = new LiveEventInput(
-                                                        eventInfoFromCosmos.InputProtocol,
-                                                        accessControl: new LiveEventInputAccessControl(new IPAccessControl(ipsInput)),
-                                                        accessToken: config.LiveIngestAccessToken
-                    );
-
-
-
-                liveEvent = new LiveEvent(
-                    name: liveEventName,
-                    location: config.Region,
-                    description: "",
-                    vanityUrl: eventInfoFromCosmos.VanityUrl,
-                    encoding: new LiveEventEncoding { EncodingType = LiveEventEncodingType.None },
-                    input: liveEventInput,
-                    preview: liveEventPreview,
-                    streamOptions: new List<StreamOptionsFlag?>
-                    {
-                        // Set this to Default or Low Latency
-                        eventInfoFromCosmos.LowLatency ?  StreamOptionsFlag.LowLatency : StreamOptionsFlag.Default
-                    }
-                );
-
-
-                liveEvent = await client.LiveEvents.CreateAsync(config.ResourceGroup, config.AccountName, liveEventName,
-                    liveEvent, eventInfoFromCosmos.AutoStart);
-                log.LogInformation("Live event created.");
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "live event creation error");
-            }
+            var cencKey = new StreamingLocatorContentKey();
+            var cbcsKey = new StreamingLocatorContentKey();
 
             if (useDRM)
             {
-                // STREAMING POLICY CREATION
-                log.LogInformation("Creating streaming policy.");
                 try
                 {
-                    streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(liveEventName, config, client);
-                }
-                catch (Exception ex)
-                {
-                    return IrdetoHelpers.ReturnErrorException(log, ex, "streaming policy creation error");
-                }
-            }
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            null);
 
-            // LIVE OUTPUT CREATION
-            log.LogInformation("Live output creation...");
+                    MediaServicesHelpers.LogInformation(log, "Irdeto call...");
 
-            try
-            {
-                log.LogInformation("Asset creation...");
+                    cencKey = await IrdetoHelpers.GenerateAndRegisterCENCKeyToIrdeto(liveEventName, config);
+                    cbcsKey = await IrdetoHelpers.GenerateAndRegisterCBCSKeyToIrdeto(liveEventName, config);
 
-                asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
-                    "asset-" + uniqueness,
-                    new Asset(storageAccountName: eventInfoFromCosmos.StorageName));
-
-                Hls hlsParam = null;
-
-                liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.ArchiveWindowLength),
-                    null, "output-" + uniqueness, null, null, manifestName,
-                    hlsParam); //we put the streaming locator in description
-                log.LogInformation("await task...");
-
-                log.LogInformation("create live output...");
-                await client.LiveOutputs.CreateAsync(config.ResourceGroup, config.AccountName, liveEventName,
-                    liveOutput.Name, liveOutput);
-                log.LogInformation("Asset created.");
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "live output creation error");
-            }
-
-            string cenckeyId = null;
-            string cenccontentKey = null;
-            string cbcskeyId = null;
-            string cbcscontentKey = null;
-
-            if (useDRM)
-                try
-                {
-                    log.LogInformation("Irdeto call...");
-
-                    // CENC Key
-                    var cencGuid = Guid.NewGuid();
-                    cenckeyId = cencGuid.ToString();
-                    cenccontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                    var cencIV = Convert.ToBase64String(cencGuid.ToByteArray());
-                    var responsecenc = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                        liveEventName, config, cenckeyId, cenccontentKey, cencIV, false);
-                    var contentcenc = await responsecenc.Content.ReadAsStringAsync();
-
-                    if (responsecenc.StatusCode != HttpStatusCode.OK)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cenc - " + contentcenc);
-
-                    var cenckeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "KeyId=");
-                    var cenccontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcenc, "ContentKey=");
-
-                    if (cenckeyId != cenckeyIdFromIrdeto || cenccontentKey != cenccontentKeyFromIrdeto)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error CENC not same key - " + contentcenc);
-
-                    // CBCS Key
-                    var cbcsGuid = Guid.NewGuid();
-                    cbcskeyId = cbcsGuid.ToString();
-                    cbcscontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
-                    var cbcsIV =
-                        Convert.ToBase64String(
-                            IrdetoHelpers.HexStringToByteArray(cbcsGuid.ToString().Replace("-", string.Empty)));
-                    var responsecbcs = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
-                        liveEventName, config, cbcskeyId, cbcscontentKey, cbcsIV, true);
-                    var contentcbcs = await responsecbcs.Content.ReadAsStringAsync();
-
-                    if (responsecbcs.StatusCode != HttpStatusCode.OK)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cbcs - " + contentcbcs);
-
-                    var cbcskeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "KeyId=");
-                    var cbcscontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "ContentKey=");
-
-                    if (cbcskeyId != cbcskeyIdFromIrdeto || cbcscontentKey != cbcscontentKeyFromIrdeto)
-                        return IrdetoHelpers.ReturnErrorException(log, "Error CBCS not same key - " + contentcbcs);
-                    log.LogInformation("Irdeto call done.");
+                    MediaServicesHelpers.LogInformation(log, "Irdeto call done.");
                 }
                 catch (Exception ex)
                 {
                     return IrdetoHelpers.ReturnErrorException(log, ex, "Irdeto response error");
                 }
+            }
 
+            var clientTasks = new List<Task<LiveEventEntry>>();
 
-            try
+            foreach (var region in azureRegions)
             {
-                // let's get the asset
-                // in v3, asset name = asset if in v2 (without prefix)
-                log.LogInformation("Asset configuration.");
-
-                StreamingLocator locator = null;
-                if (useDRM)
+                var task = Task<LiveEventEntry>.Run(async () =>
                 {
-                    locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(config, streamingPolicy.Name,
-                        streamingLocatorName, client, asset, cenckeyId, cenccontentKey, cbcskeyId, cbcscontentKey);
-                }
-                else // no DRM
-                {
-                    locator = new StreamingLocator(asset.Name, null);
-                    locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName,
-                        streamingLocatorName, locator);
-                }
+                    Asset asset = null;
+                    LiveEvent liveEvent = null;
+                    LiveOutput liveOutput = null;
+                    StreamingPolicy streamingPolicy = null;
+                    string storageName = null;
 
-                log.LogInformation("locator : " + locator.Name);
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            region
+                    );
 
-                // await taskLiveOutputCreation;
+                    MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                    MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
+
+                    if (eventInfoFromCosmos.BaseStorageName != null)
+                        storageName = eventInfoFromCosmos.BaseStorageName + config.AzureRegionCode;
+
+                    if (data.storageAccountName != null) storageName = (string)data.storageAccountName;
+
+                    var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                    // Set the polling interval for long running operations to 2 seconds.
+                    // The default value is 30 seconds for the .NET client SDK
+                    client.LongRunningOperationRetryTimeout = 2;
+
+                    // LIVE EVENT CREATION
+                    MediaServicesHelpers.LogInformation(log, "Live event creation...", region);
+
+                    // let's check that the channel does not exist already
+                    liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                    if (liveEvent != null)
+                        throw new Exception("Error : live event already exists !");
+
+                    // IP ACL for preview URL
+                    var ipsPreview = new List<IPRange>();
+                    if (eventInfoFromCosmos.LiveEventPreviewACL == null ||
+                        eventInfoFromCosmos.LiveEventPreviewACL.Count == 0)
+                    {
+                        MediaServicesHelpers.LogInformation(log, "preview all", region);
+                        var ip = new IPRange
+                        { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
+                        ipsPreview.Add(ip);
+                    }
+                    else
+                    {
+                        foreach (var ipacl in eventInfoFromCosmos.LiveEventPreviewACL)
+                        {
+                            var ipaclcomp = ipacl.Split('/'); // notation can be "192.168.0.1" or "192.168.0.1/32"
+                            var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
+                            var ip = new IPRange
+                            {
+                                Name = "ip",
+                                Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
+                                SubnetPrefixLength = subnet
+                            };
+                            ipsPreview.Add(ip);
+                        }
+                    }
+
+                    var liveEventPreview = new LiveEventPreview
+                    {
+                        AccessControl = new LiveEventPreviewAccessControl(new IPAccessControl(ipsPreview))
+                    };
+
+                    // IP ACL for input URL
+                    var ipsInput = new List<IPRange>();
+
+                    if (eventInfoFromCosmos.LiveEventInputACL == null || eventInfoFromCosmos.LiveEventInputACL.Count == 0)
+                    {
+                        MediaServicesHelpers.LogInformation(log, "input all", region);
+                        var ip = new IPRange
+                        { Name = "AllowAll", Address = IPAddress.Parse("0.0.0.0").ToString(), SubnetPrefixLength = 0 };
+                        ipsInput.Add(ip);
+                    }
+                    else
+                    {
+                        foreach (var ipacl in eventInfoFromCosmos.LiveEventInputACL)
+                        {
+                            var ipaclcomp = ipacl.Split('/'); // notation can be "192.168.0.1" or "192.168.0.1/32"
+                            var subnet = ipaclcomp.Count() > 1 ? Convert.ToInt32(ipaclcomp[1]) : 0;
+                            var ip = new IPRange
+                            {
+                                Name = "ip",
+                                Address = IPAddress.Parse(ipaclcomp[0]).ToString(),
+                                SubnetPrefixLength = subnet
+                            };
+                            ipsInput.Add(ip);
+                        }
+                    }
+
+                    var liveEventInput = new LiveEventInput(
+                                                            eventInfoFromCosmos.InputProtocol,
+                                                            accessControl: new LiveEventInputAccessControl(new IPAccessControl(ipsInput)),
+                                                            accessToken: config.LiveIngestAccessToken
+                        );
+
+                    liveEvent = new LiveEvent(
+                        name: liveEventName,
+                        location: config.Region,
+                        description: "",
+                        vanityUrl: eventInfoFromCosmos.VanityUrl,
+                        encoding: new LiveEventEncoding { EncodingType = LiveEventEncodingType.None },
+                        input: liveEventInput,
+                        preview: liveEventPreview,
+                        streamOptions: new List<StreamOptionsFlag?>
+                        {
+                        // Set this to Default or Low Latency
+                        eventInfoFromCosmos.LowLatency ?  StreamOptionsFlag.LowLatency : StreamOptionsFlag.Default
+                        }
+                    );
+
+
+                    liveEvent = await client.LiveEvents.CreateAsync(config.ResourceGroup, config.AccountName, liveEventName,
+                        liveEvent, eventInfoFromCosmos.AutoStart);
+                    MediaServicesHelpers.LogInformation(log, "Live event created.", region);
+
+
+                    if (useDRM)
+                    {
+                        // STREAMING POLICY CREATION
+                        MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
+                        try
+                        {
+                            streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(liveEventName, config, client, uniquenessPolicyName);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception("streaming policy creation error", ex);
+                        }
+                    }
+
+                    // LIVE OUTPUT CREATION
+                    MediaServicesHelpers.LogInformation(log, "Live output creation...", region);
+
+                    try
+                    {
+                        MediaServicesHelpers.LogInformation(log, "Asset creation...", region);
+
+                        asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
+                            "asset-" + uniquenessAssets,
+                            new Asset(storageAccountName: storageName));
+
+                        Hls hlsParam = null;
+
+                        liveOutput = new LiveOutput(asset.Name, TimeSpan.FromMinutes(eventInfoFromCosmos.ArchiveWindowLength),
+                            null, "output-" + uniquenessAssets, null, null, manifestName,
+                            hlsParam); //we put the streaming locator in description
+                        MediaServicesHelpers.LogInformation(log, "await task...", region);
+
+                        MediaServicesHelpers.LogInformation(log, "create live output...", region);
+                        await client.LiveOutputs.CreateAsync(config.ResourceGroup, config.AccountName, liveEventName,
+                            liveOutput.Name, liveOutput);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("live output creation error", ex);
+                    }
+
+
+                    try
+                    {
+                        // let's get the asset
+                        // in v3, asset name = asset if in v2 (without prefix)
+                        MediaServicesHelpers.LogInformation(log, "Asset configuration.", region);
+
+                        StreamingLocator locator = null;
+                        if (useDRM)
+                        {
+                            locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(config, streamingPolicy.Name,
+                                streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorGuid);
+                        }
+                        else // no DRM
+                        {
+                            locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset, streamingLocatorGuid);
+                        }
+
+                        MediaServicesHelpers.LogInformation(log, "locator : " + locator.Name, region);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("locator creation error", ex);
+                    }
+
+                    // let's build info for the live event and output
+
+                    var generalOutputInfo =
+                        GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
+
+                    if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                        log.LogWarning("Cosmos access not configured.");
+
+                    return generalOutputInfo.LiveEvents[0];
+
+                });
+                clientTasks.Add(task);
             }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "locator creation error");
-            }
 
-            // object to store the output of the function
-            var generalOutputInfo = new GeneralOutputInfo();
-
-            // let's build info for the live event and output
             try
             {
-                generalOutputInfo =
-                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
-            }
-
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            try
-            {
-                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
-                    log.LogWarning("Cosmos access not configured.");
+                Task.WaitAll(clientTasks.ToArray());
             }
             catch (Exception ex)
             {
@@ -501,7 +475,7 @@ namespace LiveDrmOperationsV3
             }
 
             return new OkObjectResult(
-                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+                 JsonConvert.SerializeObject(new GeneralOutputInfo { Success = true, LiveEvents = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
             );
         }
     }

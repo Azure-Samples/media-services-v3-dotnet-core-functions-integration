@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -21,7 +22,7 @@ namespace LiveDrmOperationsV3.Helpers
         public const string labelCbcs = "cbcsDefaultKey";
         public const string assetprefix = "nb:cid:UUID:";
 
-        public static async Task<HttpResponseMessage> CreateSoapEnvelopRegisterKeys(string url, string contentId,
+        private static async Task<HttpResponseMessage> CreateSoapEnvelopRegisterKeys(string url, string contentId,
             ConfigWrapper config, string keyId, string contentKey, string IV, bool fairPlay = false, ILogger log = null)
         {
             var soapString =
@@ -68,7 +69,7 @@ namespace LiveDrmOperationsV3.Helpers
             return response;
         }
 
-        public static async Task<string> CreateSoapEnvelopGenerateKeys(string url, string contentId,
+        private static async Task<string> CreateSoapEnvelopGenerateKeys(string url, string contentId,
             ConfigWrapper config, bool fairPlay = false)
         {
             var soapString =
@@ -106,7 +107,7 @@ namespace LiveDrmOperationsV3.Helpers
             return content;
         }
 
-        public static async Task<HttpResponseMessage> PostXmlRequestRegisterKeys(string baseUrl, string xmlString)
+        private static async Task<HttpResponseMessage> PostXmlRequestRegisterKeys(string baseUrl, string xmlString)
         {
             using (var httpClient = new HttpClient())
             {
@@ -117,7 +118,7 @@ namespace LiveDrmOperationsV3.Helpers
             }
         }
 
-        public static async Task<HttpResponseMessage> PostXmlRequestGenerateKeys(string baseUrl, string xmlString)
+        private static async Task<HttpResponseMessage> PostXmlRequestGenerateKeys(string baseUrl, string xmlString)
         {
             using (var httpClient = new HttpClient())
             {
@@ -128,7 +129,56 @@ namespace LiveDrmOperationsV3.Helpers
             }
         }
 
-        public static string ReturnDataFromSoapResponse(string xmlsoap, string item)
+        public static async Task<StreamingLocatorContentKey> GenerateAndRegisterCENCKeyToIrdeto (string liveEventName, ConfigWrapper config)
+        {
+            // CENC Key
+            var cencGuid = Guid.NewGuid();
+            string cenckeyId = cencGuid.ToString();
+            string cenccontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
+            var cencIV = Convert.ToBase64String(cencGuid.ToByteArray());
+            var responsecenc = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
+                liveEventName, config, cenckeyId, cenccontentKey, cencIV, false);
+            var contentcenc = await responsecenc.Content.ReadAsStringAsync();
+
+            if (responsecenc.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Error Irdeto response cenc - code "+ responsecenc.StatusCode);
+            //return IrdetoHelpers.ReturnErrorException(log, "Error Irdeto response cenc - " + contentcenc);
+
+
+            return new StreamingLocatorContentKey() {
+                Id = Guid.Parse(ReturnDataFromSoapResponse(contentcenc, "KeyId=")),
+                Value = ReturnDataFromSoapResponse(contentcenc, "ContentKey=") };
+
+        }
+
+        public static async Task<StreamingLocatorContentKey> GenerateAndRegisterCBCSKeyToIrdeto(string liveEventName, ConfigWrapper config)
+        {
+            // CBCS Key
+            var cbcsGuid = Guid.NewGuid();
+            string cbcskeyId = cbcsGuid.ToString();
+            string cbcscontentKey = Convert.ToBase64String(IrdetoHelpers.GetRandomBuffer(16));
+            var cbcsIV =
+                Convert.ToBase64String(
+                    IrdetoHelpers.HexStringToByteArray(cbcsGuid.ToString().Replace("-", string.Empty)));
+            var responsecbcs = await IrdetoHelpers.CreateSoapEnvelopRegisterKeys(config.IrdetoSoapService,
+                liveEventName, config, cbcskeyId, cbcscontentKey, cbcsIV, true);
+            var contentcbcs = await responsecbcs.Content.ReadAsStringAsync();
+
+            if (responsecbcs.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Error Irdeto response cbcs - code " + responsecbcs.StatusCode);
+
+            var cbcskeyIdFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "KeyId=");
+            var cbcscontentKeyFromIrdeto = IrdetoHelpers.ReturnDataFromSoapResponse(contentcbcs, "ContentKey=");
+
+            return new StreamingLocatorContentKey()
+            {
+                Id = Guid.Parse(ReturnDataFromSoapResponse(contentcbcs, "KeyId=")),
+                Value = ReturnDataFromSoapResponse(contentcbcs, "ContentKey=")
+            };
+
+        }
+
+        private static string ReturnDataFromSoapResponse(string xmlsoap, string item)
         {
             var position1 = xmlsoap.IndexOf(item, 0);
             var p1 = position1 + item.Length + 1;
@@ -171,9 +221,9 @@ namespace LiveDrmOperationsV3.Helpers
                 (prefixMessage == null ? string.Empty : prefixMessage + " : ") + ex.Message + message);
         }
 
-        public static IActionResult ReturnErrorException(ILogger log, string message)
+        public static IActionResult ReturnErrorException(ILogger log, string message, string region=null)
         {
-            log.LogError(message);
+            MediaServicesHelpers.LogError(log, message, region);
             return new BadRequestObjectResult(
                 new JObject
                 {
@@ -187,9 +237,9 @@ namespace LiveDrmOperationsV3.Helpers
         }
 
         public static async Task<StreamingPolicy> CreateStreamingPolicyIrdeto(string contentId, ConfigWrapper config,
-            IAzureMediaServicesClient client)
+            IAzureMediaServicesClient client, string uniqueness = null)
         {
-            var uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
+            if (uniqueness == null) uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
 
             var dash_smooth_protocol = new EnabledProtocols(false, true, false, true);
             var hls_dash_protocol = new EnabledProtocols(false, true, true, false);
@@ -239,37 +289,25 @@ namespace LiveDrmOperationsV3.Helpers
 
         public static async Task<StreamingLocator> SetupDRMAndCreateLocatorWithNewKeys(ConfigWrapper config,
             string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,
-            string cenckeyId, string cenccontentKey, string cbcskeyId, string cbcscontentKey)
+           StreamingLocatorContentKey cencKey, StreamingLocatorContentKey cbcsKey, Guid? streamingLocatorId)
         {
 
-            var keyCenc = new StreamingLocatorContentKey
-            {
-                Id = Guid.Parse(cenckeyId),
-                LabelReferenceInStreamingPolicy = labelCenc,
-                Value = cenccontentKey
-            };
+            cencKey.LabelReferenceInStreamingPolicy = labelCenc;
+            cbcsKey.LabelReferenceInStreamingPolicy = labelCbcs;
 
-
-            var keyCbcs = new StreamingLocatorContentKey
-            {
-                Id = Guid.Parse(cbcskeyId),
-                LabelReferenceInStreamingPolicy = labelCbcs,
-                Value = cbcscontentKey
-            };
-
-            return await SetupDRMAndCreateLocatorWithExistingKeys(config, streamingPolicyName, streamingLocatorName, client, asset, keyCenc, keyCbcs);
+            return await SetupDRMAndCreateLocatorWithExistingKeys(config, streamingPolicyName, streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorId);
         }
 
         public static async Task<StreamingLocator> SetupDRMAndCreateLocatorWithExistingKeys(ConfigWrapper config,
            string streamingPolicyName, string streamingLocatorName, IAzureMediaServicesClient client, Asset asset,
-          StreamingLocatorContentKey cencKey, StreamingLocatorContentKey cbcsKey)
+          StreamingLocatorContentKey cencKey, StreamingLocatorContentKey cbcsKey, Guid? streamingLocatorId)
         {
             var locator = new StreamingLocator(
                 asset.Name,
                 streamingPolicyName,
                 defaultContentKeyPolicyName: null,
                 contentKeys: new List<StreamingLocatorContentKey> { cencKey, cbcsKey },
-                streamingLocatorId: null
+                streamingLocatorId: streamingLocatorId
             );
 
             locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName,
@@ -278,14 +316,14 @@ namespace LiveDrmOperationsV3.Helpers
         }
 
         public static async Task<StreamingLocator> CreateClearLocator(ConfigWrapper config, string streamingLocatorName,
-            IAzureMediaServicesClient client, Asset asset)
+            IAzureMediaServicesClient client, Asset asset, Guid? streamingLocatorId)
         {
             var locator = new StreamingLocator(
                 asset.Name,
                 PredefinedStreamingPolicy.ClearStreamingOnly,
                 defaultContentKeyPolicyName: null,
                 contentKeys: null,
-                streamingLocatorId: null
+                streamingLocatorId: streamingLocatorId
             );
 
             locator = await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName,

@@ -8,7 +8,12 @@
 Input :
 {
     "liveEventName": "SFPOC",
-    "azureRegion": "euwe" or "we" or "euno" or "no"// optional. If this value is set, then the AMS account name and resource group are appended with this value. Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty. This feature is useful if you want to manage several AMS account in different regions. Note: the service principal must work with all this accounts
+    "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
+            // optional. If this value is set, then the AMS account name and resource group are appended with this value.
+            // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
+            // This feature is useful if you want to manage several AMS account in different regions.
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. It will start the live event in both regions.
+            // Note: the service principal must work with all this accounts
 }
 
 
@@ -123,6 +128,7 @@ Output:
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
@@ -147,79 +153,76 @@ namespace LiveDrmOperationsV3
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            ConfigWrapper config = null;
-            try
-            {
-                config = new ConfigWrapper(new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddEnvironmentVariables()
-                        .Build(),
-                        (string)data.azureRegion
-                );
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            log.LogInformation("config loaded.");
-            log.LogInformation("connecting to AMS account : " + config.AccountName);
+            var generalOutputInfos = new List<GeneralOutputInfo>();
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
-            var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
-            // Set the polling interval for long running operations to 2 seconds.
-            // The default value is 30 seconds for the .NET client SDK
-            client.LongRunningOperationRetryTimeout = 2;
+            // Azure region management
+            var azureRegions = new List<string>();
+            if ((string)data.azureRegion != null)
+            {
+                azureRegions = ((string)data.azureRegion).Split(',').ToList();
+            }
+            else
+            {
+                azureRegions.Add((string)null);
+            }
+            var clientTasks = new List<Task<LiveEventEntry>>();
 
-            LiveEvent liveEvent = null;
+            foreach (var region in azureRegions)
+            {
+                var task = Task<LiveEventEntry>.Run(async () =>
+                {
+                    ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddEnvironmentVariables()
+                            .Build(),
+                            region
+                    );
 
+                    MediaServicesHelpers.LogInformation(log, "config loaded.", region);
+                    MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
 
-            // LIVE EVENT START
-            log.LogInformation("Live event starting...");
+                    var client = await MediaServicesHelpers.CreateMediaServicesClientAsync(config);
+                    // Set the polling interval for long running operations to 2 seconds.
+                    // The default value is 30 seconds for the .NET client SDK
+                    client.LongRunningOperationRetryTimeout = 2;
+
+                    // LIVE EVENT STOP
+                    MediaServicesHelpers.LogInformation(log, "Live event starting...", region);
+
+                    // let's check that the channel exists
+                    var liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                    if (liveEvent == null)
+                        throw new Exception($"Live event {liveEventName} does not exist.");
+
+                    if (liveEvent.ResourceState == LiveEventResourceState.Running)
+                        throw new Exception($"Live event {liveEventName} already running !");
+
+                    await client.LiveEvents.StartAsync(config.ResourceGroup, config.AccountName, liveEventName);
+
+                    var generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
+
+                    if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
+                        MediaServicesHelpers.LogWarning(log, "Cosmos access not configured.", region);
+
+                    return generalOutputInfo.LiveEvents[0];
+
+                });
+
+                clientTasks.Add(task);
+            }
 
             try
             {
-                // let's check that the channel does not exist already
-                liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
-                if (liveEvent == null) return IrdetoHelpers.ReturnErrorException(log, "Error : live event not found !");
-                if (liveEvent.ResourceState == LiveEventResourceState.Running) return IrdetoHelpers.ReturnErrorException(log, "Error : live event already running !");
-
-
-                await client.LiveEvents.StartAsync(config.ResourceGroup, config.AccountName, liveEventName);
-            }
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex, "live event starting error");
-            }
-
-
-            // object to store the output of the function
-            var generalOutputInfo = new GeneralOutputInfo();
-
-            // let's build info for the live event and output
-            try
-            {
-                generalOutputInfo =
-                    GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
-            }
-
-            catch (Exception ex)
-            {
-                return IrdetoHelpers.ReturnErrorException(log, ex);
-            }
-
-            try
-            {
-                if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
-                    log.LogWarning("Cosmos access not configured.");
+                Task.WaitAll(clientTasks.ToArray());
             }
             catch (Exception ex)
             {
@@ -227,7 +230,7 @@ namespace LiveDrmOperationsV3
             }
 
             return new OkObjectResult(
-                JsonConvert.SerializeObject(generalOutputInfo, Formatting.Indented)
+                 JsonConvert.SerializeObject(new GeneralOutputInfo { Success = true, LiveEvents = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
             );
         }
     }

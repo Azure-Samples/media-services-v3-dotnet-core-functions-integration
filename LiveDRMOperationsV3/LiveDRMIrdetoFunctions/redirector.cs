@@ -80,8 +80,6 @@ namespace LiveDrmOperationsV3
                 var liveEvents = (await CosmosHelpers.ReadGeneralInfoDocument(liveEventName));
                 if (liveEvents == null) log.LogWarning("Live events not read from Cosmos.");
 
-                var ttt = liveEvents.ToList();
-
                 urls = liveEvents.ToList().Where(l => l.ResourceState == "Running").First()?.LiveOutputs.FirstOrDefault()?.StreamingLocators.Where(l => clear ? l.Drm.Count == 0 : l.Drm.Count > 0)?.FirstOrDefault()?.Urls;
 
                 if (urls == null)
