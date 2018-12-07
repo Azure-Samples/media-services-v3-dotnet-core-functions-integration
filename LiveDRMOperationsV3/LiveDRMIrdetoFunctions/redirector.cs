@@ -1,19 +1,28 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// Redirector - This function reads the Cosmos DB and redirect players to the right output URL
-//
-// The redirector can be called that way:
-// https://myfunctions.azurewebsites.net/api/redirector?channel/mpd (to get drm dash)
-// https://myfunctions.azurewebsites.net/api/redirector?channel/m3u8 (to get drm hls)
-// https://myfunctions.azurewebsites.net/api/redirector?channel/manifest (to get drm smooth)
-//
-// clear streams can be reported if application settings "AllowClearStream" is set to "true"
-// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/mpd (to get clear dash if such locator exists)
-// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/m3u8 (to get drm hls)
-// https://myfunctions.azurewebsites.net/api/redirector?clear/channel/manifest (to get drm smooth)
-//
+// Redirector - This function reads the Cosmos DB and redirect players to the existing output URL
+// it read output info from Cosmos to get URLs.
+// as an option, il also read Cosmos event settings or streaming endpoint selection. In the live event settings, it uses the following data to do load balancing :
+/*
+```c#
+    "redirectorStreamingEndpointData":[
+        {"StreamingEndpointName":"verizon", "Percentage":"50"},
+        {"StreamingEndpointName":"akamai", "Percentage":"50"}
+       ]
+```
 
+ The redirector can be called that way:
+ https://myfunctions.azurewebsites.net/api/redirector?channel/mpd (to get drm dash)
+ https://myfunctions.azurewebsites.net/api/redirector?channel/m3u8 (to get drm hls)
+ https://myfunctions.azurewebsites.net/api/redirector?channel/manifest (to get drm smooth)
+
+ clear streams can be reported if application settings "AllowClearStream" is set to "true"
+ https://myfunctions.azurewebsites.net/api/redirector?clear/channel/mpd (to get clear dash if such locator exists)
+ https://myfunctions.azurewebsites.net/api/redirector?clear/channel/m3u8 (to get clear hls)
+ https://myfunctions.azurewebsites.net/api/redirector?clear/channel/manifest (to get clear smooth)
+
+*/
 
 using System;
 using System.Collections.Generic;
@@ -33,6 +42,13 @@ namespace LiveDrmOperationsV3
 {
     public static class Redirector
     {
+        private static readonly IConfigurationRoot Config = new ConfigurationBuilder()
+         .SetBasePath(Directory.GetCurrentDirectory())
+         .AddEnvironmentVariables()
+         .Build();
+
+        private static readonly bool AllowClear = bool.Parse(Config["AllowClearStream"] ?? false.ToString());
+
 
         [FunctionName("redirector")]
         public static async Task<HttpResponseMessage> Run(
@@ -44,14 +60,12 @@ namespace LiveDrmOperationsV3
 
             log.LogWarning("full path: " + req.RequestUri.PathAndQuery);
 
-            IConfigurationRoot Config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddEnvironmentVariables().Build();
-
             // lets get data from the url
             var paths = req.RequestUri.PathAndQuery.Split('?').Last().Split('/');
 
             if ((paths.Count() > 2) && (paths[paths.Count() - 3] == "clear"))  // user wants the clear stream
             {
-                if ((Config["AllowClearStream"] != null) && (Config["AllowClearStream"] == "true"))
+                if (AllowClear)
                 {
                     clear = true;
                 }
@@ -99,22 +113,26 @@ namespace LiveDrmOperationsV3
                     }
                 }
 
-
                 var liveEvents = (await CosmosHelpers.ReadGeneralInfoDocument(liveEventName));
                 if (liveEvents == null) log.LogWarning("Live events not read from Cosmos.");
 
+                if (liveEvents.Count() == 0)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+
                 urls = liveEvents
                     .ToList()
-                    .Where(l => l.ResourceState == "Running")
+                    .Where(l => l.ResourceState == "Running")?
                     .First()?
-                    .LiveOutputs
+                    .LiveOutputs?
                     .FirstOrDefault()?
-                    .StreamingLocators
+                    .StreamingLocators?
                     .Where(l => clear ? l.Drm.Count == 0 : l.Drm.Count > 0)?
                     .FirstOrDefault()?
                     .Urls;
 
-                if (urls == null)
+                if (urls == null || urls.Count == 0)
                 {
                     return req.CreateResponse(HttpStatusCode.NotFound);
                 }
