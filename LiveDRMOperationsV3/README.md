@@ -14,6 +14,7 @@ Here are the list of functions:
 - create-live-event-output
 - delete-live-event-output
 - delete-streaming-locator
+- ping
 - redirector
 - reset-live-event-output
 - start-live-event
@@ -86,7 +87,6 @@ local.settings.json will look like (please replace 'value' with the correct data
     "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
     "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
     "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
-    "PreferredStreamingEndpoint" : "", // optional, use only by redirector
     "AllowClearStream" : "true" // optional, use only by redirector
   }
 }
@@ -114,6 +114,10 @@ Example of settings in Cosmos for a live event :
         "86.246.149.14"
     ],
     "playerJSONData": null,
+    "redirectorStreamingEndpointData":[
+      {"StreamingEndpointName":"verizon", "Percentage":"50"},
+      {"StreamingEndpointName":"akamai", "Percentage":"50"}
+    ],
     "id": "TESTLIVEEVENT"
 }
 ```

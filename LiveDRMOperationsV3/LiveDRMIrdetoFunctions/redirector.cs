@@ -3,7 +3,7 @@
 //
 // Redirector - This function reads the Cosmos DB and redirect players to the right output URL
 //
-// The recirector can be called that way:
+// The redirector can be called that way:
 // https://myfunctions.azurewebsites.net/api/redirector?channel/mpd (to get drm dash)
 // https://myfunctions.azurewebsites.net/api/redirector?channel/m3u8 (to get drm hls)
 // https://myfunctions.azurewebsites.net/api/redirector?channel/manifest (to get drm smooth)
@@ -33,20 +33,20 @@ namespace LiveDrmOperationsV3
 {
     public static class Redirector
     {
+
         [FunctionName("redirector")]
         public static async Task<HttpResponseMessage> Run(
              [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]
             HttpRequestMessage req, ILogger log)
         {
             bool clear = false;
+            string preferredSE = null;
 
             log.LogWarning("full path: " + req.RequestUri.PathAndQuery);
 
             IConfigurationRoot Config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddEnvironmentVariables().Build();
 
-            string preferredSE = Config["PreferredStreamingEndpoint"];
-            if (preferredSE != null) preferredSE = "https://" + preferredSE;
-
+            // lets get data from the url
             var paths = req.RequestUri.PathAndQuery.Split('?').Last().Split('/');
 
             if ((paths.Count() > 2) && (paths[paths.Count() - 3] == "clear"))  // user wants the clear stream
@@ -74,47 +74,81 @@ namespace LiveDrmOperationsV3
             string url = "";
             string protocol = "";
 
-            // Load config from Cosmos
+            // let's read balancing preferences and choose SE
             try
             {
+                var liveEventSettings = (await CosmosHelpers.ReadSettingsDocument(liveEventName));
+                if (liveEventSettings == null)
+                {
+                    log.LogWarning("Live event settings not read from Cosmos.");
+                }
+
+                // let' choose the preferred se
+                else if (liveEventSettings.RedirectorStreamingEndpointData != null) // list of preferred se with percentage
+                {
+                    int randomPercentage = (new Random()).Next(0, 100);
+                    int value = 0;
+                    foreach (var se in liveEventSettings.RedirectorStreamingEndpointData)
+                    {
+                        value += se.Percentage;
+                        if (randomPercentage <= value)
+                        {
+                            preferredSE = "https://" + se.StreamingEndpointName; // we select this one
+                            break;
+                        }
+                    }
+                }
+
+
                 var liveEvents = (await CosmosHelpers.ReadGeneralInfoDocument(liveEventName));
                 if (liveEvents == null) log.LogWarning("Live events not read from Cosmos.");
 
-                urls = liveEvents.ToList().Where(l => l.ResourceState == "Running").First()?.LiveOutputs.FirstOrDefault()?.StreamingLocators.Where(l => clear ? l.Drm.Count == 0 : l.Drm.Count > 0)?.FirstOrDefault()?.Urls;
+                urls = liveEvents
+                    .ToList()
+                    .Where(l => l.ResourceState == "Running")
+                    .First()?
+                    .LiveOutputs
+                    .FirstOrDefault()?
+                    .StreamingLocators
+                    .Where(l => clear ? l.Drm.Count == 0 : l.Drm.Count > 0)?
+                    .FirstOrDefault()?
+                    .Urls;
 
                 if (urls == null)
                 {
                     return req.CreateResponse(HttpStatusCode.NotFound);
                 }
 
-                if (format == "mpd")
+                switch (format)
                 {
-                    protocol = OutputProtocol.DashCsf.ToString();
-                }
-                else if (format == "m3u8")
-                {
-                    protocol = OutputProtocol.HlsTs.ToString();
-                }
-                else if (format == "manifest")
-                {
-                    protocol = OutputProtocol.SmoothStreaming.ToString();
+                    case "mpd":
+                        protocol = OutputProtocol.DashCsf.ToString();
+                        break;
+
+                    case "m3u8":
+                        protocol = OutputProtocol.HlsTs.ToString();
+                        break;
+
+                    case "manifest":
+                        protocol = OutputProtocol.SmoothStreaming.ToString();
+                        break;
+
+                    default:
+                        break;
                 }
 
                 var urlprotocol = urls.Where(u => u.Protocol == protocol);
                 var preferredUrlprotocol = urlprotocol.Where(u => preferredSE != null && u.Url.StartsWith(preferredSE)).FirstOrDefault();
-                if (preferredUrlprotocol != null) // preferred SE found
-                {
-                    url = preferredUrlprotocol.Url;
-                }
-                else
-                {
-                    url = urlprotocol.First().Url;
-                }
+
+                url = (preferredUrlprotocol != null) ? preferredUrlprotocol.Url : urlprotocol.First().Url; // if preferredse found otherwise let's take first
             }
             catch (Exception ex)
             {
                 string message = ex.Message;
-                return req.CreateResponse(HttpStatusCode.InternalServerError, new { error = message });
+                return req.CreateResponse(HttpStatusCode.InternalServerError, new
+                {
+                    error = message
+                });
             }
 
             //create response

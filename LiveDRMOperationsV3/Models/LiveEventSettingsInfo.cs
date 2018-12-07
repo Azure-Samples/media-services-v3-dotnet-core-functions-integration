@@ -4,6 +4,13 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3.Models
 {
+    public class RedirectorStreamingEndpointData
+    {
+        [JsonProperty("streamingEndpointName")] public string StreamingEndpointName { get; set; }
+
+        [JsonProperty("percentage")] public int Percentage { get; set; }
+    }
+
     public class Dvr
     {
         [JsonProperty("enableByDefault")] public bool EnableByDefault { get; set; }
@@ -78,6 +85,8 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("playerJSONData")] public PlayerJSONData PlayerJSONData { get; set; }
 
+        [JsonProperty("redirectorStreamingEndpointData")] public List<RedirectorStreamingEndpointData> RedirectorStreamingEndpointData { get; set; }
+                
         [JsonProperty(PropertyName = "id")] public string Id => LiveEventName;
     }
 }
