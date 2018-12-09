@@ -1,22 +1,21 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// create-clear-streaming-locator - This function create a clear streaming locator (without DRM)
+// stop-live-event - This function stops a running live event
 //
 /*
 ```c#
 Input :
 {
-    "liveEventName": "CH1",
-    "storageAccountName" : "" // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
-    "archiveWindowLength" : 20  // value in minutes, optional. Default is 10 (minutes)
+    "liveEventName": "SFPOC",
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
             // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
             // This feature is useful if you want to manage several AMS account in different regions.
-            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time
+            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. It will stop the live event in both regions.
             // Note: the service principal must work with all this accounts
 }
+
 
 Output:
 {
@@ -25,7 +24,7 @@ Output:
   "liveEvents": [
     {
       "liveEventName": "CH1",
-      "resourceState": "Running",
+      "resourceState": "Stopped",
       "vanityUrl": true,
       "amsAccountName": "customerssrlivedeveuwe",
       "region": "West Europe",
@@ -114,35 +113,6 @@ Output:
                   "protocol": "HlsTs"
                 }
               ]
-            },
-            {
-              "streamingLocatorName": "locator-92259edd-db65",
-              "streamingPolicyName": "Predefined_ClearStreamingOnly",
-              "cencKeyId": null,
-              "cbcsKeyId": null,
-              "drm": [],
-              "urls": [
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest",
-                  "protocol": "SmoothStreaming"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-csf)",
-                  "protocol": "DashCsf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=mpd-time-cmaf)",
-                  "protocol": "DashCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-cmaf)",
-                  "protocol": "HlsCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/3405a404-268b-4d15-ac15-8c8779e555ca/CH1.ism/manifest(format=m3u8-aapl)",
-                  "protocol": "HlsTs"
-                }
-              ]
             }
           ]
         }
@@ -150,12 +120,10 @@ Output:
     }
   ]
 }
-
 ```
 */
 //
 //
-
 
 using System;
 using System.Collections.Generic;
@@ -176,9 +144,11 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3
 {
-    public static class CreateClearStreamingLocator
+    public static class StopChannel
     {
-        [FunctionName("create-clear-streaming-locator")]
+        // This version registers keys in irdeto backend. For FairPlay and rpv3
+
+        [FunctionName("stop-live-event")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req, ILogger log)
@@ -187,6 +157,8 @@ namespace LiveDrmOperationsV3
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            var generalOutputInfos = new List<GeneralOutputInfo>();
 
             var liveEventName = (string)data.liveEventName;
             if (liveEventName == null)
@@ -203,24 +175,12 @@ namespace LiveDrmOperationsV3
                 azureRegions.Add((string)null);
             }
 
-            // init default
-            var uniquenessAssets = Guid.NewGuid().ToString().Substring(0, 13);
-
-            var streamingLocatorGuid = Guid.NewGuid(); // same locator for the two ouputs if 2 live event namle created
-            var uniquenessLocator = streamingLocatorGuid.ToString().Substring(0, 13);
-            var streamingLocatorName = "locator-" + uniquenessLocator;
-
-            var manifestName = liveEventName.ToLower();
-
             var clientTasks = new List<Task<LiveEventEntry>>();
 
             foreach (var region in azureRegions)
             {
                 var task = Task<LiveEventEntry>.Run(async () =>
                 {
-                    Asset asset = null;
-                    LiveOutput liveOutput = null;
-
                     ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
                             .SetBasePath(Directory.GetCurrentDirectory())
                             .AddEnvironmentVariables()
@@ -236,50 +196,20 @@ namespace LiveDrmOperationsV3
                     // The default value is 30 seconds for the .NET client SDK
                     client.LongRunningOperationRetryTimeout = 2;
 
+                    // LIVE EVENT STOP
+                    MediaServicesHelpers.LogInformation(log, "Live event stopping...", region);
+
                     // let's check that the channel exists
                     var liveEvent = await client.LiveEvents.GetAsync(config.ResourceGroup, config.AccountName, liveEventName);
                     if (liveEvent == null)
                         throw new Exception($"Live event {liveEventName} does not exist.");
 
-                    var outputs =
-                        await client.LiveOutputs.ListAsync(config.ResourceGroup, config.AccountName, liveEventName);
+                    if (liveEvent.ResourceState == LiveEventResourceState.Stopped)
+                        throw new Exception($"Live event {liveEventName} already stopped !");
 
-                    if (outputs.FirstOrDefault() != null)
-                    {
-                        liveOutput = outputs.FirstOrDefault();
-                        asset = await client.Assets.GetAsync(config.ResourceGroup, config.AccountName,
-                            liveOutput.AssetName);
-                    }
+                    await client.LiveEvents.StopAsync(config.ResourceGroup, config.AccountName, liveEventName);
 
-                    if (asset == null)
-                        throw new Exception("Error - asset not found");
-
-                    try
-                    {
-                        // streaming locator creation
-                        MediaServicesHelpers.LogInformation(log, "Locator creation...", region);
-
-                        var locator = await IrdetoHelpers.CreateClearLocator(config, streamingLocatorName, client, asset, streamingLocatorGuid);
-
-                        MediaServicesHelpers.LogInformation(log, "locator : " + locator.Name, region);
-
-                        if (liveOutput != null)
-                        {
-                            await client.Assets.UpdateAsync(config.ResourceGroup, config.AccountName, asset.Name, asset);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("locator creation error", ex);
-                    }
-
-                    // object to store the output of the function
-                    var generalOutputInfo = new GeneralOutputInfo();
-
-                    // let's build info for the live event and output
-
-                    generalOutputInfo =
-                        GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
+                    var generalOutputInfo = GenerateInfoHelpers.GenerateOutputInformation(config, client, new List<LiveEvent> { liveEvent });
 
                     if (!await CosmosHelpers.CreateOrUpdateGeneralInfoDocument(generalOutputInfo.LiveEvents[0]))
                         MediaServicesHelpers.LogWarning(log, "Cosmos access not configured.", region);

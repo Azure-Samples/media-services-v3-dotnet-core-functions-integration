@@ -5,102 +5,93 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3.Models
 {
-    public class Input
-    {
-        [JsonProperty("Protocol")] public string Protocol { get; set; }
-
-        [JsonProperty("Url")] public string Url { get; set; }
-    }
-
-    public class Preview
-    {
-        [JsonProperty("Protocol")] public string Protocol { get; set; }
-
-        [JsonProperty("Url")] public string Url { get; set; }
-    }
-
+    
     public class Drm
     {
-        [JsonProperty("Type")] public string Type { get; set; }
+        [JsonProperty("type")] public string Type { get; set; }
 
-        [JsonProperty("LicenseUrl")] public string LicenseUrl { get; set; }
+        [JsonProperty("licenseUrl")] public string LicenseUrl { get; set; }
 
-        [JsonProperty("Protocols")] public List<string> Protocols { get; set; }
+        [JsonProperty("certificateUrl", NullValueHandling = NullValueHandling.Ignore)] public string CertificateUrl { get; set; }
+
+        [JsonProperty("protocols")] public List<string> Protocols { get; set; }
     }
 
     public class UrlEntry
     {
-        [JsonProperty("Url")] public string Url { get; set; }
+        [JsonProperty("protocol")] public string Protocol { get; set; }
 
-        [JsonProperty("Protocol")] public string Protocol { get; set; }
+        [JsonProperty("url")] public string Url { get; set; }
     }
 
     public class StreamingLocatorEntry
     {
-        [JsonProperty("Name")] public string Name { get; set; }
+        [JsonProperty("streamingLocatorName")] public string StreamingLocatorName { get; set; }
 
-        [JsonProperty("StreamingPolicyName")] public string StreamingPolicyName { get; set; }
+        [JsonProperty("streamingPolicyName")] public string StreamingPolicyName { get; set; }
 
-        [JsonProperty("CencKeyId")] public string CencKeyId { get; set; }
+        [JsonProperty("cencKeyId")] public string CencKeyId { get; set; }
 
-        [JsonProperty("CbcsKeyId")] public string CbcsKeyId { get; set; }
+        [JsonProperty("cbcsKeyId")] public string CbcsKeyId { get; set; }
 
-        [JsonProperty("Drm")] public List<Drm> Drm { get; set; }
+        [JsonProperty("drm")] public List<Drm> Drm { get; set; }
 
-        [JsonProperty("Urls")] public List<UrlEntry> Urls { get; set; }
+        [JsonProperty("urls")] public List<UrlEntry> Urls { get; set; }
     }
 
     public class LiveOutputEntry
     {
-        [JsonProperty("Name")] public string Name { get; set; }
+        [JsonProperty("liveOutputName")] public string LiveOutputName { get; set; }
 
-        [JsonProperty("ArchiveWindowLength")] public int ArchiveWindowLength { get; set; }
+        [JsonProperty("archiveWindowLength")] public int ArchiveWindowLength { get; set; }
 
-        [JsonProperty("AssetName")] public string AssetName { get; set; }
+        [JsonProperty("assetName")] public string AssetName { get; set; }
 
-        [JsonProperty("AssetStorageAccountName")]
-        public string AssetStorageAccountName { get; set; }
+        [JsonProperty("assetStorageAccountName")] public string AssetStorageAccountName { get; set; }
 
-        [JsonProperty("ResourceState")] public LiveOutputResourceState? ResourceState { get; set; }
+        [JsonProperty("resourceState")] public LiveOutputResourceState? ResourceState { get; set; }
 
-        [JsonProperty("StreamingLocators")] public List<StreamingLocatorEntry> StreamingLocators { get; set; }
+        [JsonProperty("streamingLocators")] public List<StreamingLocatorEntry> StreamingLocators { get; set; }
     }
 
     public class LiveEventEntry
     {
-        [JsonProperty("Name")] public string Name { get; set; }
+        [JsonProperty("liveEventName")] public string LiveEventName { get; set; }
 
-        [JsonProperty("ResourceState")] public string ResourceState { get; set; }
+        [JsonProperty("resourceState")] public string ResourceState { get; set; }
 
-        [JsonProperty("VanityUrl")] public bool? VanityUrl { get; set; }
+        [JsonProperty("vanityUrl")] public bool? VanityUrl { get; set; }
 
-        [JsonProperty("Input")] public List<Input> Input { get; set; }
+        [JsonProperty("amsAccountName")] public string AMSAccountName { get; set; }
 
-        [JsonProperty("InputACL")] public List<string> InputACL { get; set; }
+        [JsonProperty("region")] public string Region { get; set; }
 
-        [JsonProperty("Preview")] public List<Preview> Preview { get; set; }
+        [JsonProperty("resourceGroup")] public string ResourceGroup { get; set; }
 
-        [JsonProperty("PreviewACL")] public List<string> PreviewACL { get; set; }
+        [JsonProperty(PropertyName = "lowLatency")] public bool? LowLatency { get; set; }
 
-        [JsonProperty("LiveOutputs")] public List<LiveOutputEntry> LiveOutputs { get; set; }
+        [JsonProperty(PropertyName = "id")] public string Id => AMSAccountName + ":" + LiveEventName;
 
-        [JsonProperty("AMSAccountName")] public string AMSAccountName { get; set; }
 
-        [JsonProperty("Region")] public string Region { get; set; }
+        [JsonProperty("input")] public List<UrlEntry> Input { get; set; }
 
-        [JsonProperty("ResourceGroup")] public string ResourceGroup { get; set; }
+        [JsonProperty("inputACL")] public List<string> InputACL { get; set; }
 
-        [JsonProperty(PropertyName = "id")] public string Id => AMSAccountName + ":" + Name;
+        [JsonProperty("preview")] public List<UrlEntry> Preview { get; set; }
+
+        [JsonProperty("previewACL")] public List<string> PreviewACL { get; set; }
+
+        [JsonProperty("liveOutputs")] public List<LiveOutputEntry> LiveOutputs { get; set; }
     }
 
     public class GeneralOutputInfo
     {
-        [JsonProperty("Success")] public bool Success { get; set; }
+        [JsonProperty("success")] public bool Success { get; set; }
 
-        [JsonProperty("OperationsVersion")]
+        [JsonProperty("operationsVersion")]
         public string OperationsCodeVersion =>
             AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString();
 
-        [JsonProperty("LiveEvents")] public List<LiveEventEntry> LiveEvents { get; set; }
+        [JsonProperty("liveEvents")] public List<LiveEventEntry> LiveEvents { get; set; }
     }
 }

@@ -4,77 +4,89 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3.Models
 {
+    public class RedirectorStreamingEndpointData
+    {
+        [JsonProperty("streamingEndpointName")] public string StreamingEndpointName { get; set; }
+
+        [JsonProperty("percentage")] public int Percentage { get; set; }
+    }
+
     public class Dvr
     {
-        [JsonProperty("enableByDefault")] public string enableByDefault { get; set; }
+        [JsonProperty("enableByDefault")] public bool EnableByDefault { get; set; }
 
-        [JsonProperty("allowed")] public string allowed { get; set; }
+        [JsonProperty("allowed")] public bool Allowed { get; set; }
     }
 
     public class ResourceListOrder
     {
-        [JsonProperty("dvr")] public Dvr dvr { get; set; }
+        [JsonProperty("dvr")] public Dvr Dvr { get; set; }
 
-        [JsonProperty("encryptionSorted")] public string encryptionSorted { get; set; }
+        [JsonProperty("encryptionSorted")] public bool EncryptionSorted { get; set; }
 
-        [JsonProperty("defaultAzureRegion")] public string defaultAzureRegion { get; set; }
+        [JsonProperty("defaultAzureRegion")] public string DefaultAzureRegion { get; set; }
     }
 
     public class PlayerJSONData
     {
-        [JsonProperty("quality")] public string quality { get; set; }
+        [JsonProperty("quality")] public string Quality { get; set; }
 
-        [JsonProperty("encoding")] public string encoding { get; set; }
+        [JsonProperty("encoding")] public string Encoding { get; set; }
 
-        [JsonProperty("presentation")] public string presentation { get; set; }
+        [JsonProperty("presentation")] public string Presentation { get; set; }
 
-        [JsonProperty("live")] public bool live { get; set; }
+        [JsonProperty("live")] public bool Live { get; set; }
 
-        [JsonProperty("mediaContainer")] public string mediaContainer { get; set; }
+        [JsonProperty("mediaContainer")] public string MediaContainer { get; set; }
 
-        [JsonProperty("audioCodec")] public string audioCodec { get; set; }
+        [JsonProperty("audioCodec")] public string AudioCodec { get; set; }
 
-        [JsonProperty("videoCodec")] public string videoCodec { get; set; }
+        [JsonProperty("videoCodec")] public string VideoCodec { get; set; }
 
-        [JsonProperty("resourceListOrder")] public ResourceListOrder resourceListOrder { get; set; }
+        [JsonProperty("resourceListOrder")] public ResourceListOrder ResourceListOrder { get; set; }
     }
 
     public class LiveEventSettingsInfo
     {
         public LiveEventSettingsInfo()
         {
-            archiveWindowLength = 10;
-            vanityUrl = false;
-            inputProtocol = LiveEventInputProtocol.FragmentedMP4;
-            autoStart = true;
+            ArchiveWindowLength = 10;
+            VanityUrl = false;
+            InputProtocol = LiveEventInputProtocol.FragmentedMP4;
+            AutoStart = true;
+            LowLatency = false;
         }
 
-        [JsonProperty("liveEventName")] public string liveEventName { get; set; }
+        [JsonProperty("liveEventName")] public string LiveEventName { get; set; }
 
-        [JsonProperty("urn")] public string urn { get; set; }
+        [JsonProperty("urn")] public string Urn { get; set; }
 
-        [JsonProperty("vendor")] public string vendor { get; set; }
+        [JsonProperty("vendor")] public string Vendor { get; set; }
 
-        [JsonProperty("akamaiHostname")] public string akamaiHostname { get; set; }
+        [JsonProperty("akamaiHostname")] public string AkamaiHostname { get; set; }
 
-        [JsonProperty("baseStorageName")] public string baseStorageName { get; set; }
+        [JsonProperty("baseStorageName")] public string BaseStorageName { get; set; }
 
         [JsonIgnore] public string StorageName { get; set; }
 
-        [JsonProperty("archiveWindowLength")] public int archiveWindowLength { get; set; }
+        [JsonProperty("archiveWindowLength")] public int ArchiveWindowLength { get; set; }
 
-        [JsonProperty("vanityUrl")] public bool vanityUrl { get; set; }
+        [JsonProperty("vanityUrl")] public bool VanityUrl { get; set; }
 
-        [JsonIgnore] public LiveEventInputProtocol inputProtocol { get; set; }
+        [JsonProperty("lowLatency")] public bool LowLatency { get; set; }
 
-        [JsonIgnore] public bool autoStart { get; set; }
+        [JsonIgnore] public LiveEventInputProtocol InputProtocol { get; set; }
 
-        [JsonProperty("liveEventInputACL")] public IList<string> liveEventInputACL { get; set; }
+        [JsonIgnore] public bool AutoStart { get; set; }
 
-        [JsonProperty("liveEventPreviewACL")] public IList<string> liveEventPreviewACL { get; set; }
+        [JsonProperty("liveEventInputACL")] public IList<string> LiveEventInputACL { get; set; }
 
-        [JsonProperty("playerJSONData")] public PlayerJSONData playerJSONData { get; set; }
+        [JsonProperty("liveEventPreviewACL")] public IList<string> LiveEventPreviewACL { get; set; }
 
-        [JsonProperty(PropertyName = "id")] public string Id => liveEventName;
+        [JsonProperty("playerJSONData")] public PlayerJSONData PlayerJSONData { get; set; }
+
+        [JsonProperty("redirectorStreamingEndpointData")] public List<RedirectorStreamingEndpointData> RedirectorStreamingEndpointData { get; set; }
+                
+        [JsonProperty(PropertyName = "id")] public string Id => LiveEventName;
     }
 }

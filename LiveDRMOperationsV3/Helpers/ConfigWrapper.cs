@@ -57,6 +57,8 @@ namespace LiveDrmOperationsV3.Helpers
 
         public string AzureRegionCode { get; }
 
+        public string LiveIngestAccessToken => _config["LiveIngestAccessToken"];
+
         public string IrdetoUserName => _config["IrdetoUserName"];
 
         public string IrdetoPassword => _config["IrdetoPassword"];
@@ -70,5 +72,7 @@ namespace LiveDrmOperationsV3.Helpers
         public string IrdetoWidevineLAURL => _config["IrdetoWidevineLAURL"];
 
         public string IrdetoFairPlayLAURL => _config["IrdetoFairPlayLAURL"];
+
+        public string IrdetoFairPlayCertificateUrl => _config["IrdetoFairPlayCertificateUrl"];
     }
 }

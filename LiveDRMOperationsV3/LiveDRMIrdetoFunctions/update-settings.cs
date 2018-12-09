@@ -7,13 +7,29 @@
 ```c#
 Input :
 {
+    "liveEventName": "TEST",
+    "urn": "urn:customer:video:e8927fcf-e1a0-0001-7edd-1eaaaaaa",
+    "vendor": "Customer",
+    "baseStorageName": "storagename",
+    "archiveWindowLength": 10,
+    "vanityUrl": true,
+    "lowLatency": false,
+    "liveEventInputACL": [
+        "192.168.0.0/24",
+        "86.246.149.14"
+    ],
+    "liveEventPreviewACL": [
+        "192.168.0.0/24",
+        "86.246.149.14"
+    ],
+    "playerJSONData": null
 }
 
 Output:
 {
-    "Success": true,
-    "ErrorMessage" : "",
-    "OperationsVersion": "1.0.0.26898"
+    "success": true,
+    "errorMessage" : "",
+    "operationsVersion": "1.0.0.5"
 }
 
 

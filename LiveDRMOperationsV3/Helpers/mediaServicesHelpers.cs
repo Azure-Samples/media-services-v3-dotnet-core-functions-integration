@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Microsoft.Rest.Azure.Authentication;
@@ -70,11 +71,13 @@ namespace LiveDrmOperationsV3.Helpers
 
             var encString = "(encryption=cenc)";
             var encString2 = ",encryption=cenc";
+            var cbcsString2 = ",encryption=cbcs-aapl";
 
             if (locator.StreamingPolicyName == PredefinedStreamingPolicy.ClearStreamingOnly)
             {
                 encString = "";
                 encString2 = "";
+                cbcsString2 = "";
             }
 
 
@@ -90,39 +93,49 @@ namespace LiveDrmOperationsV3.Helpers
                     uriBuilder.Path = "/" + locator.StreamingLocatorId + "/" + manifestFileName + ".ism/manifest";
                     var myPath = uriBuilder.ToString();
                     if (smoothStreaming)
-                        urls.Add(new OutputUrl {Url = myPath + encString, Protocol = OutputtProtocol.SmoothStreaming});
+                        urls.Add(new OutputUrl
+                        {
+                            Url = myPath + encString,
+                            Protocol = OutputProtocol.SmoothStreaming
+                        });
                     if (dashCsf)
                         urls.Add(new OutputUrl
                         {
-                            Url = myPath + "(format=mpd-time-csf" + encString2 + ")", Protocol = OutputtProtocol.DashCsf
+                            Url = myPath + "(format=mpd-time-csf" + encString2 + ")",
+                            Protocol = OutputProtocol.DashCsf
                         });
                     if (dashCmaf)
                         urls.Add(new OutputUrl
                         {
                             Url = myPath + "(format=mpd-time-cmaf" + encString2 + ")",
-                            Protocol = OutputtProtocol.DashCmaf
+                            Protocol = OutputProtocol.DashCmaf
                         });
                     if (hlsCmaf)
                         urls.Add(new OutputUrl
                         {
-                            Url = myPath + "(format=m3u8-cmaf" + encString2 + ")", Protocol = OutputtProtocol.HlsCmaf
+                            Url = myPath + "(format=m3u8-cmaf" + cbcsString2 + ")",
+                            Protocol = OutputProtocol.HlsCmaf
                         });
                     if (hlsTs)
                         urls.Add(new OutputUrl
-                            {Url = myPath + "(format=m3u8-aapl" + encString2 + ")", Protocol = OutputtProtocol.HlsTs});
+                        {
+                            Url = myPath + "(format=m3u8-aapl" + cbcsString2 + ")",
+                            Protocol = OutputProtocol.HlsTs
+                        });
                 }
 
             return urls;
         }
 
         public static List<string> ReturnOutputProtocolsListCbcs(EnabledProtocols protocols)
+        // returns the supported protocols for cbcs encryption
         {
             var protList = new List<string>();
 
-            if (protocols.Dash) protList.AddRange(new List<string> {OutputtProtocol.DashCmaf.ToString()});
+            //if (protocols.Dash) protList.AddRange(new List<string> { OutputProtocol.DashCmaf.ToString() });
             if (protocols.Hls)
                 protList.AddRange(new List<string>
-                    {OutputtProtocol.HlsCmaf.ToString(), OutputtProtocol.HlsTs.ToString()});
+                    {OutputProtocol.HlsCmaf.ToString(), OutputProtocol.HlsTs.ToString()});
 
             return protList;
         }
@@ -133,8 +146,8 @@ namespace LiveDrmOperationsV3.Helpers
 
             if (protocols.Dash)
                 protList.AddRange(new List<string>
-                    {OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString()});
-            if (protocols.SmoothStreaming) protList.Add(OutputtProtocol.SmoothStreaming.ToString());
+                    {OutputProtocol.DashCmaf.ToString(), OutputProtocol.DashCsf.ToString()});
+            if (protocols.SmoothStreaming) protList.Add(OutputProtocol.SmoothStreaming.ToString());
 
             return protList;
         }
@@ -145,9 +158,24 @@ namespace LiveDrmOperationsV3.Helpers
 
             if (protocols.Dash)
                 protList.AddRange(new List<string>
-                    {OutputtProtocol.DashCmaf.ToString(), OutputtProtocol.DashCsf.ToString()});
+                    {OutputProtocol.DashCmaf.ToString(), OutputProtocol.DashCsf.ToString()});
 
             return protList;
+        }
+
+        public static void LogInformation(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogInformation((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
+        }
+
+        public static void LogWarning(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogWarning((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
+        }
+
+        public static void LogError(ILogger log, string message, string azureRegion = null)
+        {
+            log.LogError((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
         }
     }
 
@@ -155,10 +183,10 @@ namespace LiveDrmOperationsV3.Helpers
     public class OutputUrl
     {
         public string Url { get; set; }
-        public OutputtProtocol Protocol { get; set; }
+        public OutputProtocol Protocol { get; set; }
     }
 
-    public enum OutputtProtocol
+    public enum OutputProtocol
     {
         SmoothStreaming,
         DashCsf,
