@@ -13,6 +13,7 @@ This Functions example is based on AMS REST API v3 and pre-compiled functions.
 
 - [CreateContentKeyPolicy](#createcontentkeypolicy)
 - [CreateEmptyAsset](#createemptyasset)
+- [CreateStreamingPolicy](#createstreamingpolicy)
 - [CreateTransform](#createtransform)
 - [GetAssetUrls](#getasseturls)
 - [MonitorBlobContainerCopyStatus](#monitorblobcontainercopystatus)
@@ -21,18 +22,99 @@ This Functions example is based on AMS REST API v3 and pre-compiled functions.
 - [StartBlobContainerCopyToAsset](#startblobcontainercopytoasset)
 - [SubmitMediaJob](#submitmediajob)
 
-
 ## CreateContentKeyPolicy
+
 This function creates an ContentKeyPolicy object.
 
 ```c#
 Input:
     {
-        // Name of the  Content Key Policy object
+        // [Required] The content key policy name.
         "contentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
-        // (Optional) Description of the Content Key Policy object
-        "contentKeyPolicyDescription": "Shared toekn restricted policy for Clear Key content key policy",
-        // Options for the Content Key Policy object
+
+        // [Required] The mode for creating the transform.
+        // Allowed values: "simple" or "advanced".
+        // Default value: "simple".
+        "mode": "simple",
+
+        // The content key policy description.
+        "description": "Shared toekn restricted policy for Clear Key content key policy",
+
+        //
+        // [mode = simple]
+        //
+        // [Required] The content key policy option name
+        "policyOptionName": "CommonEncryptionPlayReadyTokenRestrictedOption",
+
+        //
+        // [mode = simple]
+        // Restriction Arguments
+        //
+        // [Required] Use Open Restriction.
+        // License or key will be delivered on every request without restrictions.
+        // Not recommended for production environments.
+        // Allowed values: true or false
+        // Default value: false
+        "openRestriction": false,
+        //
+        // Token Restricted options (openRestriction = false)
+        //
+        // The audience for the token.
+        "audience": "urn:myAudience",
+        // The token issuer.
+        "issuer": "urn:myIssuer",
+        // The type of token. Allowed values: Jwt, Swt.
+        "tokenType": "Jwt",
+        // The type of the token key to be used for the primary verification key.
+        // Allowed values: Symmetric, RSA, X509.
+        "tokenKeyType": "Symmetric",
+        // The token key Base64 string for symmetric key or certificate (x509) or public key (rsa).
+        // Must be used in conjunction with --token-key-type.
+        "tokenKey": "AAAAAAAAAAAAAAAAAAAAAA=="
+        // Semi-colon-separated required token claims in '[key=value]' format.
+        "tokenClaims": "urn:microsoft:azure:mediaservices:contentkeyidentifier=null",
+        // Semi-colon-separated list of alternate rsa token keys.
+        "altRsaTokenKeys": null,
+        // Semi-colon-separated list of alternate symmetric token keys.
+        "altSymmetricTokenKeys": null,
+        // Semi-colon-separated list of alternate x509 certificate token keys.
+        "altX509TokenKeys": null,
+        // The OpenID connect discovery document.
+        "openIdConnectDiscoveryDocument": null,
+
+        //
+        // [mode = simple]
+        // ContentKeyPolicyConfiguration Arguments
+        //
+        // The type of content key policy option configuration
+        // Allowed values: ClearKey, FairPlay, PlayReady, Widevine
+        "configurationType": "ClearKey",
+        // FairPlay:
+        // The Base64 string of the key that must be used as FairPlay Application Secret key.
+        "fairPlayAsk": "AAAAAAAAAAAAAAAAAAAAAA==",
+        // The Base64 string if a FairPlay certificate file in PKCS 12 (pfx) format (including private key).
+        "fairPlayPfx": "AAAAAAAAAAAAAAAAAAAAAA=="
+        // The password encrypting FairPlay certificate in PKCS 12 (pfx) format.
+        "fairPlayPfxPassword": "xxx"
+        // The rental and lease key type.
+        // Available values: Undefined, PersistentUnlimited, PersistentLimited.
+        "faiPlayRentalAndLeaseKeyType": "Undefined",
+        // The rental duration. Must be greater than or equal to 0.
+        "faiPlayRentalDuration": 0,
+        // PlayReady:
+        // JSON PlayReady license template.
+        "playReadyTemplate": {},
+        // The string data of PlayReady response custom data.
+        "playReadyResponseCustomData": "xxx",
+        // Widevine:
+        // JSON Widevine license template.
+        "widevineTemplate": {},
+
+        //
+        // [mode = advanced]
+        //
+        // The JSON data for options of the content key policy.
+        // You can create multiple options in this
         "contentKeyPolicyOptions": [
             {
                 "name": "ClearKeyOption",
@@ -54,48 +136,283 @@ Input:
     }
 Output:
     {
-        // Id of the Content Key Policy object
-        "policyId": "9d6a2b92-d61a-4e87-8348-7155c137f9ca",
+        // The name of the content key policy.
+        "contentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
+        // The identifier of the content key policy.
+        "contentKeyPolicyId": "9d6a2b92-d61a-4e87-8348-7155c137f9ca",
     }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## CreateEmptyAsset
+
 This function creates an empty asset.
 
 ```c#
 Input:
     {
-        // Name of the asset
+        // [Required] The name of the asset
         "assetNamePrefix": "TestAssetName",
-        // (Optional) Name of attached storage account where to create the asset
+
+        // The name of attached storage account where to create the asset
         "assetStorageAccount":  "storage01"
     }
 Output:
     {
-        // Name of the asset created
+        // The name of the asset created
         "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-        // Id of the asset created
+
+        // The identifier of the asset created
         "assetId": "nb:cid:UUID:68adb036-43b7-45e6-81bd-8cf32013c810",
-        // Name of the destination container name for the asset created
+
+        // The name of the destination container name for the asset created
         "destinationContainer": "destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
     }
 
 ```
+
 [Back to List](#functions-list)
 
+## CreateStreamingPolicy
 
-## CreateTransform
 This function creates a new transform.
 
 ```c#
 Input:
     {
-        // Name of the Transform
+        // [Required] The name of the streaming policy.
+        "streamingPolicyName": "SharedStreamingForClearKey",
+
+        // [Required] The mode for creating the transform.
+        // Allowed values: "simple" or "advanced".
+        // Default value: "simple".
+        "mode": "simple",
+
+        // Default Content Key used by current streaming policy.
+        "defaultContentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
+
+        // Semi-colon-separated list of enabled protocols for NoEncryption.
+        // Allowed values: Download, Dash, HLS, SmoothStreaming.
+        "noEncryptionProtocols": "Dash;HLS;SmoothStreaming"
+
+        //
+        // Common Encryption CBCS Arguments
+        //
+        // The JSON representing which tracks should not be encrypted.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#trackselection.
+        "cbcsClearTracks": {},
+        // Label to specify Default Content Key for an encryption scheme.
+        "cbcsDefaultKeyLabel": "cbcsKeyDefault",
+        // Policy used by Default Content Key.
+        "cbcsDefaultKeyPolicyName": null,
+        // The JSON representing a list of StreamingPolicyContentKey.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#streamingpolicycontentkey.
+        "cbcsKeyToTrackMappings": {},
+        // Allows the license to be persistent or not.
+        // Allowed values: false, true.
+        "cbcsFairPlayAllowPersistentLicense": false,
+        // The custom license acquisition URL template for a customer service to deliver keys to end users.
+        // Not needed when using Azure Media Services for issuing keys.
+        "cbcsFairPlayTemplate": null,
+        // Custom attributes for PlayReady.
+        "cbcsPlayReadyAttributes": null,
+        // The custom license acquisition URL template for a customer service to deliver keys to end users.
+        // Not needed when using Azure Media Services for issuing keys.
+        "cbcsPlayReadyTemplate": null,
+        // The custom license acquisition URL template for a customer service to deliver keys to end users.
+        // Not needed when using Azure Media Services for issuing keys.
+        "cbcsWidevineTemplate": null,
+        // Semi-colon-separated list of enabled protocols for CommonEncryption CBCS.
+        // Allowed values: Dash, HLS, SmoothStreaming.
+        "cbcsProtocols": "Dash;HLS;SmoothStreaming",
+
+        //
+        // Common Encryption CENC Arguments
+        //
+        // The JSON representing which tracks should not be encrypted.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#trackselection.
+        "cencClearTracks": {},
+        // Label to specify Default Content Key for an encryption scheme.
+        "cencDefaultKeyLabel": "cencKeyDefault",
+        // Policy used by Default Content Key.
+        "cencDefaultKeyPolicyName": null,
+        // The JSON representing a list of StreamingPolicyContentKey.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#streamingpolicycontentkey.
+        "cencKeyToTrackMappings": {},
+        // Custom attributes for PlayReady.
+        "cencPlayReadyAttributes": null,
+        // The custom license acquisition URL template for a customer service to deliver keys to end users.
+        // Not needed when using Azure Media Services for issuing keys.
+        "cencPlayReadyTemplate": null,
+        // The custom license acquisition URL template for a customer service to deliver keys to end users.
+        // Not needed when using Azure Media Services for issuing keys.
+        "cencWidevineTemplate": null,
+        // Semi-colon-separated list of enabled protocols for CommonEncryption CENC.
+        // Allowed values: Dash, HLS, SmoothStreaming.
+        "cencProtocols": "Dash;HLS;SmoothStreaming",
+
+        //
+        // Envelope Encryption Arguments
+        //
+        // The JSON representing which tracks should not be encrypted.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#trackselection.
+        "envelopeClearTracks": {},
+        // Label to specify Default Content Key for an encryption scheme.
+        "envelopeDefaultKeyLabel": "cencKeyDefault",
+        // Policy used by Default Content Key.
+        "envelopeDefaultKeyPolicyName": null,
+        // The JSON representing a list of StreamingPolicyContentKey.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streamingpolicies/create#streamingpolicycontentkey.
+        "envelopeKeyToTrackMappings": {},
+        // The KeyAcquistionUrlTemplate is used to point to user specified service to delivery content keys.
+        "envelopeTemplate": null,
+        // Semi-colon-separated list of enabled protocols for CommonEncryption CENC.
+        // Allowed values: Dash, HLS, SmoothStreaming.
+        "envelopeProtocols": "Dash;HLS;SmoothStreaming",
+
+        // Streaming Configuration option of Common Encryption CBCS
+        "jsonCommonEncryptionCbcs": {
+            "enabledProtocols": {
+                "download": false,
+                "dash": false,
+                "hls": true,
+                "smoothStreaming": false
+            },
+            "contentKeys": {
+                "defaultKey": {
+                    "label": "cbcsDefaultKey"
+                }
+            },
+            "drm": {
+                "fairPlay": {
+                    "allowPersistentLicense": true
+                }
+            }
+        }
+        // Streaming Configuration option of Common Encryption CENC
+        "jsonCommonEncryptionCenc": {
+            "enabledProtocols": {
+                "download": false,
+                "dash": true,
+                "hls": false,
+                "smoothStreaming": true
+            },
+            "contentKeys": {
+                "defaultKey": {
+                    "label": "cencDefaultKey"
+                }
+            },
+            "drm": {
+                "playReady": {},
+                "widevine": {}
+            }
+        }
+        // Streaming Configuration option of Envelope Encryption
+        "jsonEnvelopeEncryption": {}
+        // Streaming Configuration option of No Encryption
+        "jsonNoEncryption": {}
+    }
+Output:
+    {
+        // The name of the streaming policy.
+        "streamingPolicyName": "SharedStreamingForClearKey",
+
+        // The identifier of the streaming policy.
+        "streamingPolicyId": "9d6a2b92-d61a-4e87-8348-7155c137f9ca",
+    }
+
+```
+
+[Back to List](#functions-list)
+
+## CreateTransform
+
+This function creates a new transform.
+
+```c#
+Input:
+    {
+        // [Required] The name of the transform.
         "transformName": "TestTransform",
-        // Array of presets for the Transform
+
+        // [Required] The mode for creating the transform.
+        // Allowed values: "simple" or "advanced".
+        // Default value: "simple".
+        "mode": "simple",
+
+        // The description of the transform.
+        "description": "Transform for testing",
+
+        //
+        // [mode = simple]
+        //
+        // [Required] Preset that describes the operations
+        // that will be used to modify, transcode, or extract insights
+        // from the source file to generate the transform output.
+        // Allowed values:
+        //  H264SingleBitrateSD, H264SingleBitrate720p, H264SingleBitrate1080p,
+        //  AdaptiveStreaming, AACGoodQualityAudio,
+        //  H264MultipleBitrate1080p, H264MultipleBitrate720p, H264MultipleBitrateSD,
+        //  AudioAnalyzer, VideoAnalyzer.
+        // In addition to the allowed values, you can also pass an url to a custom Standard Encoder preset JSON file.
+        // See https://docs.microsoft.com/rest/api/media/transforms/createorupdate#standardencoderpreset
+        // for further details on the settings to use to build a custom preset.
+        "preset": "AdaptiveStreaming",
+
+        //
+        // [mode = simple]
+        //
+        // A Transform can define more than one output.
+        // This property defines what the service should do when one output fails -
+        // either continue to produce other outputs, or, stop the other outputs.
+        // The overall Job state will not reflect failures of outputs that are specified with 'ContinueJob'.
+        // The default is 'StopProcessingJob'.
+        // Allowed values: ContinueJob, StopProcessingJob.
+        "onError": "StopProcessingJob",
+
+        //
+        // [mode = simple]
+        //
+        // Sets the relative priority of the transform outputs within a transform.
+        // This sets the priority that the service uses for processing TransformOutputs.
+        // The default priority is Normal.
+        // Allowed values: High, Low, Normal.
+        "relativePriority": "Normal",
+
+        //
+        // [mode = simple & preset = AudioAnalyzer | VideoAnalyzer]
+        //
+        // The language for the audio payload in the input using the BCP-47 format of "language tag-region" (e.g: en-US).
+        // If not specified, automatic language detection would be employed.
+        // This feature currently supports English, Chinese, French, German,
+        // Italian, Japanese, Spanish, Russian, and Portuguese.
+        // The automatic detection works best with audio recordings with clearly discernable speech.
+        // If automatic detection fails to find the language, transcription would fallback to English.
+        // Allowed values: en-US, en-GB, es-ES, es-MX, fr-FR, it-IT, ja-JP, pt-BR, zh-CN, de-DE, ar-EG, ru-RU, hi-IN.
+        "audioLanguage": "en-US",
+
+        //
+        // [mode = simple & preset = VideoAnalyzer]
+        //
+        // The type of insights to be extracted.
+        // If not set then the type will be selected based on the content type.
+        // If the content is audio only then only audio insights will be extracted
+        // and if it is video only video insights will be extracted.
+        // Allowed values: AllInsights, AudioInsightsOnly, VideoInsightsOnly.
+        "insightsToExtract": "AllInsights",
+
+        //
+        // [mode = advanced]
+        //
+        // [Required] The array of custom presets for the transform.
         "transformOutputs": [
             {
                 "onError": "StopProcessingJob",
@@ -118,32 +435,39 @@ Input:
     }
 Output:
     {
-        // Id of the created Transform
+        // The name of the created TransformName
+        "transformName": "TestTransform",
+
+        // The resource identifier of the created Transform
         "transformId": "/subscriptions/694d5930-8ee4-4e50-917b-9dcfeceb6179/resourceGroups/AMSdemo/providers/Microsoft.Media/mediaservices/amsdemojapaneast/transforms/TestTransform"
     }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## GetAssetUrls
+
 This function provides URLs for the asset.
 
 ```c#
 Input:
     {
-        // Name of the Streaming Locator for the asset
+        // [Required] The name of the streaming locator.
         "streamingLocatorName": "streaminglocator-911b65de-ac92-4391-9aab-80021126d403",
-        // (Optional) Name of the StreamingEndpoint to be used; "default" is used by default
+
+        // The name of the streaming endpoint; "default" is used by default
         "streamingEndpointName": "default",
-        // (Optional) Scheme of the streaming URL; "http" or "https", and "https" is used by default
+
+        // The scheme of the streaming URL; "http" or "https", and "https" is used by default
         "streamingUrlScheme": "https"
     }
 Output:
     {
-        // Path list of Progressive Download
+        // The path list of Progressive Download
         "downloadPaths": [],
-        // Path list of Streaming
+
+        // The path list of Streaming
         "streamingPaths": [
             {
                 // Streaming Protocol
@@ -167,29 +491,31 @@ Output:
     }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## MonitorBlobContainerCopyStatus
+
 This function monitors blob copy.
 [blobCopyStatus](https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.copystatus?view=azure-dotnet) is returned with the following values:
-* 0 : Invalid - The copy status is invalid.
-* 1 : Pending - The copy operation is pending.
-* 2 : Success - The copy operation succeeded.
-* 3 : Aborted - The copy operation has been aborted.
-* 4 : Failed - The copy operation encountered an error.
+
+- 0 : Invalid - The copy status is invalid.
+- 1 : Pending - The copy operation is pending.
+- 2 : Success - The copy operation succeeded.
+- 3 : Aborted - The copy operation has been aborted.
+- 4 : Failed - The copy operation encountered an error.
 
 ```c#
 Input:
-	{
-		// Name of the asset for copy destination
-		"assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-		// (Optional) File names for monitoring 
-		//      all blobs in the destination container will be monitored if no fileNames
-		"fileNames": [ "filename.mp4" , "filename2.mp4" ]
-	}
+    {
+        // [Required] The name of the asset for copy destination
+        "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
+        // The file names for monitoring
+        //      all blobs in the destination container will be monitored if no fileNames
+        "fileNames": [ "filename.mp4" , "filename2.mp4" ]
+    }
 Output:
-	{
+    {
         // BlobCopy Action Status: true or false
         "copyStatus": true|false,
         // CopyStatus for each blob
@@ -201,13 +527,14 @@ Output:
                 "blobCopyStatus": 2
             }
         ]
-	}
+    }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## MonitorMediaJob
+
 This function monitors media job.
 [jobState](https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.media.models.jobstate?view=azure-dotnet) is returned with the following values:
 
@@ -226,16 +553,18 @@ If jobState is "Error", the output will contain the job error information: [Erro
 ```c#
 Input:
     {
-        // Name of the media job
+        // [Required] The name of the media job
         "jobName": "amsv3function-job-24369d2e-7415-4ff5-ba12-b8a879a15401",
-        // Name of the Transform for the media job
+
+        // [Required] The name of the Transform for the media job
         "transformName": "TestTransform"
     }
 Output:
     {
-        // Status name of the media job
+        // The status name of the media job
         "jobStatus": "Finished",
-        // Status of each task/output asset in the media job
+
+        // The status of each task/output asset in the media job
         "jobOutputStateList": [
             {
                 // Name of the Output Asset
@@ -250,78 +579,108 @@ Output:
     }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## PublishAsset
+
 This function publishes the asset (creates a StreamingLocator for the asset).
-Predefine Streaming Policy which you can use by default are as below:
-* Predefined_ClearKey
-* Predefined_ClearStreamingOnly
-* Predefined_DownloadAndClearStreaming
-* Predefined_DownloadOnly
-* Predefined_SecureStreaming
-* Predefined_SecureStreamingWithFairPlay
+Pre-defined Streaming Policy which you can use by default are as below:
+
+- Predefined_ClearKey
+- Predefined_ClearStreamingOnly
+- Predefined_DownloadAndClearStreaming
+- Predefined_DownloadOnly
+- Predefined_MultiDrmCencStreaming
+- Predefined_MultiDrmStreaming
 
 ```c#
 Input:
     {
-        // Name of the asset for publish
+        // [Required] The name of the asset used by the streaming locator.
         "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-        // Name of Streaming Policy; predefined streaming policy or custom created streaming policy
+
+        // [Required] The name of the streaming policy used by the streaming locator.
+        // You can either create one with `CreateStreamingPolicy` or use any of the predefined policies:
+        //  Predefined_ClearKey,
+        //  Predefined_ClearStreamingOnly,
+        //  Predefined_DownloadAndClearStreaming,
+        //  Predefined_DownloadOnly,
+        //  Predefined_MultiDrmCencStreaming,
+        //  Predefined_MultiDrmStreaming.
         "streamingPolicyName": "Predefined_ClearStreamingOnly",
-        // (Optional) Start DateTime of streaming the asset
+
+        // An alternative media identifier associated with the streaming locator.
+        "alternative-media-id": "cid-0001",
+
+        // The default content key policy name used by the streaming locator.
+        "contentKeyPolicyName": "defaultContentKeyPolicy",
+
+        // JSON string with the content keys to be used by the streaming locator.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streaminglocators/create#streaminglocatorcontentkey.
+        "contentKeys": null,
+
+        // The start time (Y-m-d'T'H:M:S'Z') of the streaming locator.
         "startDateTime": "2018-07-01T00:00Z",
-        // (Optional) End DateTime of streaming the asset
+
+        // The end time (Y-m-d'T'H:M:S'Z') of the streaming locator.
         "endDateTime": "2018-12-31T23:59Z",
-        // (Optional) Id (UUID string) of the StreamingLocator; streamingLocatorName will be "streaminglocator-{UUID}".
-        "streamingLocatorId": "911b65de-ac92-4391-9aab-80021126d403",
-        // (Optional) Name of default ContentKeyPolicy for the StreamingLocator
-        "defaultContentKeyPolicyName": "defaultContentKeyPolicy"
+
+        // The identifier (UUID) of the streaming locator. "streamingLocatorName" will be "streaminglocator-{UUID}".
+        "streamingLocatorId": "911b65de-ac92-4391-9aab-80021126d403"
     }
 Output:
     {
-        // Name of the created StreamingLocatorName
+        // The name of the created StreamingLocatorName
         "streamingLocatorName": "streaminglocator-911b65de-ac92-4391-9aab-80021126d403",
-        // Name of the created StreamingLocatorId
+
+        // The name of the created StreamingLocatorId
         "streamingLocatorId": "911b65de-ac92-4391-9aab-80021126d403"
     }
 
 ```
+
 [Back to List](#functions-list)
 
 
 ## StartBlobContainerCopyToAsset
+
 This function starts copying blob container to the asset.
 
 ```c#
 Input:
-	{
-		// Name of the asset for copy destination
-		"assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-		// Id of the asset for copy destination
-		"assetId": "nb:cid:UUID:4a5f429c-686c-4f6f-ae86-4078a4e6139e",
-		// Name of the storage account for copy source
-		"sourceStorageAccountName": "mediaimports",
-		// Key of the storage account for copy source
-		"sourceStorageAccountKey": "keyxxx==",
-		// Blob container name of the storage account for copy source
-		"sourceContainer":  "movie-trailer"
-		// (Optional) File names of source contents
-		//      all blobs in the source container will be copied if no fileNames
-		"fileNames": [ "filename.mp4" , "filename2.mp4" ]
-	}
+    {
+        // [Required] The name of the Asset for media job input
+        "inputAssetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
+
+        // [Required] The name of the Transform for media job
+        "transformName": "TestTransform",
+
+        // [Required] The name of the Assets for media job outputs
+        "outputAssetNamePrefix": "TestOutputAssetName",
+
+        // The name of attached storage account where to create the Output Assets
+        "assetStorageAccount": "storage01"
+    }
 Output:
-	{
-		// Container Name of the asset for copy destination
-		"destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
-	}
+    {
+        // The name of media Job
+        "jobName": "amsv3function-job-24369d2e-7415-4ff5-ba12-b8a879a15401",
+
+        // The name of Encdoer Output Asset
+        "encoderOutputAssetName": "out-testasset-e389de79-3aa5-4a5a-a9ca-2a6fd8c53968",
+
+        // The name of Video Analyzer Output Asset
+        "videoAnalyzerOutputAssetName": "out-testasset-00cd363b-5fe0-4da1-acf8-ebd66ef14504"
+    }
 
 ```
+
 [Back to List](#functions-list)
 
-
 ## SubmitMediaJob
+
 This function submits media job.
 
 ```c#
@@ -347,4 +706,5 @@ Output:
     }
 
 ```
+
 [Back to List](#functions-list)
