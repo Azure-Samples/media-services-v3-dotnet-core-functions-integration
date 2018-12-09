@@ -7,18 +7,20 @@
 ```c#
 Input:
     {
-        // Name of the Streaming Locator for the asset
+        // [Required] The name of the streaming locator.
         "streamingLocatorName": "streaminglocator-911b65de-ac92-4391-9aab-80021126d403",
-        // (Optional) Name of the StreamingEndpoint to be used; "default" is used by default
+
+        // The name of the streaming endpoint; "default" is used by default
         "streamingEndpointName": "default",
-        // (Optional) Scheme of the streaming URL; "http" or "https", and "https" is used by default
+
+        // The scheme of the streaming URL; "http" or "https", and "https" is used by default
         "streamingUrlScheme": "https"
     }
 Output:
     {
-        // Path list of Progressive Download
+        // The path list of Progressive Download
         "downloadPaths": [],
-        // Path list of Streaming
+        // The path list of Streaming
         "streamingPaths": [
             {
                 // Streaming Protocol

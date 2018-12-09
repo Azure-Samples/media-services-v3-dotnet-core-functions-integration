@@ -7,22 +7,27 @@
 ```c#
 Input:
     {
-        // Name of the Asset for media job input
+        // [Required] The name of the Asset for media job input
         "inputAssetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-        // Name of the Transform for media job
+
+        // [Required] The name of the Transform for media job
         "transformName": "TestTransform",
-        // Name of the Assets for media job outputs
+
+        // [Required] The name of the Assets for media job outputs
         "outputAssetNamePrefix": "TestOutputAssetName",
-        // (Optional) Name of attached storage account where to create the Output Assets
+
+        // The name of attached storage account where to create the Output Assets
         "assetStorageAccount": "storage01"
     }
 Output:
     {
-        // Name of media Job
+        // The name of media Job
         "jobName": "amsv3function-job-24369d2e-7415-4ff5-ba12-b8a879a15401",
-        // Name of Encdoer Output Asset
+
+        // The name of Encdoer Output Asset
         "encoderOutputAssetName": "out-testasset-e389de79-3aa5-4a5a-a9ca-2a6fd8c53968",
-        // Name of Video Analyzer Output Asset
+
+        // The name of Video Analyzer Output Asset
         "videoAnalyzerOutputAssetName": "out-testasset-00cd363b-5fe0-4da1-acf8-ebd66ef14504"
     }
 
