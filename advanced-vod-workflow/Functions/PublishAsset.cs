@@ -7,24 +7,46 @@
 ```c#
 Input:
     {
-        // Name of the asset for publish
+        // [Required] The name of the asset used by the streaming locator.
         "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-        // Name of Streaming Policy; predefined streaming policy or custom created streaming policy
+
+        // [Required] The name of the streaming policy used by the streaming locator.
+        // You can either create one with `CreateStreamingPolicy` or use any of the predefined policies:
+        //  Predefined_ClearKey,
+        //  Predefined_ClearStreamingOnly,
+        //  Predefined_DownloadAndClearStreaming,
+        //  Predefined_DownloadOnly,
+        //  Predefined_MultiDrmCencStreaming,
+        //  Predefined_MultiDrmStreaming.
         "streamingPolicyName": "Predefined_ClearStreamingOnly",
-        // (Optional) Start DateTime of streaming the asset
+
+        // An alternative media identifier associated with the streaming locator.
+        "alternative-media-id": "cid-0001",
+
+        // The default content key policy name used by the streaming locator.
+        "contentKeyPolicyName": "defaultContentKeyPolicy",
+        
+        // JSON string with the content keys to be used by the streaming locator.
+        // Use @{url} to load from a file from the specified URL.
+        // For further information about the JSON structure please refer to swagger documentation on
+        // https://docs.microsoft.com/en-us/rest/api/media/streaminglocators/create#streaminglocatorcontentkey.
+        "contentKeys": null,
+
+        // The start time (Y-m-d'T'H:M:S'Z') of the streaming locator.
         "startDateTime": "2018-07-01T00:00Z",
-        // (Optional) End DateTime of streaming the asset
+
+        // The end time (Y-m-d'T'H:M:S'Z') of the streaming locator.
         "endDateTime": "2018-12-31T23:59Z",
-        // (Optional) Id (UUID string) of the StreamingLocator; streamingLocatorName will be "streaminglocator-{UUID}".
+
+        // The identifier (UUID) of the streaming locator. "streamingLocatorName" will be "streaminglocator-{UUID}".
         "streamingLocatorId": "911b65de-ac92-4391-9aab-80021126d403",
-        // (Optional) Name of default ContentKeyPolicy for the StreamingLocator
-        "defaultContentKeyPolicyName": "defaultContentKeyPolicy"
     }
 Output:
     {
-        // Name of the created StreamingLocatorName
+        // The name of the created StreamingLocatorName
         "streamingLocatorName": "streaminglocator-911b65de-ac92-4391-9aab-80021126d403",
-        // Name of the created StreamingLocatorId
+
+        // The name of the created StreamingLocatorId
         "streamingLocatorId": "911b65de-ac92-4391-9aab-80021126d403"
     }
 
@@ -71,6 +93,13 @@ namespace advanced_vod_functions_v3
                 return new BadRequestObjectResult("Please pass streamingPolicyName in the input object");
             string assetName = data.assetName;
             string streamingPolicyName = data.streamingPolicyName;
+            string alternativeMediaId = null;
+            if (data.alternativeMediaId != null)
+                alternativeMediaId = data.alternativeMediaId;
+            string contentKeyPolicyName = null;
+            if (data.contentKeyPolicyName != null)
+                contentKeyPolicyName = data.contentKeyPolicyName;
+            List<StreamingLocatorContentKey> contentKeys = new List<StreamingLocatorContentKey>();
             DateTime startDateTime = new DateTime(0);
             if (data.startDateTime != null)
                 startDateTime = data.startDateTime;
@@ -80,30 +109,52 @@ namespace advanced_vod_functions_v3
             Guid streamingLocatorId = Guid.NewGuid();
             if (data.streamingLocatorId != null)
                 streamingLocatorId = new Guid((string)(data.streamingLocatorId));
-            string defaultContentKeyPolicyName = null;
-            if (data.defaultContentKeyPolicyName != null)
-                defaultContentKeyPolicyName = data.defaultContentKeyPolicyName;
-            List<StreamingLocatorContentKey> contentKeys = new List<StreamingLocatorContentKey>();
+            string streamingLocatorName = "streaminglocator-" + streamingLocatorId.ToString();
 
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
-            string streamingLocatorName = "streaminglocator-" + streamingLocatorId.ToString();
             StreamingLocator streamingLocator = null;
+            Asset asset = null;
+            StreamingPolicy streamingPolicy = null;
 
             try
             {
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
 
+                asset = client.Assets.Get(amsconfig.ResourceGroup, amsconfig.AccountName, assetName);
+                if (asset == null)
+                    return new BadRequestObjectResult("Asset not found");
+                streamingPolicy = client.StreamingPolicies.Get(amsconfig.ResourceGroup, amsconfig.AccountName, streamingPolicyName);
+                if (streamingPolicy == null)
+                    return new BadRequestObjectResult("StreamingPolicy not found");
+                if (contentKeyPolicyName != null)
+                {
+                    ContentKeyPolicy contentKeyPolicy = null;
+                    contentKeyPolicy = client.ContentKeyPolicies.Get(amsconfig.ResourceGroup, amsconfig.AccountName, contentKeyPolicyName);
+                    if (contentKeyPolicy == null)
+                        return new BadRequestObjectResult("ContentKeyPolicy not found");
+                }
+                if (data.contentKeys != null)
+                {
+                    JsonConverter[] jsonConverters = {
+                        new MediaServicesHelperJsonReader()
+                    };
+                    contentKeys = JsonConvert.DeserializeObject<List<StreamingLocatorContentKey>>(data.contentKeys.ToString(), jsonConverters);
+                }
+
                 streamingLocator = new StreamingLocator()
                 {
                     AssetName = assetName,
                     StreamingPolicyName = streamingPolicyName,
+                    AlternativeMediaId = alternativeMediaId,
+                    DefaultContentKeyPolicyName = contentKeyPolicyName,
                     StartTime = null,
                     EndTime = null,
                     StreamingLocatorId = streamingLocatorId,
-                    DefaultContentKeyPolicyName = defaultContentKeyPolicyName,
                 };
                 if (!startDateTime.Equals(new DateTime(0))) streamingLocator.StartTime = startDateTime;
                 if (!endDateTime.Equals(new DateTime(0))) streamingLocator.EndTime = endDateTime;
+                if (contentKeys.Count != 0)
+                    streamingLocator.ContentKeys = contentKeys;
                 streamingLocator.Validate();
 
                 client.StreamingLocators.Create(amsconfig.ResourceGroup, amsconfig.AccountName, streamingLocatorName, streamingLocator);
