@@ -264,49 +264,49 @@ namespace advanced_vod_functions_v3
                             if (data.openIdConnectDiscoveryDocument != null)
                                 restriction.OpenIdConnectDiscoveryDocument = data.openIdConnectDiscoveryDocument;
 
-                            // Configuration
-                            switch (data.configurationType)
-                            {
-                                case "ClearKey":
-                                    option.Configuration = new ContentKeyPolicyClearKeyConfiguration();
-                                    break;
-                                case "FairPlay":
-                                    ContentKeyPolicyFairPlayConfiguration configFairPlay = new ContentKeyPolicyFairPlayConfiguration();
-                                    configFairPlay.Ask = Convert.FromBase64String(data.fairPlayAsk);
-                                    configFairPlay.FairPlayPfx = data.fairPlayPfx;
-                                    configFairPlay.FairPlayPfxPassword = data.fairPlayPfxPassword;
-                                    switch (data.faiPlayRentalAndLeaseKeyType)
-                                    {
-                                        case "Undefined":
-                                            configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.Undefined;
-                                            break;
-                                        case "PersistentLimited":
-                                            configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.PersistentLimited;
-                                            break;
-                                        case "PersistentUnlimited":
-                                            configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.PersistentUnlimited;
-                                            break;
-                                        default:
-                                            return new BadRequestObjectResult("Please pass valid faiPlayRentalAndLeaseKeyType in the input object");
-                                    }
-                                    configFairPlay.RentalDuration = data.faiPlayRentalDuration;
-                                    break;
-                                case "PlayReady":
-                                    ContentKeyPolicyPlayReadyConfiguration configPlayReady = new ContentKeyPolicyPlayReadyConfiguration();
-                                    configPlayReady.Licenses = JsonConvert.DeserializeObject<ContentKeyPolicyPlayReadyLicense>(data.PlayReadyTemplate.ToString(), jsonConverters);
-                                    if (data.playReadyResponseCustomData != null) configPlayReady.ResponseCustomData = data.playReadyResponseCustomData;
-                                    option.Configuration = configPlayReady;
-                                    break;
-                                case "Widevine":
-                                    ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonConverters);
-                                    option.Configuration = configWideVine;
-                                    break;
-                                default:
-                                    return new BadRequestObjectResult("Please pass valid configurationType in the input object");
-                            }
                             option.Restriction = restriction;
-                            options.Add(option);
                         }
+                        // Configuration
+                        switch (data.configurationType)
+                        {
+                            case "ClearKey":
+                                option.Configuration = new ContentKeyPolicyClearKeyConfiguration();
+                                break;
+                            case "FairPlay":
+                                ContentKeyPolicyFairPlayConfiguration configFairPlay = new ContentKeyPolicyFairPlayConfiguration();
+                                configFairPlay.Ask = Convert.FromBase64String(data.fairPlayAsk);
+                                configFairPlay.FairPlayPfx = data.fairPlayPfx;
+                                configFairPlay.FairPlayPfxPassword = data.fairPlayPfxPassword;
+                                switch (data.faiPlayRentalAndLeaseKeyType)
+                                {
+                                    case "Undefined":
+                                        configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.Undefined;
+                                        break;
+                                    case "PersistentLimited":
+                                        configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.PersistentLimited;
+                                        break;
+                                    case "PersistentUnlimited":
+                                        configFairPlay.RentalAndLeaseKeyType = ContentKeyPolicyFairPlayRentalAndLeaseKeyType.PersistentUnlimited;
+                                        break;
+                                    default:
+                                        return new BadRequestObjectResult("Please pass valid faiPlayRentalAndLeaseKeyType in the input object");
+                                }
+                                configFairPlay.RentalDuration = data.faiPlayRentalDuration;
+                                break;
+                            case "PlayReady":
+                                ContentKeyPolicyPlayReadyConfiguration configPlayReady = new ContentKeyPolicyPlayReadyConfiguration();
+                                configPlayReady.Licenses = JsonConvert.DeserializeObject<ContentKeyPolicyPlayReadyLicense>(data.PlayReadyTemplate.ToString(), jsonConverters);
+                                if (data.playReadyResponseCustomData != null) configPlayReady.ResponseCustomData = data.playReadyResponseCustomData;
+                                option.Configuration = configPlayReady;
+                                break;
+                            case "Widevine":
+                                ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonConverters);
+                                option.Configuration = configWideVine;
+                                break;
+                            default:
+                                return new BadRequestObjectResult("Please pass valid configurationType in the input object");
+                        }
+                        options.Add(option);
                     }
                     else if (mode == "advanced")
                     {
