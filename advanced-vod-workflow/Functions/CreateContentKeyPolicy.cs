@@ -305,6 +305,7 @@ namespace advanced_vod_functions_v3
                                     return new BadRequestObjectResult("Please pass valid configurationType in the input object");
                             }
                             option.Restriction = restriction;
+                            options.Add(option);
                         }
                     }
                     else if (mode == "advanced")
