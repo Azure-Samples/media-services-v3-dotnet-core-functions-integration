@@ -35,7 +35,7 @@ This Media Services Functions code is based on AMS REST API v3 on Azure Function
 
 Overall architecture :
 
-![Screen capture](images/overview.png?raw=true)
+![Screen capture](Images/overview.png?raw=true)
 
 ## Prerequisites for a sample Logic Apps deployments
 
