@@ -33,6 +33,10 @@ It is also possible to execute all operations in two regions at the same time. F
 
 This Media Services Functions code is based on AMS REST API v3 on Azure Functions v2.
 
+Overall architecture :
+
+![Screen capture](images/overview.png?raw=true)
+
 ## Prerequisites for a sample Logic Apps deployments
 
 ### 1. Create an Azure Media Services account
