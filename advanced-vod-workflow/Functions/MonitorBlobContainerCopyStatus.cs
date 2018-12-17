@@ -7,9 +7,10 @@
 ```c#
 Input:
 	{
-		// Name of the asset for copy destination
+		// [Required] The name of the asset for copy destination
 		"assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-		// (Optional) File names for monitoring 
+
+		// The file names for monitoring
 		//      all blobs in the destination container will be monitored if no fileNames
 		"fileNames": [ "filename.mp4" , "filename2.mp4" ]
 	}

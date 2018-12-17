@@ -7,23 +7,28 @@
 ```c#
 Input:
 	{
-		// Name of the asset for copy destination
+		// [Required] The name of the asset for copy destination
 		"assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-		// Id of the asset for copy destination
+
+		// [Required] The indentifier of the asset for copy destination
 		"assetId": "nb:cid:UUID:4a5f429c-686c-4f6f-ae86-4078a4e6139e",
-		// Name of the storage account for copy source
+
+		// [Required] The name of the storage account for copy source
 		"sourceStorageAccountName": "mediaimports",
-		// Key of the storage account for copy source
+
+		// [Required] The key of the storage account for copy source
 		"sourceStorageAccountKey": "keyxxx==",
-		// Blob container name of the storage account for copy source
-		"sourceContainer":  "movie-trailer"
-		// (Optional) File names of source contents
+
+		// [Required] The Blob container name of the storage account for copy source
+		"sourceContainer":  "movie-trailer",
+
+		// The file names of source contents
 		//      all blobs in the source container will be copied if no fileNames
 		"fileNames": [ "filename.mp4" , "filename2.mp4" ]
 	}
 Output:
 	{
-		// Container Name of the asset for copy destination
+		// The container Name of the asset for copy destination
 		"destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
 	}
 

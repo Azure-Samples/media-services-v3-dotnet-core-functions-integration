@@ -7,16 +7,18 @@
 ```c#
 Input:
     {
-        // Name of the media job
+        // [Required] The name of the media job
         "jobName": "amsv3function-job-24369d2e-7415-4ff5-ba12-b8a879a15401",
-        // Name of the Transform for the media job
+
+        // [Required] The name of the Transform for the media job
         "transformName": "TestTransform"
     }
 Output:
     {
-        // Status name of the media job
+        // The status name of the media job
         "jobStatus": "Finished",
-        // Status of each task/output asset in the media job
+
+        // The status of each task/output asset in the media job
         "jobOutputStateList": [
             {
                 // Name of the Output Asset

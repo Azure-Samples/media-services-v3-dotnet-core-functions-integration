@@ -7,18 +7,21 @@
 ```c#
 Input:
     {
-        // Name of the asset
+        // [Required] The name of the asset
         "assetNamePrefix": "TestAssetName",
-        // (Optional) Name of attached storage account where to create the asset
+
+        // The name of attached storage account where to create the asset
         "assetStorageAccount":  "storage01"
     }
 Output:
     {
-        // Name of the asset created
+        // The name of the asset created
         "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-        // Id of the asset created
+
+        // The identifier of the asset created
         "assetId": "nb:cid:UUID:68adb036-43b7-45e6-81bd-8cf32013c810",
-        // Name of the destination container name for the asset created
+
+        // The name of the destination container name for the asset created
         "destinationContainer": "destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
     }
 
