@@ -13,6 +13,8 @@ using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
+using Newtonsoft.Json.Linq;
+
 
 namespace advanced_vod_functions_v3.SharedLibs
 {
@@ -26,6 +28,22 @@ namespace advanced_vod_functions_v3.SharedLibs
             {
                 SubscriptionId = config.SubscriptionId,
             };
+        }
+
+        public static JToken ConvertTypeInMediaServicesJson(string jsonString)
+        {
+            JToken token = JToken.Parse(jsonString);
+            foreach (JToken t in token.FindTokens("$type"))
+            {
+                JValue jval = (JValue)token.SelectToken(t.Path);
+                string[] typeInfo = ((string)jval.Value).Split(',');
+                string[] className = typeInfo[0].Split('.');
+                string val = "#" + "Microsoft.Media." + className[className.Length - 1];
+                JProperty jprop = (JProperty)t.Parent;
+                jprop.AddAfterSelf(new JProperty("@odata.type", val));
+                t.Parent.Remove();
+            }
+            return token;
         }
 
         private static async Task<ServiceClientCredentials> GetCredentialsAsync(MediaServicesConfigWrapper config)
@@ -100,5 +118,37 @@ namespace advanced_vod_functions_v3.SharedLibs
         // URLs
         public PublishStreamingUrls[] streamingUrls;
         public string[] downloadUrls;
+    }
+
+    public static class JsonExtensions
+    {
+        public static List<JToken> FindTokens(this JToken containerToken, string name)
+        {
+            List<JToken> matches = new List<JToken>();
+            FindTokens(containerToken, name, matches);
+            return matches;
+        }
+
+        private static void FindTokens(JToken containerToken, string name, List<JToken> matches)
+        {
+            if (containerToken.Type == JTokenType.Object)
+            {
+                foreach (JProperty child in containerToken.Children<JProperty>())
+                {
+                    if (child.Name == name)
+                    {
+                        matches.Add(child.Value);
+                    }
+                    FindTokens(child.Value, name, matches);
+                }
+            }
+            else if (containerToken.Type == JTokenType.Array)
+            {
+                foreach (JToken child in containerToken.Children())
+                {
+                    FindTokens(child, name, matches);
+                }
+            }
+        }
     }
 }
