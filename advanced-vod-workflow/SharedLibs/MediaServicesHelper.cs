@@ -30,22 +30,6 @@ namespace advanced_vod_functions_v3.SharedLibs
             };
         }
 
-        public static JToken ConvertTypeInMediaServicesJson(string jsonString)
-        {
-            JToken token = JToken.Parse(jsonString);
-            foreach (JToken t in token.FindTokens("$type"))
-            {
-                JValue jval = (JValue)token.SelectToken(t.Path);
-                string[] typeInfo = ((string)jval.Value).Split(',');
-                string[] className = typeInfo[0].Split('.');
-                string val = "#" + "Microsoft.Media." + className[className.Length - 1];
-                JProperty jprop = (JProperty)t.Parent;
-                jprop.AddAfterSelf(new JProperty("@odata.type", val));
-                t.Parent.Remove();
-            }
-            return token;
-        }
-
         private static async Task<ServiceClientCredentials> GetCredentialsAsync(MediaServicesConfigWrapper config)
         {
             // Use ApplicationTokenProvider.LoginSilentAsync to get a token using a service principal with symetric key
