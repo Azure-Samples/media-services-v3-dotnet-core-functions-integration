@@ -265,23 +265,15 @@ namespace advanced_vod_functions_v3.Functions
 
                 string jsonString = JsonConvert.SerializeObject(licenseTemplates, jsonWriter);
                 jToken = JToken.Parse(jsonString);
-
-                //var settings = new JsonSerializerSettings();
-                //settings.TypeNameHandling = TypeNameHandling.Auto;
-                //string jsonString = JsonConvert.SerializeObject(licenseTemplates, settings);
-                //jToken = MediaServicesHelper.ConvertTypeInMediaServicesJson(jsonString);
-
-                //jToken = MediaServicesHelper.ConvertTypeInMediaServicesJson(licenseTemplates);
-
             }
             catch (ApiErrorException e)
             {
-                log.LogInformation($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogError($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.LogInformation($"ERROR: Exception with message: {e.Message}");
+                log.LogError($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 
