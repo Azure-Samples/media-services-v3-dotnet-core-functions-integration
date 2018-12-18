@@ -28,11 +28,17 @@ Input:
         //  H264SingleBitrateSD, H264SingleBitrate720p, H264SingleBitrate1080p,
         //  AdaptiveStreaming, AACGoodQualityAudio,
         //  H264MultipleBitrate1080p, H264MultipleBitrate720p, H264MultipleBitrateSD,
-        //  AudioAnalyzer, VideoAnalyzer.
-        // In addition to the allowed values, you can also pass an url to a custom Standard Encoder preset JSON file.
+        //  AudioAnalyzer, VideoAnalyzer,
+        //  CustomPreset.
+        "preset": "AdaptiveStreaming",
+
+        //
+        // [mode = simple]
+        //
+        // The JSON representing a custom preset.
         // See https://docs.microsoft.com/rest/api/media/transforms/createorupdate#standardencoderpreset
         // for further details on the settings to use to build a custom preset.
-        "preset": "AdaptiveStreaming",
+        "customPresetJson": { ... },
 
         //
         // [mode = simple]
@@ -117,6 +123,7 @@ Output:
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -126,6 +133,8 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -139,9 +148,12 @@ namespace advanced_vod_functions_v3
     public static class CreateTransform
     {
         [FunctionName("CreateTransform")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
+        //public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
         {
-            log.Info($"AMS v3 Function - CreateTransform was triggered!");
+            log.LogInformation($"AMS v3 Function - CreateTransform was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -164,6 +176,8 @@ namespace advanced_vod_functions_v3
             if (mode == "simple" && data.preset == null)
                 return new BadRequestObjectResult("Please pass preset in the input object");
             string presetName = data.preset;
+            if (presetName == "CustomPreset" && data.customPresetJson == null)
+                return new BadRequestObjectResult("Please pass customPresetJson in the input object");
             //
             // Advanced Mode
             //
@@ -172,6 +186,11 @@ namespace advanced_vod_functions_v3
 
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             string transformId = null;
+
+            JsonConverter[] jsonReaders = {
+                new MediaServicesHelperJsonReader(),
+                new MediaServicesHelperTimeSpanJsonConverter()
+            };
 
             try
             {
@@ -184,6 +203,7 @@ namespace advanced_vod_functions_v3
                 if (transform == null)
                 {
                     TransformOutput[] outputs = null;
+                    List<TransformOutput> transformOutputs = new List<TransformOutput>();
                     if (mode == "simple")
                     {
                         Preset preset = null;
@@ -201,6 +221,10 @@ namespace advanced_vod_functions_v3
                         {
                             preset = new AudioAnalyzerPreset(audioLanguage);
                         }
+                        else if (presetName == "CustomPreset")
+                        {
+                            preset = JsonConvert.DeserializeObject<StandardEncoderPreset>(data.customPresetJson.ToString(), jsonReaders);
+                        }
                         else {
                             if (!EncoderNamedPresetList.ContainsKey(presetName))
                                 return new BadRequestObjectResult("Preset not found");
@@ -212,15 +236,12 @@ namespace advanced_vod_functions_v3
                         Priority relativePriority = Priority.Normal;
                         if (data.relativePriority != null && PriorityList.ContainsKey(data.relativePriority))
                             relativePriority = PriorityList[data.relativePriority];
-                        outputs[0] = new TransformOutput(preset, onError, relativePriority);
+                        transformOutputs.Add(new TransformOutput(preset, onError, relativePriority));
+                        outputs = transformOutputs.ToArray();
                     }
                     else if (mode == "advanced")
                     {
-                        JsonConverter[] jsonConverters = {
-                            new MediaServicesHelperJsonReader(),
-                            new MediaServicesHelperTimeSpanJsonConverter()
-                        };
-                        List<TransformOutput> transformOutputList = JsonConvert.DeserializeObject<List<TransformOutput>>(data.transformOutputs.ToString(), jsonConverters);
+                        List<TransformOutput> transformOutputList = JsonConvert.DeserializeObject<List<TransformOutput>>(data.transformOutputs.ToString(), jsonReaders);
                         outputs = transformOutputList.ToArray();
                     }
                     else
@@ -235,12 +256,12 @@ namespace advanced_vod_functions_v3
             }
             catch (ApiErrorException e)
             {
-                log.Info($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogInformation($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.Info($"ERROR: Exception with message: {e.Message}");
+                log.LogInformation($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 
