@@ -151,7 +151,6 @@ namespace advanced_vod_functions_v3
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
-        //public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
         {
             log.LogInformation($"AMS v3 Function - CreateTransform was triggered!");
 
@@ -256,12 +255,12 @@ namespace advanced_vod_functions_v3
             }
             catch (ApiErrorException e)
             {
-                log.LogInformation($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogError($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.LogInformation($"ERROR: Exception with message: {e.Message}");
+                log.LogError($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 

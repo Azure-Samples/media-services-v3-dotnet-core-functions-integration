@@ -50,7 +50,7 @@ Output:
 
 using System;
 using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -60,6 +60,8 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -72,9 +74,11 @@ namespace advanced_vod_functions_v3
     public static class GetAssetUrls
     {
         [FunctionName("GetAssetUrls")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
-            log.Info($"AMS v3 Function - GetAssetUrls was triggered!");
+            log.LogInformation($"AMS v3 Function - GetAssetUrls was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -134,12 +138,12 @@ namespace advanced_vod_functions_v3
             }
             catch (ApiErrorException e)
             {
-                log.Info($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogInformation($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.Info($"ERROR: Exception with message: {e.Message}");
+                log.LogInformation($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 
