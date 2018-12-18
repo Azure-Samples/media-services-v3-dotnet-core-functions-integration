@@ -12,7 +12,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 
 
-namespace advanced_vod_functions_v3.SharedLibs
+namespace advanced_vod_functions_v3.SharedLibs.amsv2
 {
     public class MESPresetSchema
     {
