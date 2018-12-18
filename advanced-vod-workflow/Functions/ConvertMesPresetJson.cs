@@ -31,8 +31,10 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using advanced_vod_functions_v3.SharedLibs;
+using advanced_vod_functions_v3.SharedLibs.amsv2;
 
 
 namespace advanced_vod_functions_v3.Functions
@@ -53,6 +55,7 @@ namespace advanced_vod_functions_v3.Functions
 
 			//MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
 			string presetString = null;
+            JToken jt = null;
 
 			try
 			{
@@ -62,6 +65,7 @@ namespace advanced_vod_functions_v3.Functions
 				StandardEncoderPreset v3preset = MediaServicesHelperMES.convertMESPreset(v2preset);
 				JsonConverter[] v3JsonConverters = { new MediaServicesHelperJsonWriter(), new MediaServicesHelperTimeSpanJsonConverter() };
 				presetString = JsonConvert.SerializeObject(v3preset, v3JsonConverters);
+                jt = JToken.Parse(presetString);
 
 			}
 			catch (ApiErrorException e)
@@ -77,7 +81,7 @@ namespace advanced_vod_functions_v3.Functions
 
 			return (ActionResult)new OkObjectResult(new
 			{
-				preset = presetString
+				preset = jt
 			});
 		}
 	}
