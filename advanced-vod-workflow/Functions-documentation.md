@@ -13,6 +13,7 @@ This Functions example is based on AMS REST API v3 and pre-compiled functions.
 
 - [CreateContentKeyPolicy](#createcontentkeypolicy)
 - [CreateEmptyAsset](#createemptyasset)
+- [CreatePlayReadyLicenseTemplate](#createplayreadylicensetemplate)
 - [CreateStreamingPolicy](#createstreamingpolicy)
 - [CreateTransform](#createtransform)
 - [GetAssetUrls](#getasseturls)
@@ -102,8 +103,8 @@ Input:
         // The rental duration. Must be greater than or equal to 0.
         "faiPlayRentalDuration": 0,
         // PlayReady:
-        // JSON PlayReady license template.
-        "playReadyTemplate": {},
+        // The JSON representing the list of PlayReady license template.
+        "playReadyTemplates": [ { ... } ],
         // The string data of PlayReady response custom data.
         "playReadyResponseCustomData": "xxx",
         // Widevine:
@@ -175,6 +176,112 @@ Output:
 
 [Back to List](#functions-list)
 
+## CreatePlayReadyLicenseTemplate
+
+This function creates a PlayReady License Template JSON data.
+
+```c#
+Input:
+    {
+        // A flag indicating whether test devices can use the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "allowTestDevices": false,
+
+        // The license type.
+        // Allowed values: 'NonPersistent', 'Persistent'.
+        // Default value: 'NonPersistent'.
+        "licenseType": "NonPersistent",
+
+        // The content key location.
+        // Allowed values: 'ContentEncryptionKeyFromHeader', 'ContentEncryptionKeyFromKeyIdentifier'.
+        // Default value: 'ContentEncryptionKeyFromHeader'.
+        "contentKeyLocation": "ContentEncryptionKeyFromHeader",
+
+        // The PlayReady content type.
+        // Allowed values: 'Unspecified', 'UltraVioletDownload', 'UltraVioletStreaming'.
+        // Default value: 'Unspecified'
+        "contentType": "UltraVioletStreaming",
+
+        // The begin date (Y-m-d'T'H:M:S'Z') of license
+        "beginDate": "2018-01-01T00:00Z",
+
+        // The expiration date (Y-m-d'T'H:M:S'Z') of license.
+        "expirationDate": "2018-12-31T23:59Z",
+
+        // The relative begin date of license.
+        "relativeBeginDate": "PT10H",
+
+        // The relative expiration date of license.
+        "relativeExpirationDate": "P30D",
+
+        // The grace period of license.
+        "gracePeriod": "PT5S",
+
+        // PlayRight
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "digitalVideoOnlyContentRestriction": false,
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "imageConstraintForAnalogComponentVideoRestriction": false,
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "imageConstraintForAnalogComputerMonitorRestriction": false,
+        // Configures Unknown output handling settings of the license.
+        // Allowed values: 'NotAllowed', 'Allowed', 'AllowedWithVideoConstriction'.
+        // Default value: 'NotAllowed'.
+        "allowPassingVideoContentToUnknownOutput": "NotAllowed",
+        // The amount of time that the license is valid after the license is first used to play content.
+        "firstPlayExpiration": "PT60M",
+        // Configures the Serial Copy Management System (SCMS) in the license.
+        // Must be between 0 and 3 inclusive.
+        "scmsRestriction": 0,
+        // Configures Automatic Gain Control (AGC) and Color Stripe in the license.
+        // Must be between 0 and 3 inclusive.
+        "agcAndColorStripeRestriction": 0,
+        // Configures the Explicit Analog Television Output Restriction in the license.
+        // Configuration data must be between 0 and 3 inclusive.
+        "explicitAnalogTelevisionOutputRestriction": 0,
+        // Configures the Explicit Analog Television Output Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "explicitAnalogTelevisionOutputRestrictionBestEffort": false,
+
+        // Output Protection Level
+        // Please see the document: https://docs.microsoft.com/en-us/playready/overview/output-protection-levels
+        // Specifies the output protection level for uncompressed digital video.
+        // Allowed Values: 100, 250, 270, 300.
+        "uncompressedDigitalVideoOpl": 100,
+        // Specifies the output protection level for compressed digital video.
+        // Allowed Values: 400, 500.
+        "compressedDigitalVideoOpl": 400,
+        // Specifies the output protection level for compressed digital audio.
+        // Allowed Values: 100, 150, 200.
+        "analogVideoOpl": 100,
+        // Specifies the output protection level for compressed digital audio.
+        // Allowed Values: 100, 150, 200, 250, 300.
+        "compressedDigitalAudioOpl": 100,
+        // Specifies the output protection level for uncompressed digital audio.
+        // Allowed Values: 100, 150, 200, 250, 300.
+        "uncompressedDigitalAudioOpl": 100,
+
+        // PlayReady License Template JSONs
+        "playReadyLicenses": [ { ... } ]
+    }
+Output:
+    {
+        // The JSON string of PlayReady License Templates.
+        "playReadyLicenses": [ { ... }, { ... } ]
+    }
+
+```
+
+[Back to List](#functions-list)
+
 ## CreateStreamingPolicy
 
 This function creates a new transform.
@@ -193,10 +300,16 @@ Input:
         // Default Content Key used by current streaming policy.
         "defaultContentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
 
+        //
+        // [mode = simple]
+        //
         // Semi-colon-separated list of enabled protocols for NoEncryption.
         // Allowed values: Download, Dash, HLS, SmoothStreaming.
         "noEncryptionProtocols": "Dash;HLS;SmoothStreaming"
 
+        //
+        // [mode = simple]
+        //
         //
         // Common Encryption CBCS Arguments
         //
@@ -231,6 +344,9 @@ Input:
         "cbcsProtocols": "Dash;HLS;SmoothStreaming",
 
         //
+        // [mode = simple]
+        //
+        //
         // Common Encryption CENC Arguments
         //
         // The JSON representing which tracks should not be encrypted.
@@ -258,6 +374,9 @@ Input:
         "cencProtocols": "Dash;HLS;SmoothStreaming",
 
         //
+        // [mode = simple]
+        //
+        //
         // Envelope Encryption Arguments
         //
         // The JSON representing which tracks should not be encrypted.
@@ -278,6 +397,9 @@ Input:
         // Allowed values: Dash, HLS, SmoothStreaming.
         "envelopeProtocols": "Dash;HLS;SmoothStreaming",
 
+        //
+        // [mode = advanced]
+        //
         // Streaming Configuration option of Common Encryption CBCS
         "jsonCommonEncryptionCbcs": {
             "enabledProtocols": {
@@ -361,11 +483,17 @@ Input:
         //  H264SingleBitrateSD, H264SingleBitrate720p, H264SingleBitrate1080p,
         //  AdaptiveStreaming, AACGoodQualityAudio,
         //  H264MultipleBitrate1080p, H264MultipleBitrate720p, H264MultipleBitrateSD,
-        //  AudioAnalyzer, VideoAnalyzer.
-        // In addition to the allowed values, you can also pass an url to a custom Standard Encoder preset JSON file.
+        //  AudioAnalyzer, VideoAnalyzer,
+        //  CustomPreset.
+        "preset": "AdaptiveStreaming",
+
+        //
+        // [mode = simple]
+        //
+        // The JSON representing a custom preset.
         // See https://docs.microsoft.com/rest/api/media/transforms/createorupdate#standardencoderpreset
         // for further details on the settings to use to build a custom preset.
-        "preset": "AdaptiveStreaming",
+        "customPresetJson": { ... },
 
         //
         // [mode = simple]
