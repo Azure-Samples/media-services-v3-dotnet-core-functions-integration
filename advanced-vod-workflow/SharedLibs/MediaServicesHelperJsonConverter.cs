@@ -17,7 +17,7 @@ using Newtonsoft.Json.Linq;
 
 namespace advanced_vod_functions_v3.SharedLibs
 {
-    public class MediaServicesHelperJsonConverter : JsonConverter
+    abstract public class MediaServicesHelperJsonConverter : JsonConverter
     {
         protected static List<JsonObjectConversionRule> conversions = new List<JsonObjectConversionRule>
         {
@@ -68,6 +68,7 @@ namespace advanced_vod_functions_v3.SharedLibs
                     { "#Microsoft.Media.ContentKeyPolicyX509CertificateTokenKey", typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyX509CertificateTokenKey) }
                 }
             },
+            // ContentKeyPolicyPlayReadyContentKeyLocation
             new JsonObjectConversionRule
             {
                 t = typeof(Microsoft.Azure.Management.Media.Models.ContentKeyPolicyPlayReadyContentKeyLocation),
@@ -100,6 +101,15 @@ namespace advanced_vod_functions_v3.SharedLibs
                     { "#Microsoft.Media.JobInputs", typeof(Microsoft.Azure.Management.Media.Models.JobInputs) }
                 }
             },
+            // JobOutput
+            new JsonObjectConversionRule
+            {
+                t = typeof(Microsoft.Azure.Management.Media.Models.JobOutput),
+                rules = new Dictionary<string, Type>()
+                {
+                    { "#Microsoft.Media.JobOutputAsset ", typeof(Microsoft.Azure.Management.Media.Models.JobOutputAsset) }
+                }
+            },
             // Layer
             new JsonObjectConversionRule
             {
@@ -109,6 +119,16 @@ namespace advanced_vod_functions_v3.SharedLibs
                     { "#Microsoft.Media.H264Layer ", typeof(Microsoft.Azure.Management.Media.Models.H264Layer) },
                     { "#Microsoft.Media.JpgLayer", typeof(Microsoft.Azure.Management.Media.Models.JpgLayer) },
                     { "#Microsoft.Media.PngLayer", typeof(Microsoft.Azure.Management.Media.Models.PngLayer) }
+                }
+            },
+            // Overlay
+            new JsonObjectConversionRule
+            {
+                t = typeof(Microsoft.Azure.Management.Media.Models.Overlay),
+                rules = new Dictionary<string, Type>()
+                {
+                    { "#Microsoft.Media.AudioOverlay", typeof(Microsoft.Azure.Management.Media.Models.AudioOverlay) },
+                    { "#Microsoft.Media.VideoOverlay", typeof(Microsoft.Azure.Management.Media.Models.VideoOverlay) }
                 }
             },
             // Preset
