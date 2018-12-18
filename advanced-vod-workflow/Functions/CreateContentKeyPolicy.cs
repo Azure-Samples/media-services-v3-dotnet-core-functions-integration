@@ -80,7 +80,7 @@ Input:
         // The rental duration. Must be greater than or equal to 0.
         "faiPlayRentalDuration": 0,
         // PlayReady:
-        // JSON data: the list of PlayReady license template.
+        // The JSON representing the list of PlayReady license template.
         "playReadyTemplates": [ { ... } ],
         // The string data of PlayReady response custom data.
         "playReadyResponseCustomData": "xxx",
