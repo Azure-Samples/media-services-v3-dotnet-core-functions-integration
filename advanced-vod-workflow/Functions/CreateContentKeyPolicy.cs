@@ -80,8 +80,8 @@ Input:
         // The rental duration. Must be greater than or equal to 0.
         "faiPlayRentalDuration": 0,
         // PlayReady:
-        // JSON PlayReady license template.
-        "playReadyTemplate": {},
+        // JSON data: the list of PlayReady license template.
+        "playReadyTemplates": [ { ... } ],
         // The string data of PlayReady response custom data.
         "playReadyResponseCustomData": "xxx",
         // Widevine:
@@ -197,6 +197,11 @@ namespace advanced_vod_functions_v3
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             ContentKeyPolicy policy = null;
 
+            JsonConverter[] jsonReaders = {
+                new MediaServicesHelperJsonReader(),
+                new MediaServicesHelperTimeSpanJsonConverter()
+            };
+
             try
             {
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
@@ -205,10 +210,6 @@ namespace advanced_vod_functions_v3
 
                 if (policy == null)
                 {
-                    JsonConverter[] jsonConverters = {
-                        new MediaServicesHelperJsonConverter(),
-                        new MediaServicesHelperTimeSpanJsonConverter()
-                    };
                     List<ContentKeyPolicyOption> options = new List<ContentKeyPolicyOption>();
 
                     if (mode == "simple")
@@ -295,12 +296,12 @@ namespace advanced_vod_functions_v3
                                 break;
                             case "PlayReady":
                                 ContentKeyPolicyPlayReadyConfiguration configPlayReady = new ContentKeyPolicyPlayReadyConfiguration();
-                                configPlayReady.Licenses = JsonConvert.DeserializeObject<ContentKeyPolicyPlayReadyLicense>(data.PlayReadyTemplate.ToString(), jsonConverters);
+                                configPlayReady.Licenses = JsonConvert.DeserializeObject<List<ContentKeyPolicyPlayReadyLicense>>(data.playReadyTemplates.ToString(), jsonReaders);
                                 if (data.playReadyResponseCustomData != null) configPlayReady.ResponseCustomData = data.playReadyResponseCustomData;
                                 option.Configuration = configPlayReady;
                                 break;
                             case "Widevine":
-                                ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonConverters);
+                                ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonReaders);
                                 option.Configuration = configWideVine;
                                 break;
                             default:
@@ -310,7 +311,7 @@ namespace advanced_vod_functions_v3
                     }
                     else if (mode == "advanced")
                     {
-                        options = JsonConvert.DeserializeObject<List<ContentKeyPolicyOption>>(data.contentKeyPolicyOptions.ToString(), jsonConverters);
+                        options = JsonConvert.DeserializeObject<List<ContentKeyPolicyOption>>(data.contentKeyPolicyOptions.ToString(), jsonReaders);
                     }
 
                     foreach (ContentKeyPolicyOption o in options)
