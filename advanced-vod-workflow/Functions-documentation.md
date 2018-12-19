@@ -16,6 +16,7 @@ This Functions example is based on AMS REST API v3 and pre-compiled functions.
 - [CreatePlayReadyLicenseTemplate](#createplayreadylicensetemplate)
 - [CreateStreamingPolicy](#createstreamingpolicy)
 - [CreateTransform](#createtransform)
+- [CreateWidevineLicenseTemplate](#createwidevinelicensetemplate)
 - [GetAssetUrls](#getasseturls)
 - [MonitorBlobContainerCopyStatus](#monitorblobcontainercopystatus)
 - [MonitorMediaJob](#monitormediajob)
@@ -568,6 +569,104 @@ Output:
 
         // The resource identifier of the created Transform
         "transformId": "/subscriptions/694d5930-8ee4-4e50-917b-9dcfeceb6179/resourceGroups/AMSdemo/providers/Microsoft.Media/mediaservices/amsdemojapaneast/transforms/TestTransform"
+    }
+
+```
+
+[Back to List](#functions-list)
+
+## CreateWidevineLicenseTemplate
+
+This function creates a Widevine License Template JSON data.
+
+```c#
+Input:
+    {
+        // Controls which content keys should be included in a license.
+        // Allowed values:
+        //      SD_ONLY - returns SD and AUDIO keys only
+        //      SD_HD - returns SD, HD and AUDIO keys only
+        //      SD_UHD1 - returns SD, HD, UHD1 and AUDIO keys
+        //      SD_UHD2 - returns SD, HD, UHD1, UHD2 and AUDIO keys (all)
+        "allowedTrackTypes": "SD_HD",
+
+        // A finer grained control on what content keys to return.
+        // Semi-colon-separated triplet string presentation (TrackType:SecurityLevel:HDCP) is required.
+        // See Content Key Spec in the reference for details.
+        "contentKeySpecs": "SD:1:HDCP_NONE;HD:1:HDCP_V2",
+
+        // Policy Overrides
+        // Policies settings for this license.
+        // In the event this asset has a predefined policy, these specified values will be used.
+
+        // Indicates that playback of the content is allowed.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canPlay": false,
+
+        // Indicates that the license may be persisted to non-volatile storage for offline use.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canPersist": false,
+
+        // Indicates that renewal of this license is allowed.
+        // If true, the duration of the license can be extended by heartbeat.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canRenew": false,
+
+        // Indicates the time window for this specific license.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "licenseDurationSeconds": 0,
+
+        // Indicates the time window while playback is permitted.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "rentalDurationSeconds": 0,
+
+        // The viewing window of time once playback starts within the license duration.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "playbackDurationSeconds": 0,
+
+        // All heartbeat (renewal) requests for this license shall be directed to the specified URL.
+        // This field is only used if canRenew is true.
+        "renewalServerUrl": null,
+
+        // How many seconds after license_start_time, before renewal is first attempted.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalDelaySeconds": 0,
+
+        // Specifies the delay in seconds between subsequent license renewal requests, in case of failure.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalRetryIntervalSeconds": 0,
+
+        // The window of time, in which playback is allowed to continue while renewal is attempted,
+        // yet unsuccessful due to backend problems with the license server.
+        // A value of 0 indicates unlimited.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalRecoveryDurationSeconds": 0,
+
+        // Indicates that the license shall be sent for renewal when usage is started.
+        // This field is only used if canRenew is true.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "renewWithUsage": false,
+
+        // Indicates to client that license renewal and release requests must include client identification (client_id).
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "alwaysIncludeClientId": false
+    }
+Output:
+    {
+        // The JSON string of Widevine License Template.
+        "widevineLicenses": { ... }
+
     }
 
 ```
