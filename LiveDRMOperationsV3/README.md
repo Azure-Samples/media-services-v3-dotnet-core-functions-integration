@@ -86,7 +86,8 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
     "IrdetoFairPlayLAURL": "value",
-    "CosmosDBAccountEndpoint": "value", /* optional but needed for Cosmos support */
+    "LiveIngestAccessToken" : "value", // optional but needed if you want always the same live ingest URL
+    "CosmosDBAccountEndpoint": "value", // optional but needed for Cosmos support */
     "CosmosDBAccountKey": "value", // optional but needed for Cosmos support
     "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
     "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
@@ -98,6 +99,7 @@ local.settings.json will look like (please replace 'value' with the correct data
 
 ### 5. Optional : deploy a Cosmos Database
 This database is used to read the settings when creating a live event. It is also used to store all the information about the live event and output created.
+Database and collections are automatically created by the code if Cosmos fields are set in app settings. Collections use a partition key named "/partitionKey" and value is always "live".
 
 Example of settings in Cosmos for a live event :
 ```json
@@ -122,7 +124,8 @@ Example of settings in Cosmos for a live event :
       {"StreamingEndpointName":"verizon", "Percentage":"50"},
       {"StreamingEndpointName":"akamai", "Percentage":"50"}
     ],
-    "id": "TESTLIVEEVENT"
+    "id": "testliveevent",
+    "partitionKey": "live"
 }
 ```
 
@@ -136,7 +139,8 @@ Example of information in Cosmos for a live event :
       "region": "West Europe",
       "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
       "lowLatency": false,
-      "id": "customerssrlivedeveuwe:CH1",
+      "id": "customerssrlivedeveuwe:ch1",
+      "partitionKey": "live",
       "input": [
         {
           "protocol": "FragmentedMP4",

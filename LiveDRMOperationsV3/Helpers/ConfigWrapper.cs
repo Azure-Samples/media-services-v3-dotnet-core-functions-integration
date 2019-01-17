@@ -27,11 +27,11 @@ namespace LiveDrmOperationsV3.Helpers
 
         public string AadSecret => _config["AadSecret"];
 
-        public Uri ArmAadAudience => new Uri(_config["ArmAadAudience"]);
+        public Uri ArmAadAudience => _config["ArmAadAudience"] != null ? new Uri(_config["ArmAadAudience"]) : null;
 
-        public Uri AadEndpoint => new Uri(_config["AadEndpoint"]);
+        public Uri AadEndpoint => _config["AadEndpoint"] != null ? new Uri(_config["AadEndpoint"]) : null;
 
-        public Uri ArmEndpoint => new Uri(_config["ArmEndpoint"]);
+        public Uri ArmEndpoint => _config["ArmEndpoint"] != null ? new Uri(_config["ArmEndpoint"]) : null;
 
         public string Region
         {
@@ -74,5 +74,6 @@ namespace LiveDrmOperationsV3.Helpers
         public string IrdetoFairPlayLAURL => _config["IrdetoFairPlayLAURL"];
 
         public string IrdetoFairPlayCertificateUrl => _config["IrdetoFairPlayCertificateUrl"];
+
     }
 }

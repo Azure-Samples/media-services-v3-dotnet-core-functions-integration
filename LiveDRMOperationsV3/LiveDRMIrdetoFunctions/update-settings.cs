@@ -35,8 +35,6 @@ Output:
 
 ```
 */
-//
-//
 
 using System;
 using System.IO;
@@ -66,8 +64,10 @@ namespace LiveDrmOperationsV3
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
+            bool success = true;
+
             var requestBody = new StreamReader(req.Body).ReadToEnd();
-            // dynamic data = JsonConvert.DeserializeObject(requestBody);
+                        
             LiveEventSettingsInfo settings = null;
             try
             {
@@ -100,7 +100,10 @@ namespace LiveDrmOperationsV3
             try
             {
                 if (!await CosmosHelpers.CreateOrUpdateSettingsDocument(settings))
-                    log.LogWarning("Cosmos access not configured.");
+                {
+                    log.LogWarning("Cosmos access not configured or error.");
+                    success = false;
+                }
             }
             catch (Exception ex)
             {
@@ -109,7 +112,7 @@ namespace LiveDrmOperationsV3
 
             var response = new JObject
             {
-                {"Success", true},
+                {"Success", success},
                 {
                     "OperationsVersion",
                     AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString()

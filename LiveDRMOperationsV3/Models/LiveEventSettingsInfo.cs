@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using LiveDrmOperationsV3.Helpers;
+using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3.Models
@@ -46,7 +50,7 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("resourceListOrder")] public ResourceListOrder ResourceListOrder { get; set; }
     }
 
-    public class LiveEventSettingsInfo
+    public class LiveEventSettingsInfo : BaseModel
     {
         public LiveEventSettingsInfo()
         {
@@ -86,7 +90,7 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("playerJSONData")] public PlayerJSONData PlayerJSONData { get; set; }
 
         [JsonProperty("redirectorStreamingEndpointData")] public List<RedirectorStreamingEndpointData> RedirectorStreamingEndpointData { get; set; }
-                
-        [JsonProperty(PropertyName = "id")] public string Id => LiveEventName;
+
+        [JsonProperty(PropertyName = "id")] public string Id => LiveEventName.ToLower();
     }
 }

@@ -160,8 +160,7 @@ with some live events:
 
 ```
 */
-//
-//
+
 
 using System;
 using System.Collections.Generic;
@@ -190,8 +189,15 @@ namespace LiveDrmOperationsV3
         {
             MediaServicesHelpers.LogInformation(log, "C# HTTP trigger function processed a request.");
 
-            var requestBody = new StreamReader(req.Body).ReadToEnd();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            dynamic data;
+            try
+            {
+                data = JsonConvert.DeserializeObject(new StreamReader(req.Body).ReadToEnd());
+            }
+            catch (Exception ex)
+            {
+                return IrdetoHelpers.ReturnErrorException(log, ex);
+            }
 
             ConfigWrapper config = null;
             var generalOutputInfos = new List<GeneralOutputInfo>();
@@ -222,7 +228,6 @@ namespace LiveDrmOperationsV3
                 {
                     return IrdetoHelpers.ReturnErrorException(log, ex);
                 }
-
                 MediaServicesHelpers.LogInformation(log, "config loaded.", region);
                 MediaServicesHelpers.LogInformation(log, "connecting to AMS account : " + config.AccountName, region);
 

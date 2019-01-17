@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
+using LiveDrmOperationsV3.Helpers;
+using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Management.Media.Models;
 using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3.Models
 {
-    
+
     public class Drm
     {
         [JsonProperty("type")] public string Type { get; set; }
@@ -54,7 +56,7 @@ namespace LiveDrmOperationsV3.Models
         [JsonProperty("streamingLocators")] public List<StreamingLocatorEntry> StreamingLocators { get; set; }
     }
 
-    public class LiveEventEntry
+    public class LiveEventEntry : BaseModel
     {
         [JsonProperty("liveEventName")] public string LiveEventName { get; set; }
 
@@ -70,8 +72,7 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty(PropertyName = "lowLatency")] public bool? LowLatency { get; set; }
 
-        [JsonProperty(PropertyName = "id")] public string Id => AMSAccountName + ":" + LiveEventName;
-
+        [JsonProperty(PropertyName = "id")] public string Id => (AMSAccountName + ":" + LiveEventName).ToLower();
 
         [JsonProperty("input")] public List<UrlEntry> Input { get; set; }
 

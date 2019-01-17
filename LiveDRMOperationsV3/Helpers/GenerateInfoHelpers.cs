@@ -35,7 +35,7 @@ namespace LiveDrmOperationsV3.Helpers
 
 
                 // output info
-                var liveEventInfo = new LiveEventEntry
+                var liveEventInfo = new LiveEventEntry()
                 {
                     LiveEventName = liveEvent.Name,
                     ResourceState = liveEvent.ResourceState.ToString(),

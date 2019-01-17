@@ -12,7 +12,7 @@ Input :
     "inputProtocol" : "FragmentedMP4" or "RTMP",  // value is optional. Default is FragmentedMP4
     "vanityUrl" : true, // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
     "archiveWindowLength" : 20,  // value in minutes, optional. Default is 10 (minutes)
-    "liveEventAutoStart": False,  // optional. Default is True
+    "liveEventAutoStart": false,  // optional. Default is True
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
             // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
@@ -135,8 +135,6 @@ Output:
 }
 ```
 */
-//
-//
 
 using System;
 using System.Collections.Generic;
@@ -169,8 +167,16 @@ namespace LiveDrmOperationsV3
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            var requestBody = new StreamReader(req.Body).ReadToEnd();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            dynamic data;
+            try
+            {
+                data = JsonConvert.DeserializeObject(new StreamReader(req.Body).ReadToEnd());
+            }
+            catch (Exception ex)
+            {
+                return IrdetoHelpers.ReturnErrorException(log, ex);
+            }
+
 
             var generalOutputInfos = new List<GeneralOutputInfo>();
 
@@ -179,7 +185,7 @@ namespace LiveDrmOperationsV3
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass liveEventName in the JSON");
 
             // default settings
-            var eventInfoFromCosmos = new LiveEventSettingsInfo
+            var eventInfoFromCosmos = new LiveEventSettingsInfo()
             {
                 LiveEventName = liveEventName
             };
