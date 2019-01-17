@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 
-namespace advanced_vod_functions_v3.SharedLibs
+namespace advanced_vod_functions_v3.SharedLibs.amsv2
 {
     public class MediaServicesHelperMES
     {
@@ -38,7 +38,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             }
             return v3preset;
         }
-        public static Microsoft.Azure.Management.Media.Models.Codec convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.Encoding s)
+        public static Microsoft.Azure.Management.Media.Models.Codec convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.Encoding s)
         {
             Type t = s.GetType();
 
@@ -53,7 +53,7 @@ namespace advanced_vod_functions_v3.SharedLibs
                     throw new NotSupportedException($"MES Encoding Class {t.Name} is not supported");
             }
         }
-        public static Microsoft.Azure.Management.Media.Models.AacAudio convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.AACAudio s)
+        public static Microsoft.Azure.Management.Media.Models.AacAudio convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.AACAudio s)
         {
             Microsoft.Azure.Management.Media.Models.AacAudio d = new Microsoft.Azure.Management.Media.Models.AacAudio();
             d.Bitrate = s.Bitrate * 1000;
@@ -63,7 +63,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.SamplingRate = s.SamplingRate;
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.H264Video convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.H264Video s)
+        public static Microsoft.Azure.Management.Media.Models.H264Video convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.H264Video s)
         {
             Microsoft.Azure.Management.Media.Models.H264Video d = new Microsoft.Azure.Management.Media.Models.H264Video();
             d.Complexity = (Microsoft.Azure.Management.Media.Models.H264Complexity)convertMediaModelsField(typeof(Microsoft.Azure.Management.Media.Models.H264Complexity), s.Complexity);
@@ -82,7 +82,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             }
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.JpgImage convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.JpgImage s)
+        public static Microsoft.Azure.Management.Media.Models.JpgImage convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.JpgImage s)
         {
             Microsoft.Azure.Management.Media.Models.JpgImage d = new Microsoft.Azure.Management.Media.Models.JpgImage();
             d.KeyFrameInterval = s.KeyFrameInterval;
@@ -102,7 +102,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             }
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.PngImage convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.PngImage s)
+        public static Microsoft.Azure.Management.Media.Models.PngImage convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.PngImage s)
         {
             Microsoft.Azure.Management.Media.Models.PngImage d = new Microsoft.Azure.Management.Media.Models.PngImage();
             d.KeyFrameInterval = s.KeyFrameInterval;
@@ -122,7 +122,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             }
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.H264Layer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.H264Layer s)
+        public static Microsoft.Azure.Management.Media.Models.H264Layer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.H264Layer s)
         {
             Microsoft.Azure.Management.Media.Models.H264Layer d = new Microsoft.Azure.Management.Media.Models.H264Layer();
             d.AdaptiveBFrame = s.AdaptiveBFrame;
@@ -141,7 +141,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Width = s.Width;
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.JpgLayer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.JpgLayer s)
+        public static Microsoft.Azure.Management.Media.Models.JpgLayer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.JpgLayer s)
         {
             Microsoft.Azure.Management.Media.Models.JpgLayer d = new Microsoft.Azure.Management.Media.Models.JpgLayer();
             d.Height = s.Height;
@@ -150,7 +150,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Width = s.Width;
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.PngLayer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.PngLayer s)
+        public static Microsoft.Azure.Management.Media.Models.PngLayer convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.PngLayer s)
         {
             Microsoft.Azure.Management.Media.Models.PngLayer d = new Microsoft.Azure.Management.Media.Models.PngLayer();
             d.Height = s.Height;
@@ -158,7 +158,7 @@ namespace advanced_vod_functions_v3.SharedLibs
             d.Width = s.Width;
             return d;
         }
-        public static Microsoft.Azure.Management.Media.Models.Format convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.Output s)
+        public static Microsoft.Azure.Management.Media.Models.Format convertMesPresetObeject(advanced_vod_functions_v3.SharedLibs.amsv2.Output s)
         {
             Microsoft.Azure.Management.Media.Models.Format d = null;
             switch (s.Format.Type)

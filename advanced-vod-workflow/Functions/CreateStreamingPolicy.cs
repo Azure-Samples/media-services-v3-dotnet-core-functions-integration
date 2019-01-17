@@ -177,6 +177,7 @@ Output:
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -186,6 +187,8 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -198,9 +201,11 @@ namespace advanced_vod_functions_v3
     public static class CreateStreamingPolicy
     {
         [FunctionName("CreateStreamingPolicy")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
-            log.Info($"AMS v3 Function - CreateStreamingPolicy was triggered!");
+            log.LogInformation($"AMS v3 Function - CreateStreamingPolicy was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -241,6 +246,11 @@ namespace advanced_vod_functions_v3
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             StreamingPolicy policy = null;
 
+            JsonConverter[] jsonReaders = {
+                new MediaServicesHelperJsonReader(),
+                new MediaServicesHelperTimeSpanJsonConverter()
+            };
+
             try
             {
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
@@ -248,10 +258,6 @@ namespace advanced_vod_functions_v3
                 policy = client.StreamingPolicies.Get(amsconfig.ResourceGroup, amsconfig.AccountName, streamingPolicyName);
                 if (policy == null)
                 {
-                    JsonConverter[] jsonConverters = {
-                        new MediaServicesHelperJsonConverter(),
-                        new MediaServicesHelperTimeSpanJsonConverter()
-                    };
                     StreamingPolicy parameters = new StreamingPolicy();
                     parameters.DefaultContentKeyPolicyName = defaultContentKeyPolicyName;
 
@@ -270,14 +276,14 @@ namespace advanced_vod_functions_v3
                         // Common Encryption CBCS Argument
                         if (data.cbcsClearTracks != null)
                         {
-                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.cbcsClearTracks.ToString(), jsonConverters);
+                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.cbcsClearTracks.ToString(), jsonReaders);
                             parameters.CommonEncryptionCbcs.ClearTracks = tracks;
                         }
                         if (data.cbcsDefaultKeyLabel != null) parameters.CommonEncryptionCbcs.ContentKeys.DefaultKey.Label = data.cbcsDefaultKeyLabel;
                         if (data.cbcsDefaultKeyPolicyName != null) parameters.CommonEncryptionCbcs.ContentKeys.DefaultKey.PolicyName = data.cbcsDefaultKeyPolicyName;
                         if (data.cbcsClearTracks != null)
                         {
-                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.cbcsKeyToTrackMappings.ToString(), jsonConverters);
+                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.cbcsKeyToTrackMappings.ToString(), jsonReaders);
                             parameters.CommonEncryptionCbcs.ContentKeys.KeyToTrackMappings = mappings;
                         }
                         if (data.cbcsFairPlayTemplate != null)
@@ -302,14 +308,14 @@ namespace advanced_vod_functions_v3
                         // Common Encryption CENC Argument
                         if (data.cencClearTracks != null)
                         {
-                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.cencClearTracks.ToString(), jsonConverters);
+                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.cencClearTracks.ToString(), jsonReaders);
                             parameters.CommonEncryptionCenc.ClearTracks = tracks;
                         }
                         if (data.cencDefaultKeyLabel != null) parameters.CommonEncryptionCenc.ContentKeys.DefaultKey.Label = data.cencDefaultKeyLabel;
                         if (data.cencDefaultKeyPolicyName != null) parameters.CommonEncryptionCenc.ContentKeys.DefaultKey.PolicyName = data.cencDefaultKeyPolicyName;
                         if (data.cencClearTracks != null)
                         {
-                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.cencKeyToTrackMappings.ToString(), jsonConverters);
+                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.cencKeyToTrackMappings.ToString(), jsonReaders);
                             parameters.CommonEncryptionCenc.ContentKeys.KeyToTrackMappings = mappings;
                         }
                         if (data.cencPlayReadyTemplate != null)
@@ -330,14 +336,14 @@ namespace advanced_vod_functions_v3
                         // Envelope Encryption Argument
                         if (data.envelopeClearTracks != null)
                         {
-                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.envelopeClearTracks.ToString(), jsonConverters);
+                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.envelopeClearTracks.ToString(), jsonReaders);
                             parameters.EnvelopeEncryption.ClearTracks = tracks;
                         }
                         if (data.envelopeDefaultKeyLabel != null) parameters.EnvelopeEncryption.ContentKeys.DefaultKey.Label = data.envelopeDefaultKeyLabel;
                         if (data.envelopeDefaultKeyPolicyName != null) parameters.EnvelopeEncryption.ContentKeys.DefaultKey.PolicyName = data.envelopeDefaultKeyPolicyName;
                         if (data.envelopeClearTracks != null)
                         {
-                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.envelopeKeyToTrackMappings.ToString(), jsonConverters);
+                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.envelopeKeyToTrackMappings.ToString(), jsonReaders);
                             parameters.EnvelopeEncryption.ContentKeys.KeyToTrackMappings = mappings;
                         }
                         if (data.envelopeTemplate != null)
@@ -359,10 +365,10 @@ namespace advanced_vod_functions_v3
                         CommonEncryptionCenc commonEncryptionCencArguments = null;
                         EnvelopeEncryption envelopeEncryptionArguments = null;
 
-                        if (data.jsonNoEncryption != null) noEncryptionArguments = JsonConvert.DeserializeObject<NoEncryption>(data.configNoEncryption.ToString(), jsonConverters);
-                        if (data.jsonCommonEncryptionCbcs != null) commonEncryptionCbcsArguments = JsonConvert.DeserializeObject<CommonEncryptionCbcs>(data.jsonCommonEncryptionCbcs.ToString(), jsonConverters);
-                        if (data.jsonCommonEncryptionCenc != null) commonEncryptionCencArguments = JsonConvert.DeserializeObject<CommonEncryptionCenc>(data.configCommonEncryptionCenc.ToString(), jsonConverters);
-                        if (data.jsonEnvelopeEncryption != null) envelopeEncryptionArguments = JsonConvert.DeserializeObject<EnvelopeEncryption>(data.configEnvelopeEncryption.ToString(), jsonConverters);
+                        if (data.jsonNoEncryption != null) noEncryptionArguments = JsonConvert.DeserializeObject<NoEncryption>(data.configNoEncryption.ToString(), jsonReaders);
+                        if (data.jsonCommonEncryptionCbcs != null) commonEncryptionCbcsArguments = JsonConvert.DeserializeObject<CommonEncryptionCbcs>(data.jsonCommonEncryptionCbcs.ToString(), jsonReaders);
+                        if (data.jsonCommonEncryptionCenc != null) commonEncryptionCencArguments = JsonConvert.DeserializeObject<CommonEncryptionCenc>(data.configCommonEncryptionCenc.ToString(), jsonReaders);
+                        if (data.jsonEnvelopeEncryption != null) envelopeEncryptionArguments = JsonConvert.DeserializeObject<EnvelopeEncryption>(data.configEnvelopeEncryption.ToString(), jsonReaders);
                         parameters.NoEncryption = noEncryptionArguments;
                         parameters.CommonEncryptionCbcs = commonEncryptionCbcsArguments;
                         parameters.CommonEncryptionCenc = commonEncryptionCencArguments;
@@ -374,12 +380,12 @@ namespace advanced_vod_functions_v3
             }
             catch (ApiErrorException e)
             {
-                log.Info($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogError($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.Info($"ERROR: Exception with message: {e.Message}");
+                log.LogError($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 

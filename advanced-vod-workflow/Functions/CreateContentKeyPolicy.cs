@@ -80,8 +80,8 @@ Input:
         // The rental duration. Must be greater than or equal to 0.
         "faiPlayRentalDuration": 0,
         // PlayReady:
-        // JSON PlayReady license template.
-        "playReadyTemplate": {},
+        // The JSON representing the list of PlayReady license template.
+        "playReadyTemplates": [ { ... } ],
         // The string data of PlayReady response custom data.
         "playReadyResponseCustomData": "xxx",
         // Widevine:
@@ -128,6 +128,7 @@ Output:
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -137,6 +138,8 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -149,9 +152,11 @@ namespace advanced_vod_functions_v3
     public static class CreateContentKeyPolicy
     {
         [FunctionName("CreateContentKeyPolicy")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
-            log.Info($"AMS v3 Function - CreateContentKeyPolicy was triggered!");
+            log.LogInformation($"AMS v3 Function - CreateContentKeyPolicy was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -197,6 +202,11 @@ namespace advanced_vod_functions_v3
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             ContentKeyPolicy policy = null;
 
+            JsonConverter[] jsonReaders = {
+                new MediaServicesHelperJsonReader(),
+                new MediaServicesHelperTimeSpanJsonConverter()
+            };
+
             try
             {
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
@@ -205,10 +215,6 @@ namespace advanced_vod_functions_v3
 
                 if (policy == null)
                 {
-                    JsonConverter[] jsonConverters = {
-                        new MediaServicesHelperJsonConverter(),
-                        new MediaServicesHelperTimeSpanJsonConverter()
-                    };
                     List<ContentKeyPolicyOption> options = new List<ContentKeyPolicyOption>();
 
                     if (mode == "simple")
@@ -295,12 +301,12 @@ namespace advanced_vod_functions_v3
                                 break;
                             case "PlayReady":
                                 ContentKeyPolicyPlayReadyConfiguration configPlayReady = new ContentKeyPolicyPlayReadyConfiguration();
-                                configPlayReady.Licenses = JsonConvert.DeserializeObject<ContentKeyPolicyPlayReadyLicense>(data.PlayReadyTemplate.ToString(), jsonConverters);
+                                configPlayReady.Licenses = JsonConvert.DeserializeObject<List<ContentKeyPolicyPlayReadyLicense>>(data.playReadyTemplates.ToString(), jsonReaders);
                                 if (data.playReadyResponseCustomData != null) configPlayReady.ResponseCustomData = data.playReadyResponseCustomData;
                                 option.Configuration = configPlayReady;
                                 break;
                             case "Widevine":
-                                ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonConverters);
+                                ContentKeyPolicyWidevineConfiguration configWideVine = JsonConvert.DeserializeObject<ContentKeyPolicyWidevineConfiguration>(data.widevineTemplate.ToString(), jsonReaders);
                                 option.Configuration = configWideVine;
                                 break;
                             default:
@@ -310,7 +316,7 @@ namespace advanced_vod_functions_v3
                     }
                     else if (mode == "advanced")
                     {
-                        options = JsonConvert.DeserializeObject<List<ContentKeyPolicyOption>>(data.contentKeyPolicyOptions.ToString(), jsonConverters);
+                        options = JsonConvert.DeserializeObject<List<ContentKeyPolicyOption>>(data.contentKeyPolicyOptions.ToString(), jsonReaders);
                     }
 
                     foreach (ContentKeyPolicyOption o in options)
@@ -320,12 +326,12 @@ namespace advanced_vod_functions_v3
             }
             catch (ApiErrorException e)
             {
-                log.Info($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
+                log.LogError($"ERROR: AMS API call failed with error code: {e.Body.Error.Code} and message: {e.Body.Error.Message}");
                 return new BadRequestObjectResult("AMS API call error: " + e.Message + "\nError Code: " + e.Body.Error.Code + "\nMessage: " + e.Body.Error.Message);
             }
             catch (Exception e)
             {
-                log.Info($"ERROR: Exception with message: {e.Message}");
+                log.LogError($"ERROR: Exception with message: {e.Message}");
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 

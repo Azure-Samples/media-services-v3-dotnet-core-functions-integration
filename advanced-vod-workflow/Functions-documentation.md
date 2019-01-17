@@ -13,8 +13,10 @@ This Functions example is based on AMS REST API v3 and pre-compiled functions.
 
 - [CreateContentKeyPolicy](#createcontentkeypolicy)
 - [CreateEmptyAsset](#createemptyasset)
+- [CreatePlayReadyLicenseTemplate](#createplayreadylicensetemplate)
 - [CreateStreamingPolicy](#createstreamingpolicy)
 - [CreateTransform](#createtransform)
+- [CreateWidevineLicenseTemplate](#createwidevinelicensetemplate)
 - [GetAssetUrls](#getasseturls)
 - [MonitorBlobContainerCopyStatus](#monitorblobcontainercopystatus)
 - [MonitorMediaJob](#monitormediajob)
@@ -102,8 +104,8 @@ Input:
         // The rental duration. Must be greater than or equal to 0.
         "faiPlayRentalDuration": 0,
         // PlayReady:
-        // JSON PlayReady license template.
-        "playReadyTemplate": {},
+        // The JSON representing the list of PlayReady license template.
+        "playReadyTemplates": [ { ... } ],
         // The string data of PlayReady response custom data.
         "playReadyResponseCustomData": "xxx",
         // Widevine:
@@ -175,6 +177,112 @@ Output:
 
 [Back to List](#functions-list)
 
+## CreatePlayReadyLicenseTemplate
+
+This function creates a PlayReady License Template JSON data.
+
+```c#
+Input:
+    {
+        // A flag indicating whether test devices can use the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "allowTestDevices": false,
+
+        // The license type.
+        // Allowed values: 'NonPersistent', 'Persistent'.
+        // Default value: 'NonPersistent'.
+        "licenseType": "NonPersistent",
+
+        // The content key location.
+        // Allowed values: 'ContentEncryptionKeyFromHeader', 'ContentEncryptionKeyFromKeyIdentifier'.
+        // Default value: 'ContentEncryptionKeyFromHeader'.
+        "contentKeyLocation": "ContentEncryptionKeyFromHeader",
+
+        // The PlayReady content type.
+        // Allowed values: 'Unspecified', 'UltraVioletDownload', 'UltraVioletStreaming'.
+        // Default value: 'Unspecified'
+        "contentType": "UltraVioletStreaming",
+
+        // The begin date (Y-m-d'T'H:M:S'Z') of license
+        "beginDate": "2018-01-01T00:00Z",
+
+        // The expiration date (Y-m-d'T'H:M:S'Z') of license.
+        "expirationDate": "2018-12-31T23:59Z",
+
+        // The relative begin date of license.
+        "relativeBeginDate": "PT10H",
+
+        // The relative expiration date of license.
+        "relativeExpirationDate": "P30D",
+
+        // The grace period of license.
+        "gracePeriod": "PT5S",
+
+        // PlayRight
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "digitalVideoOnlyContentRestriction": false,
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "imageConstraintForAnalogComponentVideoRestriction": false,
+        // Enables the Image Constraint For Analog Component Video Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "imageConstraintForAnalogComputerMonitorRestriction": false,
+        // Configures Unknown output handling settings of the license.
+        // Allowed values: 'NotAllowed', 'Allowed', 'AllowedWithVideoConstriction'.
+        // Default value: 'NotAllowed'.
+        "allowPassingVideoContentToUnknownOutput": "NotAllowed",
+        // The amount of time that the license is valid after the license is first used to play content.
+        "firstPlayExpiration": "PT60M",
+        // Configures the Serial Copy Management System (SCMS) in the license.
+        // Must be between 0 and 3 inclusive.
+        "scmsRestriction": 0,
+        // Configures Automatic Gain Control (AGC) and Color Stripe in the license.
+        // Must be between 0 and 3 inclusive.
+        "agcAndColorStripeRestriction": 0,
+        // Configures the Explicit Analog Television Output Restriction in the license.
+        // Configuration data must be between 0 and 3 inclusive.
+        "explicitAnalogTelevisionOutputRestriction": 0,
+        // Configures the Explicit Analog Television Output Restriction in the license.
+        // Allowed values: true, false.
+        // Default value: false.
+        "explicitAnalogTelevisionOutputRestrictionBestEffort": false,
+
+        // Output Protection Level
+        // Please see the document: https://docs.microsoft.com/en-us/playready/overview/output-protection-levels
+        // Specifies the output protection level for uncompressed digital video.
+        // Allowed Values: 100, 250, 270, 300.
+        "uncompressedDigitalVideoOpl": 100,
+        // Specifies the output protection level for compressed digital video.
+        // Allowed Values: 400, 500.
+        "compressedDigitalVideoOpl": 400,
+        // Specifies the output protection level for compressed digital audio.
+        // Allowed Values: 100, 150, 200.
+        "analogVideoOpl": 100,
+        // Specifies the output protection level for compressed digital audio.
+        // Allowed Values: 100, 150, 200, 250, 300.
+        "compressedDigitalAudioOpl": 100,
+        // Specifies the output protection level for uncompressed digital audio.
+        // Allowed Values: 100, 150, 200, 250, 300.
+        "uncompressedDigitalAudioOpl": 100,
+
+        // PlayReady License Template JSONs
+        "playReadyLicenses": [ { ... } ]
+    }
+Output:
+    {
+        // The JSON string of PlayReady License Templates.
+        "playReadyLicenses": [ { ... }, { ... } ]
+    }
+
+```
+
+[Back to List](#functions-list)
+
 ## CreateStreamingPolicy
 
 This function creates a new transform.
@@ -193,10 +301,16 @@ Input:
         // Default Content Key used by current streaming policy.
         "defaultContentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
 
+        //
+        // [mode = simple]
+        //
         // Semi-colon-separated list of enabled protocols for NoEncryption.
         // Allowed values: Download, Dash, HLS, SmoothStreaming.
         "noEncryptionProtocols": "Dash;HLS;SmoothStreaming"
 
+        //
+        // [mode = simple]
+        //
         //
         // Common Encryption CBCS Arguments
         //
@@ -231,6 +345,9 @@ Input:
         "cbcsProtocols": "Dash;HLS;SmoothStreaming",
 
         //
+        // [mode = simple]
+        //
+        //
         // Common Encryption CENC Arguments
         //
         // The JSON representing which tracks should not be encrypted.
@@ -258,6 +375,9 @@ Input:
         "cencProtocols": "Dash;HLS;SmoothStreaming",
 
         //
+        // [mode = simple]
+        //
+        //
         // Envelope Encryption Arguments
         //
         // The JSON representing which tracks should not be encrypted.
@@ -278,6 +398,9 @@ Input:
         // Allowed values: Dash, HLS, SmoothStreaming.
         "envelopeProtocols": "Dash;HLS;SmoothStreaming",
 
+        //
+        // [mode = advanced]
+        //
         // Streaming Configuration option of Common Encryption CBCS
         "jsonCommonEncryptionCbcs": {
             "enabledProtocols": {
@@ -361,11 +484,17 @@ Input:
         //  H264SingleBitrateSD, H264SingleBitrate720p, H264SingleBitrate1080p,
         //  AdaptiveStreaming, AACGoodQualityAudio,
         //  H264MultipleBitrate1080p, H264MultipleBitrate720p, H264MultipleBitrateSD,
-        //  AudioAnalyzer, VideoAnalyzer.
-        // In addition to the allowed values, you can also pass an url to a custom Standard Encoder preset JSON file.
+        //  AudioAnalyzer, VideoAnalyzer,
+        //  CustomPreset.
+        "preset": "AdaptiveStreaming",
+
+        //
+        // [mode = simple]
+        //
+        // The JSON representing a custom preset.
         // See https://docs.microsoft.com/rest/api/media/transforms/createorupdate#standardencoderpreset
         // for further details on the settings to use to build a custom preset.
-        "preset": "AdaptiveStreaming",
+        "customPresetJson": { ... },
 
         //
         // [mode = simple]
@@ -440,6 +569,104 @@ Output:
 
         // The resource identifier of the created Transform
         "transformId": "/subscriptions/694d5930-8ee4-4e50-917b-9dcfeceb6179/resourceGroups/AMSdemo/providers/Microsoft.Media/mediaservices/amsdemojapaneast/transforms/TestTransform"
+    }
+
+```
+
+[Back to List](#functions-list)
+
+## CreateWidevineLicenseTemplate
+
+This function creates a Widevine License Template JSON data.
+
+```c#
+Input:
+    {
+        // Controls which content keys should be included in a license.
+        // Allowed values:
+        //      SD_ONLY - returns SD and AUDIO keys only
+        //      SD_HD - returns SD, HD and AUDIO keys only
+        //      SD_UHD1 - returns SD, HD, UHD1 and AUDIO keys
+        //      SD_UHD2 - returns SD, HD, UHD1, UHD2 and AUDIO keys (all)
+        "allowedTrackTypes": "SD_HD",
+
+        // A finer grained control on what content keys to return.
+        // Semi-colon-separated triplet string presentation (TrackType:SecurityLevel:HDCP) is required.
+        // See Content Key Spec in the reference for details.
+        "contentKeySpecs": "SD:1:HDCP_NONE;HD:1:HDCP_V2",
+
+        // Policy Overrides
+        // Policies settings for this license.
+        // In the event this asset has a predefined policy, these specified values will be used.
+
+        // Indicates that playback of the content is allowed.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canPlay": false,
+
+        // Indicates that the license may be persisted to non-volatile storage for offline use.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canPersist": false,
+
+        // Indicates that renewal of this license is allowed.
+        // If true, the duration of the license can be extended by heartbeat.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "canRenew": false,
+
+        // Indicates the time window for this specific license.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "licenseDurationSeconds": 0,
+
+        // Indicates the time window while playback is permitted.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "rentalDurationSeconds": 0,
+
+        // The viewing window of time once playback starts within the license duration.
+        // A value of 0 indicates unlimited.
+        // Default value: 0.
+        "playbackDurationSeconds": 0,
+
+        // All heartbeat (renewal) requests for this license shall be directed to the specified URL.
+        // This field is only used if canRenew is true.
+        "renewalServerUrl": null,
+
+        // How many seconds after license_start_time, before renewal is first attempted.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalDelaySeconds": 0,
+
+        // Specifies the delay in seconds between subsequent license renewal requests, in case of failure.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalRetryIntervalSeconds": 0,
+
+        // The window of time, in which playback is allowed to continue while renewal is attempted,
+        // yet unsuccessful due to backend problems with the license server.
+        // A value of 0 indicates unlimited.
+        // This field is only used if canRenew is true.
+        // Default value: 0.
+        "renewalRecoveryDurationSeconds": 0,
+
+        // Indicates that the license shall be sent for renewal when usage is started.
+        // This field is only used if canRenew is true.
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "renewWithUsage": false,
+
+        // Indicates to client that license renewal and release requests must include client identification (client_id).
+        // Allowed values: Boolean - true or false
+        // Default value: false.
+        "alwaysIncludeClientId": false
+    }
+Output:
+    {
+        // The JSON string of Widevine License Template.
+        "widevineLicenses": { ... }
+
     }
 
 ```
