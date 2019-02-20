@@ -4,11 +4,12 @@ platforms: dotnetcore
 author: xpouyat
 ---
 
-# Media Services v3 Dynamic Encryption with Irdeto license delivery service
-This Visual Studio 2017 Solution exposes several Azure functions that can be used to manage live streaming with DRM, using Irdeto back-end to deliver the licenses. The functions communicate with Irdeto backend using SOAP. Optionaly, a Cosmos database can be used to store the result of the functions, and to specify the settings of the live event(s) to be created : ArchiveWindow, baseStorageName, ACLs, autostart, Vanity URL mode.
+# Media Services v3 Dynamic Encryption with Irdeto license delivery service (Live and VOD)
+This Visual Studio 2017 Solution exposes several Azure functions that can be used to manage live streaming and VOD with DRM, using Irdeto back-end to deliver the licenses. The functions communicate with Irdeto backend using SOAP. Optionaly, a Cosmos database can be used to store the result of the functions, and to specify the settings of the live event(s) to be created : ArchiveWindow, baseStorageName, ACLs, autostart, Vanity URL mode.
 
-Here are the list of functions:
+Here are the list of functions available:
 
+Live
 - check-all-live-event-output
 - create-clear-streaming-locator
 - create-live-event-output
@@ -21,9 +22,16 @@ Here are the list of functions:
 - stop-live-event
 - update-settings
 
+VOD
+- check-blob-copy-to-asset-status
+- create-empty-asset
+- generate-ism-manifest
+- publish-asset
+- start-blob-copy-to-asset
+
 As an option, two AMS accounts and two Azure functions deployments can be created in two different Azure regions. An Azure function deployment could manage either AMS account. For this to work, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name, or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
 
-It is also possible to execute all operations in two regions at the same time. For example, the creation of a live event can be executed by the function into two different accounts simultaneously. In that case, the same live event name, ingest path, output locator name, output locator GUID, streaming policy name and DRM keys will be used ; all URLS will be similar (except the hostname, of course). To use this mode, pass the two regions to the create-live-event-output function. Example :
+For Live, it is also possible to execute all operations in two regions at the same time. For example, the creation of a live event can be executed by the function into two different accounts simultaneously. In that case, the same live event name, ingest path, output locator name, output locator GUID, streaming policy name and DRM keys will be used ; all URLS will be similar (except the hostname, of course). To use this mode, pass the two regions to the create-live-event-output function. Example :
 ```json
 {
   "liveEventName": "Channel1",
@@ -31,7 +39,7 @@ It is also possible to execute all operations in two regions at the same time. F
 }
 ```
 
-This Media Services Functions code is based on AMS REST API v3 on Azure Functions v2.
+This Media Services Functions code is based on AMS REST API v3 using Azure Functions v2.
 
 Overall architecture :
 
@@ -86,19 +94,22 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoPlayReadyLAURL": "value",
     "IrdetoWidevineLAURL": "value",
     "IrdetoFairPlayLAURL": "value",
+    "IrdetoFairPlayCertificateUrl": "value",
     "LiveIngestAccessToken" : "value", // optional but needed if you want always the same live ingest URL
     "CosmosDBAccountEndpoint": "value", // optional but needed for Cosmos support */
     "CosmosDBAccountKey": "value", // optional but needed for Cosmos support
     "CosmosDB": "liveDRMStreaming", // optional but needed for Cosmos support
     "CosmosCollectionSettings": "liveEventSettings", // optional but needed for Settings
     "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
+    "CosmosCollectionVODAssets": "vodAssets", // optional but needed for storing the asset info to Cosmos
+    "CosmosCollectionStreamingPolicies": "streamingPolicies", // optional but needed for storing the streaming policy to Cosmos
     "AllowClearStream" : "true" // optional, use only by redirector
   }
 }
 ```
 
-### 5. Optional : deploy a Cosmos Database
-This database is used to read the settings when creating a live event. It is also used to store all the information about the live event and output created.
+### 5. Optional but recommended : deploy a Cosmos Database
+This database is used to read the settings when creating a live event. It is also used to store all the information about the live event, output created, and vod assets.
 Database and collections are automatically created by the code if Cosmos fields are set in app settings. Collections use a partition key named "/partitionKey" and value is always "live".
 
 Example of settings in Cosmos for a live event :
