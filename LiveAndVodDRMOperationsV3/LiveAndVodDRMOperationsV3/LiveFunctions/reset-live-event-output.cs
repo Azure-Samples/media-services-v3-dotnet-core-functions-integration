@@ -353,12 +353,69 @@ namespace LiveDrmOperationsV3
                             }
                         }
 
-                        if (streamingLocatorsPolicies.Count == 0) // no way to get the streaming policy, let's create a new one
+                        if (streamingLocatorsPolicies.Count == 0) // no way to get the streaming policy, let's read Cosmos or create a new one
                         {
-                            MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
-                            var streamingPolicy =
-                                await IrdetoHelpers.CreateStreamingPolicyIrdeto(config, client);
-                            streamingLocatorsPolicies.Add("", streamingPolicy.Name);
+                            MediaServicesHelpers.LogInformation(log, "Trying to read streaming policy from Cosmos.", region);
+                            string streamingPolicyName = null;
+                            // Load streaming policy info from Cosmos
+                            try
+                            {
+                                var info = await CosmosHelpers.ReadStreamingPolicyDocument(new StreamingPolicyInfo(false)
+                                {
+                                    AMSAccountName = config.AccountName
+                                });
+
+                                if (info == null)
+                                {
+                                    log.LogWarning("Streaming policy not read from Cosmos.");
+                                }
+                                else
+                                {
+                                    streamingPolicyName = info.StreamingPolicyName;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Error reading Cosmos DB", ex);
+                            }
+
+
+                            // STREAMING POLICY CREATION
+                            if (streamingPolicyName == null) // not found in Cosmos let's create a new one
+                            {
+                                StreamingPolicy  streamingPolicy;
+                                MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
+                                try
+                                {
+                                    streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(config, client, uniquenessPolicyName);
+                                    streamingLocatorsPolicies.Add("", streamingPolicy.Name);
+                                }
+                                catch (Exception ex)
+                                {
+                                    throw new Exception("Streaming policy creation error", ex);
+                                }
+
+                                try
+                                {
+                                    if (!await CosmosHelpers.CreateOrUpdatePolicyDocument(new StreamingPolicyInfo(false)
+                                    {
+                                        AMSAccountName = config.AccountName,
+                                        StreamingPolicyName = streamingPolicy.Name
+                                    }))
+                                    {
+                                        log.LogWarning("Cosmos access not configured or error.");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    throw new Exception("Streaming policy write error to Cosmos", ex);
+                                }
+                            }
+                            else
+                            {
+                                streamingLocatorsPolicies.Add("", streamingPolicyName);
+
+                            }
                         }
                     }
 

@@ -220,6 +220,16 @@ namespace LiveDrmOperationsV3.Helpers
         {
             log.LogError((azureRegion != null ? "[" + azureRegion + "] " : "") + message);
         }
+
+        public static string UpdateHostNameIfNeeded(string newHostName, string url)
+        {
+            if (url == null) return null;
+
+            if (newHostName != null)
+                return (new UriBuilder(url) { Host = newHostName }).ToString();
+            else
+                return url;
+        }
     }
 
 

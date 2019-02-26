@@ -150,7 +150,6 @@ namespace LiveDrmOperationsV3
 {
     public static class PublishAsset
     {
-        private static string policyProject = "VOD";
         // This version registers keys in irdeto backend. For FairPlay and rpv3
 
         [FunctionName("publish-asset")]
@@ -302,12 +301,10 @@ namespace LiveDrmOperationsV3
                         // Load streaming policy info from Cosmos
                         try
                         {
-                            var info = await CosmosHelpers.ReadStreamingPolicyDocument(new StreamingPolicyInfo()
+                            var info = await CosmosHelpers.ReadStreamingPolicyDocument(new StreamingPolicyInfo(true)
                             {
-                                Project = policyProject,
                                 AMSAccountName = config.AccountName
                             });
-
 
                             if (info == null)
                             {
@@ -317,7 +314,6 @@ namespace LiveDrmOperationsV3
                             {
                                 streamingPolicyName = info.StreamingPolicyName;
                             }
-
                         }
                         catch (Exception ex)
                         {
@@ -340,9 +336,8 @@ namespace LiveDrmOperationsV3
 
                             try
                             {
-                                if (!await CosmosHelpers.CreateOrUpdatePolicyDocument(new StreamingPolicyInfo()
+                                if (!await CosmosHelpers.CreateOrUpdatePolicyDocument(new StreamingPolicyInfo(true)
                                 {
-                                    Project = policyProject,
                                     AMSAccountName = config.AccountName,
                                     StreamingPolicyName = streamingPolicy.Name
                                 }))
@@ -427,7 +422,7 @@ namespace LiveDrmOperationsV3
             }
 
             return new OkObjectResult(
-                                        JsonConvert.SerializeObject(new AssetInfo { Success = true, Assets = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
+                                        JsonConvert.SerializeObject(new VodAssetInfo { Success = true, Assets = clientTasks.Select(i => i.Result).ToList() }, Formatting.Indented)
                                     );
         }
     }

@@ -239,10 +239,8 @@ namespace LiveDrmOperationsV3.Helpers
         }
 
         public static async Task<StreamingPolicy> CreateStreamingPolicyIrdeto(ConfigWrapper config,
-            IAzureMediaServicesClient client, string uniqueness = null)
+            IAzureMediaServicesClient client, string uniqueness)
         {
-            if (uniqueness == null) uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
-
             var dash_smooth_protocol = new EnabledProtocols(false, true, false, true);
             var hls_dash_protocol = new EnabledProtocols(false, true, true, false);
             var cenc_config = new CencDrmConfiguration(
@@ -281,7 +279,7 @@ namespace LiveDrmOperationsV3.Helpers
             var cenc = new CommonEncryptionCenc(dash_smooth_protocol, null, ContentKeysEnc, cenc_config);
             var cbcs = new CommonEncryptionCbcs(hls_dash_protocol, null, ContentKeysCbcsc, cbcs_config);
 
-            var policyName = uniqueness;
+            var policyName = "policy-" + uniqueness;
             var streamingPolicy = new StreamingPolicy(Guid.NewGuid().ToString(), policyName, null, DateTime.Now, null,
                 null, cenc, cbcs, null);
             streamingPolicy = await client.StreamingPolicies.CreateAsync(config.ResourceGroup, config.AccountName,

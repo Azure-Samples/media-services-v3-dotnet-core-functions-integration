@@ -26,6 +26,7 @@ VOD
 - check-blob-copy-to-asset-status
 - create-empty-asset
 - generate-ism-manifest
+- generate-resource
 - publish-asset
 - start-blob-copy-to-asset
 

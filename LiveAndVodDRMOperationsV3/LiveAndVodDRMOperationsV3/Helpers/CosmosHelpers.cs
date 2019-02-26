@@ -35,6 +35,7 @@ namespace LiveDrmOperationsV3.Helpers
         private static readonly string CollectionSettings = Config["CosmosCollectionLiveEventSettings"];
         private static readonly string CollectionStreamingPolicies = Config["CosmosCollectionStreamingPolicies"];
         private static readonly string CollectionVODAssets = Config["CosmosCollectionVODAssets"];
+        private static readonly string CollectionVODResources = Config["CosmosCollectionVODResources"];
 
         private static readonly bool NotInit =
             string.IsNullOrEmpty(EndpointUrl) || string.IsNullOrEmpty(AuthorizationKey);
@@ -73,6 +74,11 @@ namespace LiveDrmOperationsV3.Helpers
             {
                 id = ((AssetEntry)myObject).Id;
                 collectionId = CollectionVODAssets;
+            }
+            else if (myObject.GetType() == typeof(VodResource))
+            {
+                id = ((VodResource)myObject).Id;
+                collectionId = CollectionVODResources;
             }
             else
             {
@@ -230,6 +236,11 @@ namespace LiveDrmOperationsV3.Helpers
         public static async Task<bool> CreateOrUpdateAssetDocument(AssetEntry assetEntry)
         {
             return await CreateOrUpdateDocument(assetEntry);
+        }
+
+        public static async Task<bool> CreateOrUpdateVODResourceDocument(VodResource vodResourceEntry)
+        {
+            return await CreateOrUpdateDocument(vodResourceEntry);
         }
     }
 }

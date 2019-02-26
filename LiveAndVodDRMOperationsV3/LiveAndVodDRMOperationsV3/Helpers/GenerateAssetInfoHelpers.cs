@@ -27,7 +27,6 @@ namespace LiveDrmOperationsV3.Helpers
                 StreamingLocators = new List<StreamingLocatorEntry>(),
                 CreatedTime = asset.Created.ToUniversalTime().ToString(AssetEntry.DateFormat),
                 ContentId = contentId,
-                RegionCode = region
             };
 
             var urls = new List<OutputUrl>();

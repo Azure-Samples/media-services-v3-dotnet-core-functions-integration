@@ -156,6 +156,7 @@ using Newtonsoft.Json;
 
 namespace LiveDrmOperationsV3
 {
+   
     public static class CreateChannel
     {
         // This version registers keys in irdeto backend. For FairPlay and rpv3
@@ -240,6 +241,8 @@ namespace LiveDrmOperationsV3
             if (data.PreviewACL != null) eventInfoFromCosmos.LiveEventPreviewACL = (List<string>)data.PreviewACL;
 
             if (data.lowLatency != null) eventInfoFromCosmos.LowLatency = (bool)data.lowLatency;
+
+            if (data.vanityUrl != null) eventInfoFromCosmos.VanityUrl = (bool)data.vanityUrl;
 
             var cencKey = new StreamingLocatorContentKey();
             var cbcsKey = new StreamingLocatorContentKey();
@@ -393,15 +396,72 @@ namespace LiveDrmOperationsV3
 
                     if (useDRM)
                     {
-                        // STREAMING POLICY CREATION
-                        MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
+
+                        MediaServicesHelpers.LogInformation(log, "Trying to read streaming policy from Cosmos.", region);
+                        string streamingPolicyName = null;
+                        // Load streaming policy info from Cosmos
                         try
                         {
-                            streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(config, client, uniquenessPolicyName);
+                            var info = await CosmosHelpers.ReadStreamingPolicyDocument(new StreamingPolicyInfo(false)
+                            {
+                                AMSAccountName = config.AccountName
+                            });
+
+                            if (info == null)
+                            {
+                                log.LogWarning("Streaming policy not read from Cosmos.");
+                            }
+                            else
+                            {
+                                streamingPolicyName = info.StreamingPolicyName;
+                            }
                         }
                         catch (Exception ex)
                         {
-                            throw new Exception("streaming policy creation error", ex);
+                            throw new Exception("Error reading Cosmos DB", ex);
+                        }
+
+
+                        // STREAMING POLICY CREATION
+                        if (streamingPolicyName == null) // not found in Cosmos let's create a new one
+                        {
+                            MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
+                            try
+                            {
+                                streamingPolicy = await IrdetoHelpers.CreateStreamingPolicyIrdeto(config, client, uniquenessPolicyName);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Streaming policy creation error", ex);
+                            }
+
+                            try
+                            {
+                                if (!await CosmosHelpers.CreateOrUpdatePolicyDocument(new StreamingPolicyInfo(false)
+                                {
+                                    AMSAccountName = config.AccountName,
+                                    StreamingPolicyName = streamingPolicy.Name
+                                }))
+                                {
+                                    log.LogWarning("Cosmos access not configured or error.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Streaming policy write error to Cosmos", ex);
+                            }
+                        }
+                        else
+                        {
+                            MediaServicesHelpers.LogInformation(log, "Getting streaming policy in AMS.", region);
+                            try
+                            {
+                                streamingPolicy = await client.StreamingPolicies.GetAsync(config.ResourceGroup, config.AccountName, streamingPolicyName);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Error when getting streaming policy " + streamingPolicy, ex);
+                            }
                         }
                     }
 

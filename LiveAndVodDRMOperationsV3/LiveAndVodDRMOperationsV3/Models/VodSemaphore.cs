@@ -148,7 +148,7 @@ namespace LiveDRMOperationsV3.Models
     {
       "fileName": "subtitle-de.vtt",
       "containsText": true, // false if property not present
-      "language": "deu",
+      "textLanguage": "deu",
       "copyToSubAsset" : true  // it means we want this file to be copied in another asset which will be published with clear policy (default is false)
     },
     {
