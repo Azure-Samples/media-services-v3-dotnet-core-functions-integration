@@ -104,6 +104,8 @@ local.settings.json will look like (please replace 'value' with the correct data
     "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
     "CosmosCollectionVODAssets": "vodAssets", // optional but needed for storing the asset info to Cosmos
     "CosmosCollectionStreamingPolicies": "streamingPolicies", // optional but needed for storing the streaming policy to Cosmos
+    "CosmosCollectionVODAssets": "vodAssets",
+    "CosmosCollectionVODResources": "vodResources",
     "AllowClearStream" : "true" // optional, use only by redirector
   }
 }
