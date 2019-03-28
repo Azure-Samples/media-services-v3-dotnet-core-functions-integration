@@ -25,102 +25,159 @@ Output:
 {
   "success": true,
   "operationsVersion": "1.0.0.5",
-  "liveEvents": [
-    {
-      "liveEventName": "CH1",
-      "resourceState": "Running",
-      "vanityUrl": true,
-      "amsAccountName": "customerssrlivedeveuwe",
-      "region": "West Europe",
-      "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
-      "lowLatency": false,
-      "id": "customerssrlivedeveuwe:CH1",
-      "input": [
+  "assets": [
+  {
+    "assetName": "VOD-6918f509-229c",
+    "assetStorageAccountName": "voddeveuwe",
+    "streamingLocators": [
         {
-          "protocol": "FragmentedMP4",
-          "url": "http://CH1-customerssrlivedeveuwe-euwe.channel.media.azure.net/838afbbac2514fafa2eaed76d8a3cc74/ingest.isml"
+            "streamingLocatorName": "locator-186d097e-d826",
+            "streamingPolicyName": "policy-69e284dc-5b0e",
+            "cencKeyId": "c399ec91-3171-474c-ae84-57be0e161686",
+            "cbcsKeyId": "4f598865-1660-48bd-a55f-d06a75a13a07",
+            "drm": [
+                {
+                    "type": "FairPlay",
+                    "licenseUrl": "skd://rng.stage.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=4f598865-1660-48bd-a55f-d06a75a13a07",
+                    "certificateUrl": "https://rng.stage.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getcertificate?applicationId=stage",
+                    "protocols": [
+                        "HlsCmaf",
+                        "HlsTs"
+                    ]
+                },
+                {
+                    "type": "PlayReady",
+                    "licenseUrl": "https://rng.stage.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?contentId=VOD",
+                    "protocols": [
+                        "DashCmaf",
+                        "DashCsf"
+                    ]
+                },
+                {
+                    "type": "Widevine",
+                    "licenseUrl": "https://rng.stage.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license?contentId=VOD",
+                    "protocols": [
+                        "DashCmaf",
+                        "DashCsf"
+                    ]
+                }
+            ],
+            "urls": [
+                {
+                    "protocol": "SmoothStreaming",
+                    "url": "https://voddeveuwe-euwe.streaming.media.azure.net/186d097e-d826-4898-a4e8-692f796ceff4/RTSVOD-6918f509-229c.ism/manifest(encryption=cenc)"
+                },
+                {
+                    "protocol": "DashCsf",
+                    "url": "https://voddeveuwe-euwe.streaming.media.azure.net/186d097e-d826-4898-a4e8-692f796ceff4/RTSVOD-6918f509-229c.ism/manifest(format=mpd-time-csf,encryption=cenc)"
+                },
+                {
+                    "protocol": "DashCmaf",
+                    "url": "https://voddeveuwe-euwe.streaming.media.azure.net/186d097e-d826-4898-a4e8-692f796ceff4/RTSVOD-6918f509-229c.ism/manifest(format=mpd-time-cmaf,encryption=cenc)"
+                },
+                {
+                    "protocol": "HlsCmaf",
+                    "url": "https://voddeveuwe-euwe.streaming.media.azure.net/186d097e-d826-4898-a4e8-692f796ceff4/RTSVOD-6918f509-229c.ism/manifest(format=m3u8-cmaf,encryption=cbcs-aapl)"
+                },
+                {
+                    "protocol": "HlsTs",
+                    "url": "https://voddeveuwe-euwe.streaming.media.azure.net/186d097e-d826-4898-a4e8-692f796ceff4/RTSVOD-6918f509-229c.ism/manifest(format=m3u8-aapl,encryption=cbcs-aapl)"
+                }
+            ]
         }
-      ],
-      "inputACL": [
-        "192.168.0.0/24",
-        "86.246.149.14/0"
-      ],
-      "preview": [
-        {
-          "protocol": "FragmentedMP4",
-          "url": "https://CH1-customerssrlivedeveuwe.preview-euwe.channel.media.azure.net/90083bd1-bed3-4019-9d54-b70e314ac9c8/preview.ism/manifest"
-        }
-      ],
-      "previewACL": [
-        "192.168.0.0/24",
-        "86.246.149.14/0"
-      ],
-      "liveOutputs": [
-        {
-          "liveOutputName": "output-179744a9-3f6f",
-          "archiveWindowLength": 120,
-          "assetName": "asset-179744a9-3f6f",
-          "assetStorageAccountName": "rsilsvdeveuwe",
-          "resourceState": "Running",
-          "streamingLocators": [
+    ],
+    "amsAccountName": "voddeveuwe",
+    "region": "West Europe",
+    "resourceGroup": "DISTVOD-dev-euwe",
+    "urn": "urn:rts:vod:testwilder:HD",
+    "createdTime": "20190326T15:31:52Z",
+    "semaphore": {
+        "encodedAsset": true,
+        "startTime": "20190213T10:00:00Z",
+        "endTime": "20200218T13:00:00Z",
+        "urn": "urn:rts:vod:testwilder:HD",
+        "drmContentId": "VOD",
+        "clearStream": false,
+        "files": [
             {
-              "streamingLocatorName": "locator-179744a9-3f6f",
-              "streamingPolicyName": "CH1-321870db-de01",
-              "cencKeyId": "58420ba1-da30-4756-b50c-fcd72a9645b7",
-              "cbcsKeyId": "ced687fd-c34b-433e-bca7-346a1d7af9f5",
-              "drm": [
-                {
-                  "type": "FairPlay",
-                  "licenseUrl": "skd://rng.live.ott.irdeto.com/licenseServer/streaming/v1/CUSTOMER/getckc?ContentId=CH1&KeyId=ced687fd-c34b-433e-bca7-346a1d7af9f5",
-                  "protocols": [
-                    "DashCmaf",
-                    "HlsCmaf",
-                    "HlsTs"
-                  ]
-                },
-                {
-                  "type": "PlayReady",
-                  "licenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/playready/v1/CUSTOMER/license?ContentId=CH1",
-                  "protocols": [
-                    "DashCmaf",
-                    "DashCsf"
-                  ]
-                },
-                {
-                  "type": "Widevine",
-                  "licenseUrl": "https://rng.live.ott.irdeto.com/licenseServer/widevine/v1/CUSTOMER/license&ContentId=CH1",
-                  "protocols": [
-                    "DashCmaf",
-                    "DashCsf"
-                  ]
-                }
-              ],
-              "urls": [
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(encryption=cenc)",
-                  "protocol": "SmoothStreaming"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-csf,encryption=cenc)",
-                  "protocol": "DashCsf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=mpd-time-cmaf,encryption=cenc)",
-                  "protocol": "DashCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-cmaf,encryption=cenc)",
-                  "protocol": "HlsCmaf"
-                },
-                {
-                  "url": "https://customerssrlsvdeveuwe-customerssrlivedeveuwe-euwe.streaming.media.azure.net/a2fa92c4-77dc-4305-a20e-21c8ad20c8c0/CH1.ism/manifest(format=m3u8-aapl,encryption=cenc)",
-                  "protocol": "HlsTs"
-                }
-              ]
+                "fileName": "625290641000.mp4",
+                "containsVideo": true,
+                "containsAudio": false,
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290643000.mp4",
+                "containsVideo": true,
+                "containsAudio": false,
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290705000.mp4",
+                "containsVideo": true,
+                "containsAudio": true,
+                "audioLanguage": "ita",
+                "audioTitle ": "Italian",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290707000.mp4",
+                "containsVideo": true,
+                "containsAudio": true,
+                "audioLanguage": "fra",
+                "audioTitle ": "Francais",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290709000.mp4",
+                "containsVideo": true,
+                "containsAudio": true,
+                "audioLanguage": "fra",
+                "audioTitle ": "Francais",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290711000.mp4",
+                "containsVideo": true,
+                "containsAudio": true,
+                "audioLanguage": "ita",
+                "audioTitle ": "Italian",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "625290639000.mp4",
+                "containsVideo": true,
+                "containsAudio": true,
+                "audioLanguage": "fra",
+                "audioTitle ": "Francais",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "gsw_CPL.mp4",
+                "containsVideo": false,
+                "containsAudio": true,
+                "audioLanguage": "deu",
+                "audioTitle ": "German",
+                "copyToSubAsset": false
+            },
+            {
+                "fileName": "W2_ZT036555FR.vtt",
+                "containsVideo": false,
+                "containsAudio": false,
+                "containsText": true,
+                "language": "fra",
+                "textTitle": "French subs",
+                "copyToSubAsset": true
+            },
+            {
+                "fileName": "W2_ZT036555FRDE.vtt",
+                "containsVideo": false,
+                "containsAudio": false,
+                "containsText": true,
+                "language": "deu",
+                "textTitle": "Deutsch subs",
+                "copyToSubAsset": true
             }
-          ]
-        }
-      ]
+        ]
     }
   ]
 }

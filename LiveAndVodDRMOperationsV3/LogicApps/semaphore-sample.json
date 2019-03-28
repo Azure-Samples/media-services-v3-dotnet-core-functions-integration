@@ -1,0 +1,51 @@
+{
+    "encodedAsset": true, 
+    "transformName": "myTransform", 
+    "startTime": "20180214T13:00:00Z", 
+    "endTime": "20290214T13:00:00Z", 
+    "urn": "asset URN", 
+    "drmContentId": "vodMajor1", 
+    "clearStream": false, 
+    "files": [
+      {
+        "fileName": "video-400.mp4",
+        "containsVideo": true,
+        "containsAudio": true, 
+        "videoCodec":"H264", 
+        "audioCodec":"AAC", 
+        "mediaContainer": "MP4", 
+        "videoQuality": "SD" 
+      },
+      {
+        "fileName": "video-700.mp4",
+        "containsVideo": true,
+        "containsAudio": true,
+        "audioLanguage": "deu", 
+        "audioTitle ": "German audio" 
+      },
+      {
+        "fileName": "video-1200.mp4",
+        "containsVideo": true,
+        "containsAudio": true,
+        "audioLanguage": "eng"
+      },
+      {
+        "fileName": "subtitle-de.vtt",
+        "containsText": true, 
+        "language": "deu",
+        "copyToSubAsset" : true  
+      },
+      {
+        "fileName": "subtitle-en.vtt",
+        "containsText": true,
+        "textLanguage": "eng",
+        "textTitle": "English subtitles",
+        "copyToSubAsset" : true  
+      },
+      {
+        "fileName": "audio-en.mp4",
+        "containsAudio": true,
+        "audioLanguage ": "eng"
+      }
+    ]
+  }
