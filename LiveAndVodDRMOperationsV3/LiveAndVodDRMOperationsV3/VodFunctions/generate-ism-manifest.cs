@@ -1,7 +1,7 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// generate-ims-manifest - this function generates a ISM v1 manifest
+// generate-ims-manifest - this function generates a simple server-side ISM manifest
 /*
 This function generates a manifest(.ism) from the MP4/M4A files in the asset.It makes this file primary.
 This manifest is needed to stream MP4 file(s) with Azure Media Services.
