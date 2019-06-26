@@ -85,7 +85,7 @@ namespace LiveDrmOperationsV3.Models
         public string Id => ((new Uri(ResourceList[0]?.Url)).Host + "-" + (new Uri(ResourceList[0]?.Url)).Segments[1].Replace("/", string.Empty)).ToLower();
 
         [JsonProperty(PropertyName = "partitionKey", NullValueHandling = NullValueHandling.Ignore)]
-        public override string PartitionKey => (MainAsset.Semaphore.DrmContentId ?? DefaultPartitionValue).ToLower();
+        public override string PartitionKey => (MainAsset.Semaphore.DrmContentId?? DefaultPartitionValue).ToLower();
 
         public new static string DefaultPartitionValue = "vod";
     }

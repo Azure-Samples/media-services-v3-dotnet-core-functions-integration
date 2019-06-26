@@ -474,7 +474,7 @@ namespace LiveDrmOperationsV3
 
                         asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
                             "asset-" + uniquenessAssets,
-                            new Asset(storageAccountName: storageName));
+                            new Asset(storageAccountName: storageName, alternateId: liveEventName));
 
                         Hls hlsParam = null;
 
