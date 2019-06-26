@@ -91,11 +91,11 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IrdetoUserName": "value",
     "IrdetoPassword": "value",
     "IrdetoAccountId": "value",
-    "IrdetoSoapService": "value",
-    "IrdetoPlayReadyLAURL": "value",
-    "IrdetoWidevineLAURL": "value",
-    "IrdetoFairPlayLAURL": "value",
-    "IrdetoFairPlayCertificateUrl": "value",
+    "IrdetoSoapService": "https://test.ott.irdeto.com/LiveDRMService/livedrmservice.asmx",
+    "IrdetoPlayReadyLAURL": "https://test.ott.irdeto.com/licenseServer/playready/v1/customer/license?contentId={AlternativeMediaId}",
+    "IrdetoWidevineLAURL": "https://test.ott.irdeto.com/licenseServer/widevine/v1/customer/license?contentId={AlternativeMediaId}",
+    "IrdetoFairPlayLAURL": "skd://test.ott.irdeto.com/licenseServer/streaming/v1/customer/getckc?contentId={AlternativeMediaId}&keyId={ContentKeyId}",
+    "IrdetoFairPlayCertificateUrl": "https://test.ott.irdeto.com/licenseServer/streaming/v1/customer/getcertificate?applicationId=stage",
     "LiveIngestAccessToken" : "value", // optional but needed if you want always the same live ingest URL
     "CosmosDBAccountEndpoint": "value", // optional but needed for Cosmos support */
     "CosmosDBAccountKey": "value", // optional but needed for Cosmos support
