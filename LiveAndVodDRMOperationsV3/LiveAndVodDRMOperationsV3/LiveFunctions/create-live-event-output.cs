@@ -474,7 +474,7 @@ namespace LiveDrmOperationsV3
 
                         asset = await client.Assets.CreateOrUpdateAsync(config.ResourceGroup, config.AccountName,
                             "asset-" + uniquenessAssets,
-                            new Asset(storageAccountName: storageName, alternateId: liveEventName));
+                            new Asset(storageAccountName: storageName));
 
                         Hls hlsParam = null;
 
@@ -503,7 +503,7 @@ namespace LiveDrmOperationsV3
                         if (useDRM)
                         {
                             locator = await IrdetoHelpers.SetupDRMAndCreateLocatorWithNewKeys(config, streamingPolicy.Name,
-                                streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorGuid);
+                                streamingLocatorName, client, asset, cencKey, cbcsKey, streamingLocatorGuid, liveEventName);
                         }
                         else // no DRM
                         {
