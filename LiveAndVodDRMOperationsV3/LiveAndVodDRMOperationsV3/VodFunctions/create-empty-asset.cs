@@ -28,7 +28,8 @@ Output:
     "success": true,
     "errorMessage" : "",
     "operationsVersion": "1.0.0.5",
-    "assetName":"asset-fedtsdslkjdsd"
+    "assetName":"asset-fedtsdslkjdsd",
+    "assetId" : "0ba50322-0a9e-4a91-8c28-0f87d60e3526"
     "containerPath" : [
     {"the url to the storage container of the asset"} 
     ],
@@ -89,6 +90,7 @@ namespace LiveDrmOperationsV3
             var assetName = (string)data.assetName ?? prefixAssetName + Guid.NewGuid().ToString().Substring(0, 13);
             List<string> containers = new List<string>();
             List<string> containerPaths = new List<string>();
+            string assetId = null;
 
             // Azure region management
             var azureRegions = new List<string>();
@@ -144,6 +146,7 @@ namespace LiveDrmOperationsV3
 
                     containerPaths.Add(container.Uri.ToString());
                     containers.Add(asset.Container);
+                    assetId = asset.AssetId.ToString();
                 }
                 catch (Exception ex)
                 {
@@ -155,6 +158,7 @@ namespace LiveDrmOperationsV3
             {
                 {"success", true},
                 {"assetName",  assetName},
+                {"assetId",  assetId},
                 {"containerPath", new JArray(containerPaths)},
                 {"container", new JArray(containers)},
                 {
