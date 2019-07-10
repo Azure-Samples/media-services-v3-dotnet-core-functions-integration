@@ -25,7 +25,7 @@ namespace LiveDrmOperationsV3.Helpers
 
         public string AadClientId => _config["AadClientId"];
 
-        public string AadSecret => _config["AadSecret"];
+        public string AadClientSecret => _config["AadClientSecret"] ?? _config["AadSecret"];
 
         public Uri ArmAadAudience => _config["ArmAadAudience"] != null ? new Uri(_config["ArmAadAudience"]) : null;
 

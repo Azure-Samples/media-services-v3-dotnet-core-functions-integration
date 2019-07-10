@@ -31,7 +31,7 @@ namespace LiveDrmOperationsV3.Helpers
             //// ApplicationTokenProvider.LoginSilentWithCertificateAsync
 
             // Use ApplicationTokenProvider.LoginSilentAsync to get a token using a service principal with symetric key
-            var clientCredential = new ClientCredential(config.AadClientId, config.AadSecret);
+            var clientCredential = new ClientCredential(config.AadClientId, config.AadClientSecret);
             return await ApplicationTokenProvider.LoginSilentAsync(config.AadTenantId, clientCredential,
                 ActiveDirectoryServiceSettings.Azure);
         }

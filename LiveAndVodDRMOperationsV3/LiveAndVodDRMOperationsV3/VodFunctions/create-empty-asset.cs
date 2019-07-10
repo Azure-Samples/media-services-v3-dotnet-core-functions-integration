@@ -123,7 +123,7 @@ namespace LiveDrmOperationsV3
 
                 MediaServicesHelpers.LogInformation(log, "asset name : " + assetName, region);
 
-                string storageName = (!string.IsNullOrWhiteSpace(data.baseStorageName)) ? (string)data.baseStorageName + config.AzureRegionCode : null;
+                string storageName = (!string.IsNullOrWhiteSpace((string)data.baseStorageName)) ? (string)data.baseStorageName + config.AzureRegionCode : null;
 
                 Asset asset = new Asset() { StorageAccountName = storageName, AlternateId = data.alternateId, Description = data.description };
 
