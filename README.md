@@ -1,4 +1,9 @@
 ---
+topic: sample
+languages:
+  - csharp
+products: azure-media-services
+azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/master/azuredeploy.json
 services: media-services
 platforms: dotnet-core
 author: xpouyat
