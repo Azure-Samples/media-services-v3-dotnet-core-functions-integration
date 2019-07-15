@@ -6,15 +6,9 @@ products: azure-media-services
 azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/master/azuredeploy.json
 ---
 
-# Azure Media Services v3 .NET Core  - Serverless Workflows
+# Azure Media Services v3 - Serverless Workflows with Azure Functions & Logic Apps
 This repository contains projects that show how to integrate Azure Media Services with Azure Functions & Azure Logic Apps.
-
-# Media Services: Integrating Azure Media Services with Azure Functions & Azure Logic Apps
-
-This project contains advanced VOD media workflow examples of using Azure Functions with Azure Media Services.
-The project includes several folders of sample Azure Functions for use with Azure Media Services that show workflows related to ingesting content directly from blob storage, encoding, and writing content back to blob storage.
-
-This Media Services Functions example is based on AMS REST API v3 on Azure Functions v2.
+These Media Services Functions examples are based on AMS REST API v3 on Azure Functions v2. Most of the functions can also be used from Logic Apps.
 
 ## Prerequisites for a sample Logic Apps deployments
 
