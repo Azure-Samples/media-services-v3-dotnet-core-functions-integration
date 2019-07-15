@@ -133,15 +133,19 @@ namespace LiveDRMOperationsV3.Helpers
                 foreach (var file in audioFiles)
                 {
                     var myListAt = new List<XAttribute>() { new XAttribute("src", file.FileName) };
-                    var myListElem = new List<XElement>();
                     if (file.AudioLanguage != null)
-                        myListAt.Add(new XAttribute("systemLanguage", Path.GetFileNameWithoutExtension(file.AudioLanguage)));
+                        myListAt.Add(new XAttribute("systemLanguage", file.AudioLanguage));
+                    if (file.AudioTitle != null)
+                        myListAt.Add(new XAttribute("title", file.AudioTitle));
+
+                    var myListElem = new List<XElement>();
                     if (file.AudioTrackName != null)
                         myListElem.Add(new XElement(ns + "param", new List<XAttribute> { new XAttribute("name", "trackName"), new XAttribute("value", file.AudioTrackName) }));
                     if (file.AudioAccessibility != null)
                         myListElem.Add(new XElement(ns + "param", new List<XAttribute> { new XAttribute("name", "accessibility"), new XAttribute("value", file.AudioAccessibility) }));
                     if (file.AudioRole != null)
                         myListElem.Add(new XElement(ns + "param", new List<XAttribute> { new XAttribute("name", "role"), new XAttribute("value", file.AudioRole) }));
+
                     var audioElement = new XElement(ns + "audio", myListAt);
                     audioElement.Add(myListElem);
                     switchxml.Add(audioElement);
