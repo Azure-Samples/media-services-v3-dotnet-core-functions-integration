@@ -35,7 +35,7 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 
 ### 4. Deploy the Azure functions
 
-If not already done : fork the repo, deploy Azure Functions and select the **"advanced-vod-workflow-functions"** Project (IMPORTANT!)
+If not already done : fork the repo, deploy Azure Functions and select the right project (IMPORTANT!)
 
 Follow the guidelines in the [git tutorial](1-CONTRIBUTION-GUIDE/git-tutorial.md) for details on how to fork the project and use Git properly with this project.
 
