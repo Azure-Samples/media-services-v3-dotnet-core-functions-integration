@@ -41,9 +41,16 @@
         "description": "Sourcecode Repo branch. This should be set to Master for the public sample. You can adjust this to point to your own fork branch as recommended"
       }
     },
+    "mediaServicesAccountSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "Subscription Id for your media services account name."
+      }
+    },
     "mediaServicesAccountRegion": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "",
       "metadata": {
         "description": "Region name of your media services account name."
       }
@@ -95,8 +102,7 @@
     "functionsAppName": "[concat(toLower(parameters('functionsAppName')),'-',uniqueString(resourceGroup().id))]",
     "storageAccountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
     "storageAccountName": "[concat('azfnstorage',uniqueString(resourceGroup().id))]",
-    "hostingPlanName": "[concat(variables('functionsAppName'), '-plan')]",
-    "mediaServicesAccountSubscriptionId":"[subscription().subscriptionId]"
+    "hostingPlanName": "[concat(variables('functionsAppName'), '-plan')]"
   },
   "resources": [
     {
@@ -170,7 +176,7 @@
             "WEBSITE_CONTENTSHARE": "[variables('functionsAppName')]",
             "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
             "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
-            "SubscriptionId": "[variables('mediaServicesAccountSubscriptionId')]",
+            "SubscriptionId": "[parameters('mediaServicesAccountSubscriptionId')]",
             "Region": "[parameters('mediaServicesAccountRegion')]",
             "ResourceGroup": "[parameters('mediaServicesAccountResourceGroup')]",
             "AccountName": "[parameters('mediaServicesAccountName')]",
