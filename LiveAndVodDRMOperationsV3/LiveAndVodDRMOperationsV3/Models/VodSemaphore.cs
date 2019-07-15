@@ -67,9 +67,18 @@ namespace LiveDRMOperationsV3.Models
         [JsonProperty("audioLanguage", NullValueHandling = NullValueHandling.Ignore)]
         public string AudioLanguage { get; set; }
 
-        [JsonProperty("audioTitle ", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("audioTitle", NullValueHandling = NullValueHandling.Ignore)]
         public string AudioTitle { get; set; }
-       
+
+        [JsonProperty("audioTrackName", NullValueHandling = NullValueHandling.Ignore)]
+        public string AudioTrackName { get; set; }
+
+        [JsonProperty("audioAccessibility", NullValueHandling = NullValueHandling.Ignore)]
+        public string AudioAccessibility { get; set; }
+
+        [JsonProperty("audioRole", NullValueHandling = NullValueHandling.Ignore)]
+        public string AudioRole { get; set; }
+
         [JsonProperty("containsText", NullValueHandling = NullValueHandling.Ignore)]
         public bool? ContainsText { get; set; }
 
