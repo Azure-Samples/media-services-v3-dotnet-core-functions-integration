@@ -4,6 +4,7 @@
   "parameters": {
     "functionsAppName": {
       "type": "string",
+      "defaultValue": "amsv3functions",
       "metadata": {
         "description": "The name of the Function application to be deployed. The name will automatically be made unique on deployment, all lowercase letters or numbers with no spaces."
       }
@@ -28,7 +29,7 @@
     },
     "sourceCodeRepositoryURL": {
       "type": "string",
-      "defaultValue": "ENTER PATH to YOUR FORK of https://github.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration",
+      "defaultValue": "https://github.com/YOURGITHUBACCOUNTNAME/media-services-v3-dotnet-core-functions-integration",
       "metadata": {
         "description": "Source code repository URL. Is is REQUIRED that you first fork the samples repository and point this to your fork. If you are using your own fork, you may see an error in deployment related to GitHub auth. We require this for your own good, as we may update and break your application or testing as we deploy new updates to the public samples repository."
       }
@@ -42,7 +43,7 @@
     },
     "mediaServicesAccountSubscriptionId": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "[subscription().subscriptionId]",
       "metadata": {
         "description": "Subscription Id for your media services account name."
       }
@@ -83,7 +84,7 @@
       }
     },
     "mediaServicesAccountServicePrincipalClientSecret": {
-      "type": "string",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "Service Principal Client Secret to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/media-services-portal-get-started-with-aad#service-principal-authentication"
