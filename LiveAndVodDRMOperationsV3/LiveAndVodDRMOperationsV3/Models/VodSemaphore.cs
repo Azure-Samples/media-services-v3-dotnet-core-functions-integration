@@ -1,4 +1,70 @@
-﻿using System;
+﻿
+/*
+Model for Sempahore.
+
+SAMPLE JSON :
+
+{
+  "encodedAsset": true, // true : no additional encoded is needed on Azure but a manifest must be generated, false: encoded is needed
+  "transformName": "myTransform", // ask to process the asset with a AMS v3 Transform. For encoding or other task like speech analysis
+  "startTime": "date-time", // ISO 8601 start date and time of the availability of the URL, the stream cannot be played before; "now" if property not present. Parsing : https://docs.microsoft.com/en-us/dotnet/api/system.datetime?view=netframework-4.7.2#parsing-03 
+  "endTime": "date-time", // ISO 8601 end date and time of the availability of the URL, the stream is no longer available after this time; "31/12/9999 23:59.59" if property not present
+  "urn": "asset URN", // URN of Asset; Filename if property not present
+  "drmContentId": "vodMajor1", // Content ID used to register the key in the DRM and to generate the License URL; variable in logi app is used if value not present
+  "clearStream": true, // true : stream is not DRM protected, false : stream is DRM protected; false if property not present
+  "files": [
+    {
+      "fileName": "video-400.mp4",
+      "containsVideo": true, // false if property not present
+      "containsAudio": true, // false if property not present
+      "videoCodec":"H264", // ignored if not present
+      "audioCodec":"AAC", // ignored if not present
+      "mediaContainer": "MP4", // ignored if not present
+      "videoQuality": "SD" // Quality = SD for resolutions with less than 720 lines; Quality = HD for 720 and 1080 lines; Quality = UHD for more than 1080 lines; SD if property not present
+    },
+    {
+      "fileName": "video-700.mp4",
+      "containsVideo": true,
+      "containsAudio": true,
+      "audioLanguage": "deu", // based on ISO 639-2 language codes; if not preset and audio track is present, then audioLanguage = "und" (undefined)
+      "audioTitle ": "German audio" // ignored if not present
+    },
+    {
+      "fileName": "video-1200.mp4",
+      "containsVideo": true,
+      "containsAudio": true,
+      "audioLanguage": "eng"
+    },
+    {
+      "fileName": "subtitle-de.vtt",
+      "containsText": true, // false if property not present
+      "textLanguage": "deu",
+      "copyToSubAsset" : true  // it means we want this file to be copied in another asset which will be published with clear policy (default is false)
+    },
+    {
+      "fileName": "subtitle-en.vtt",
+      "containsText": true,
+      "textLanguage": "eng",
+      "textTitle": "English subtitles", // ignored if not present
+      "copyToSubAsset" : true  // it means we want this file to be copied in another asset which will be published with clear policy (default is false)
+    },
+    {
+      "fileName": "audio-en.mp4",
+      "containsAudio": true,
+      "audioLanguage ": "eng",
+      "audioTrackName" : "english-audio-description",
+      "audioAccessibility":"description",
+      "audioRole":"alternate"
+    }
+  ]
+}
+
+
+    https://app.quicktype.io/#l=cs&r=json2csharp
+
+*/
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -121,61 +187,4 @@ namespace LiveDRMOperationsV3.Models
 }
 
 
-/* SAMPLE JSON
 
-{
-  "encodedAsset": true, // true : no additional encoded is needed on Azure but a manifest must be generated, false: encoded is needed
-  "transformName": "myTransform", // ask to process the asset with a AMS v3 Transform. For encoding or other task like speech analysis
-  "startTime": "date-time", // ISO 8601 start date and time of the availability of the URL, the stream cannot be played before; "now" if property not present. Parsing : https://docs.microsoft.com/en-us/dotnet/api/system.datetime?view=netframework-4.7.2#parsing-03 
-  "endTime": "date-time", // ISO 8601 end date and time of the availability of the URL, the stream is no longer available after this time; "31/12/9999 23:59.59" if property not present
-  "urn": "asset URN", // URN of Asset; Filename if property not present
-  "drmContentId": "vodMajor1", // Content ID used to register the key in the DRM and to generate the License URL; variable in logi app is used if value not present
-  "clearStream": true, // true : stream is not DRM protected, false : stream is DRM protected; false if property not present
-  "files": [
-    {
-      "fileName": "video-400.mp4",
-      "containsVideo": true, // false if property not present
-      "containsAudio": true, // false if property not present
-      "videoCodec":"H264", // ignored if not present
-      "audioCodec":"AAC", // ignored if not present
-      "mediaContainer": "MP4", // ignored if not present
-      "videoQuality": "SD" // Quality = SD for resolutions with less than 720 lines; Quality = HD for 720 and 1080 lines; Quality = UHD for more than 1080 lines; SD if property not present
-    },
-    {
-      "fileName": "video-700.mp4",
-      "containsVideo": true,
-      "containsAudio": true,
-      "audioLanguage": "deu", // based on ISO 639-2 language codes; if not preset and audio track is present, then audioLanguage = "und" (undefined)
-      "audioTitle ": "German audio" // ignored if not present
-    },
-    {
-      "fileName": "video-1200.mp4",
-      "containsVideo": true,
-      "containsAudio": true,
-      "audioLanguage": "eng"
-    },
-    {
-      "fileName": "subtitle-de.vtt",
-      "containsText": true, // false if property not present
-      "textLanguage": "deu",
-      "copyToSubAsset" : true  // it means we want this file to be copied in another asset which will be published with clear policy (default is false)
-    },
-    {
-      "fileName": "subtitle-en.vtt",
-      "containsText": true,
-      "textLanguage": "eng",
-      "textTitle": "English subtitles", // ignored if not present
-      "copyToSubAsset" : true  // it means we want this file to be copied in another asset which will be published with clear policy (default is false)
-    },
-    {
-      "fileName": "audio-en.mp4",
-      "containsAudio": true,
-      "audioLanguage ": "eng"
-    }
-  ]
-}
-
-
-    https://app.quicktype.io/#l=cs&r=json2csharp
-
-*/

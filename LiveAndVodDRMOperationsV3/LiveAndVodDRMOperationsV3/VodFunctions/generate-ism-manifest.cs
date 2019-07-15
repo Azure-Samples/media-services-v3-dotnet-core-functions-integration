@@ -9,8 +9,8 @@ This manifest is needed to stream MP4 file(s) with Azure Media Services.
 Caution : such assets are not guaranteed to work with Dynamic Packaging.
 
 
-Note : this function makes  guesses to determine the files for the video tracks and audio tracks.
-These guesses can be wrong.Please check the SMIL generated data for your scenario and your source assets.
+Note : if you don't pass a sempahore JSON then this function makes guesses to determine the files for the video tracks and audio tracks.
+These guesses can be wrong. Please check the SMIL generated data for your scenario and your source assets.
 
 
 As an option, this function can check that the streaming endpoint returns a successful client manifest.
@@ -20,7 +20,7 @@ Input :
 {
     "assetName":"asset-fedtsdslkjdsd",
 
-    "semaphore" : // json structure from model VodSemaphore. If specified, then the function does not do any gues but build the manifest based on the data from the semaphore file
+    "semaphore" : // json structure from model VodSemaphore. If specified, then the function does not do any guess but build the manifest based on the data from the semaphore file
  
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
@@ -41,6 +41,31 @@ Output:
      "fileName" : "manifest.ism" // The name of the manifest file created
     "manifestContent" : "" // the SMIL data created as an asset file 
 }
+
+
+
+
+Example of generated manifest file :
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
+  <head>
+    <meta name="formats" content="mp4" />
+  </head>
+  <body>
+    <switch>
+      <audio src="625290641000.mp4" systemLanguage="fra">
+        <param name="trackName" value="french-audio" />
+      </audio>
+      <audio src="gsw_CPL.mp4" systemLanguage="fra">
+        <param name="trackName" value="french-audio-description" />
+        <param name="accessibility" value="description" />
+        <param name="role" value="alternate" />
+      </audio>
+      <video src="625290641000.mp4" />
+    </switch>
+  </body>
+</smil>
+
 
 ```
 */
