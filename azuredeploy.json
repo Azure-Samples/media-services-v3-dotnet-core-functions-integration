@@ -43,7 +43,7 @@
     },
     "mediaServicesAccountSubscriptionId": {
       "type": "string",
-      "defaultValue": "[subscription().subscriptionId]",
+      "defaultValue": "[string(subscription().subscriptionId)]",
       "metadata": {
         "description": "Subscription Id for your media services account name."
       }
