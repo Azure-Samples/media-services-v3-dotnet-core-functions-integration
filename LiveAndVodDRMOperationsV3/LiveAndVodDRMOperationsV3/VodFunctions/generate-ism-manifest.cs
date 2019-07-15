@@ -26,7 +26,7 @@ Input :
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
             // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
             // This feature is useful if you want to manage several AMS account in different regions.
-            // if two regions are sepecified using a comma as a separator, then the function will operate in the two regions at the same time. With this function, the live event will be deleted from the two regions.
+            // if two regions are specified using a comma as a separator, then the function will operate in the two regions at the same time. With this function, the live event will be deleted from the two regions.
             // Note: the service principal must work with all this accounts
 
     "fileName" : "manifest.ism", // Optional. file name of the manifest to create

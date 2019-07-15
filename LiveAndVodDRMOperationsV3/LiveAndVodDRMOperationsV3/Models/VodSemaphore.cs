@@ -27,7 +27,7 @@ SAMPLE JSON :
       "containsVideo": true,
       "containsAudio": true,
       "audioLanguage": "deu", // based on ISO 639-2 language codes; if not preset and audio track is present, then audioLanguage = "und" (undefined)
-      "audioTitle ": "German audio" // ignored if not present
+      "audioTrackName ": "German audio" // ignored if not present
     },
     {
       "fileName": "video-1200.mp4",
@@ -132,9 +132,6 @@ namespace LiveDRMOperationsV3.Models
 
         [JsonProperty("audioLanguage", NullValueHandling = NullValueHandling.Ignore)]
         public string AudioLanguage { get; set; }
-
-        [JsonProperty("audioTitle", NullValueHandling = NullValueHandling.Ignore)]
-        public string AudioTitle { get; set; }
 
         [JsonProperty("audioTrackName", NullValueHandling = NullValueHandling.Ignore)]
         public string AudioTrackName { get; set; }

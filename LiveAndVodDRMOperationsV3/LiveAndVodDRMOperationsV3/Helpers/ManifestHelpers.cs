@@ -135,8 +135,11 @@ namespace LiveDRMOperationsV3.Helpers
                     var myListAt = new List<XAttribute>() { new XAttribute("src", file.FileName) };
                     if (file.AudioLanguage != null)
                         myListAt.Add(new XAttribute("systemLanguage", file.AudioLanguage));
+                    /*
+                     * // No need as it is recommended to use trackName for audio
                     if (file.AudioTitle != null)
                         myListAt.Add(new XAttribute("title", file.AudioTitle));
+                        */
 
                     var myListElem = new List<XElement>();
                     if (file.AudioTrackName != null)
