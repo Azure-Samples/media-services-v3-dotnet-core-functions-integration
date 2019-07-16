@@ -6,6 +6,8 @@ products:
 - azure
 - azure-functions
 - azure-media-services
+name: "Azure Media Services v3 - Serverless Workflows with Azure Functions and Logic Apps"
+description: "Projects that show how to integrate Azure Media Services with Azure Functions and Azure Logic Apps."
 azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/master/azuredeploy.json
 ---
 
