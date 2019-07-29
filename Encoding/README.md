@@ -19,6 +19,7 @@ In Visual Studio, open the file properties, "Build action" should be "Content", 
 ### Publish the function to Azure
 Open the solution with Visual Studio and publish the functions to Azure.
 It is recommended to use a **premium plan** to avoid functions timeout (Premium gives you 30 min and a more powerfull host).
+It is possible to [unbound run duration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan#unbounded-run-duration).
 
 JSON input body of the function :
 ```json
