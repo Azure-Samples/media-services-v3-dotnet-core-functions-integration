@@ -1,14 +1,21 @@
 ---
-topic: sample
+page_type: sample
 languages:
-  - csharp
-products: azure-media-services
+- csharp
+products:
+- azure
+- azure-functions
+- azure-media-services
+name: "Azure Media Services v3 - Serverless Workflows with Azure Functions and Logic Apps"
+description: "Projects that show how to integrate Azure Media Services with Azure Functions and Azure Logic Apps."
 azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/master/azuredeploy.json
 ---
 
-# Azure Media Services v3 - Serverless Workflows with Azure Functions & Logic Apps
+# Azure Media Services v3 - Serverless Workflows with Azure Functions & Logic Apps 
 This repository contains projects that show how to integrate Azure Media Services with Azure Functions & Azure Logic Apps.
 These Media Services Functions examples are based on AMS REST API v3 on Azure Functions v2. Most of the functions can also be used from Logic Apps.
+
+This repository can be accessed directly using https://aka.ms/ams3functions.
 
 ## Prerequisites for a sample Logic Apps deployments
 
@@ -30,6 +37,6 @@ If not already done : fork the repo, deploy Azure Functions and select the right
 
 Follow the guidelines in the [git tutorial](1-CONTRIBUTION-GUIDE/git-tutorial.md) for details on how to fork the project and use Git properly with this project.
 
-Note : if you never provided your GitHub account in the Azure portal before, the continous integration probably will probably fail and you won't see the functions. In that case, you need to setup it manually. Go to your azure functions deployment / Functions app settings / Configure continous integration. Select GitHub as a source and configure it to use your fork.
+Note : if you never provided your GitHub account in the Azure portal before, the continuous integration probably will probably fail and you won't see the functions. In that case, you need to setup it manually. Go to your azure functions deployment / Functions app settings / Configure continous integration. Select GitHub as a source and configure it to use your fork.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmaster%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
