@@ -135,11 +135,18 @@ namespace LiveDrmOperationsV3
                     string uploadSasUrl = responseListSas.AssetContainerSasUrls.First();
                     var sasUri = new Uri(uploadSasUrl);
                     var destinationBlobContainer = new CloudBlobContainer(sasUri);
+                  
+                    List<IListBlobItem> blobsresult = new List<IListBlobItem>();
+                    BlobContinuationToken continuationToken = null;
+                    do
+                    {
+                        var responseList = await destinationBlobContainer.ListBlobsSegmentedAsync(null, true, BlobListingDetails.Metadata, null, continuationToken, null, null);
+                        continuationToken = responseList.ContinuationToken;
+                        blobsresult.AddRange(responseList.Results);
+                    }
+                    while (continuationToken != null);
 
-
-                    BlobResultSegment segment = await destinationBlobContainer.ListBlobsSegmentedAsync(null, true, BlobListingDetails.None, null, null, null, null);
-
-                    foreach (var dest in segment.Results)
+                    foreach (var dest in blobsresult)
                     {
 
                         var destBlob = dest as CloudBlob;

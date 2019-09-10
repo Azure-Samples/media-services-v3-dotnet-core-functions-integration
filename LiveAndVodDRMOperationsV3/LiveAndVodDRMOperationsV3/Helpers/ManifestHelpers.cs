@@ -21,8 +21,17 @@ namespace LiveDRMOperationsV3.Helpers
     {
         public async static Task<ManifestGenerated> LoadAndUpdateManifestTemplate(Asset asset, CloudBlobContainer container, Microsoft.Azure.WebJobs.ExecutionContext execContext, string manifestFileName = null)
         {
-            var blobsresult = await container.ListBlobsSegmentedAsync(null, true, BlobListingDetails.Metadata, null, null, null, null);
-            var blobs = blobsresult.Results.Where(c => c.GetType() == typeof(CloudBlockBlob)).Select(c => c as CloudBlockBlob);
+            List<IListBlobItem> blobsresult = new List<IListBlobItem>();
+            BlobContinuationToken continuationToken = null;
+            do
+            {
+                var response = await container.ListBlobsSegmentedAsync(null, true, BlobListingDetails.Metadata, null, continuationToken, null, null);
+                continuationToken = response.ContinuationToken;
+                blobsresult.AddRange(response.Results);
+            }
+            while (continuationToken != null);
+
+            var blobs = blobsresult.Where(c => c.GetType() == typeof(CloudBlockBlob)).Select(c => c as CloudBlockBlob);
 
             var mp4AssetFiles = blobs.Where(f => f.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)).ToArray();
             var m4aAssetFiles = blobs.Where(f => f.Name.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase)).ToArray();

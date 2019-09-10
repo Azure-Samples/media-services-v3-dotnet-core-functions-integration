@@ -79,8 +79,16 @@ namespace LiveDrmOperationsV3.Helpers
 
                             var sasUri = new Uri(uploadSasUrl);
                             var container = new CloudBlobContainer(sasUri);
-                            var blobsR = await container.ListBlobsSegmentedAsync(null);
-                            blobs = blobsR.Results.ToList();
+
+                            BlobContinuationToken continuationToken = null;
+                            do
+                            {
+                                var response = await container.ListBlobsSegmentedAsync(continuationToken);
+                                continuationToken = response.ContinuationToken;
+                                blobs.AddRange(response.Results);
+                            }
+                            while (continuationToken != null);
+
                             // let's take the first manifest file. It should exist
                             manifestName = blobs.Where(b => (b.GetType() == typeof(CloudBlockBlob))).Select(b => (CloudBlockBlob)b).Where(b => b.Name.ToLower().EndsWith(".ism")).FirstOrDefault().Name;
                         }
