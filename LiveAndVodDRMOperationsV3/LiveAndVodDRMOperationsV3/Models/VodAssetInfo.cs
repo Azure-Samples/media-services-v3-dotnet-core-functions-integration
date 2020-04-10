@@ -69,4 +69,20 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("assets")] public List<AssetEntry> Assets { get; set; }
     }
+
+    public class VodAssetInfoSimple
+    {
+        [JsonProperty("success")] public bool Success { get; set; }
+
+        [JsonProperty("operationsVersion")]
+        public string OperationsCodeVersion =>
+            AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Version.ToString();
+
+        [JsonProperty("createdLocatorName")] public string CreatedLocatorName { get; set; }
+
+        [JsonProperty("createdLocatorPath")] public string CreatedLocatorPath { get; set; }
+
+        [JsonProperty("asset")] public AssetEntry Asset { get; set; }
+    }
+
 }

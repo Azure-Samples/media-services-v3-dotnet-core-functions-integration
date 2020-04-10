@@ -22,7 +22,7 @@ namespace LiveDrmOperationsV3.Helpers
                 ResourceGroup = config.ResourceGroup,
                 AssetStorageAccountName = asset?.StorageAccountName,
                 AssetName = asset.Name,
-                Urn = semaphore.Urn,
+                Urn = semaphore?.Urn,
                 Semaphore = semaphore,
                 StreamingLocators = new List<StreamingLocatorEntry>(),
                 CreatedTime = asset.Created.ToUniversalTime().ToString(AssetEntry.DateFormat),
