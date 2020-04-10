@@ -644,7 +644,7 @@ namespace LiveDrmOperationsV3
 
                     var locatorPath2 = assetEntry.StreamingLocators.Where(l => l.StreamingLocatorName == streamingLocatorName).First().Urls.Where(u => u.Protocol == OutputProtocol.SmoothStreaming.ToString()).First().Url;
                     var uriloc = new Uri(locatorPath2);
-                    locatorPath = uriloc.Scheme + "//" + uriloc.Host + "/" + uriloc.Segments[1];
+                    locatorPath = uriloc.Scheme + "://" + uriloc.Host + "/" + uriloc.Segments[1];
 
                     if (!await CosmosHelpers.CreateOrUpdateAssetDocument(assetEntry))
                         log.LogWarning("Cosmos access not configured.");
