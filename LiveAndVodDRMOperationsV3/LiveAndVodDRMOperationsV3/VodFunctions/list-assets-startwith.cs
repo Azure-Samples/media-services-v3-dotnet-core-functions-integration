@@ -119,6 +119,7 @@ namespace LiveDrmOperationsV3
                     ODataQuery<Asset> query = new ODataQuery<Asset>();
                     string search = "'" + assetNameStartsWith + "'";
                     query.Filter = "name gt " + search.Substring(0, search.Length - 2) + char.ConvertFromUtf32(char.ConvertToUtf32(search, search.Length - 2) - 1) + new string('z', 262 - search.Length) + "'" + " and name lt " + search.Substring(0, search.Length - 1) + new string('z', 262 - search.Length) + "'";
+                    query.OrderBy = "Properties/Created";
                     var assetsResult = client.Assets.List(config.ResourceGroup, config.AccountName, query);
 
                     assets = assetsResult.Select(a => a.Name).ToList();
