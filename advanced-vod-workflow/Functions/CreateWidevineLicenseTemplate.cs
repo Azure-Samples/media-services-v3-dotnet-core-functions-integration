@@ -124,7 +124,7 @@ using advanced_vod_functions_v3.SharedLibs;
 using advanced_vod_functions_v3.SharedLibs.Widevine;
 
 
-namespace advanced_vod_functions_v3.Functions
+namespace advanced_vod_functions_v3
 {
     public static class CreateWidevineLicenseTemplate
     {

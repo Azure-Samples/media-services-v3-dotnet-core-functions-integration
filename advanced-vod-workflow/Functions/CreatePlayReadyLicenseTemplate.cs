@@ -129,7 +129,7 @@ using Newtonsoft.Json.Linq;
 using advanced_vod_functions_v3.SharedLibs;
 
 
-namespace advanced_vod_functions_v3.Functions
+namespace advanced_vod_functions_v3
 {
     public static class CreatePlayReadyLicenseTemplate
     {
