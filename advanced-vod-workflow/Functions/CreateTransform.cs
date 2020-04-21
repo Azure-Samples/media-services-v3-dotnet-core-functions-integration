@@ -229,12 +229,17 @@ namespace advanced_vod_functions_v3
                                 return new BadRequestObjectResult("Preset not found");
                             preset = new BuiltInStandardEncoderPreset(EncoderNamedPresetList[presetName]);
                         }
+
                         OnErrorType onError = OnErrorType.StopProcessingJob;
-                        if (data.onError != null && OnErrorTypeList.ContainsKey(data.onError))
-                            onError = OnErrorTypeList[data.onError];
+                        string temp = data.onError;
+                        if (!string.IsNullOrEmpty(temp) && OnErrorTypeList.ContainsKey(temp))
+                            onError = OnErrorTypeList[temp];
+                        
                         Priority relativePriority = Priority.Normal;
-                        if (data.relativePriority != null && PriorityList.ContainsKey(data.relativePriority))
-                            relativePriority = PriorityList[data.relativePriority];
+                        temp = data.relativePriority;
+                        if (!string.IsNullOrEmpty(temp) && PriorityList.ContainsKey(temp))
+                            relativePriority = PriorityList[temp];
+
                         transformOutputs.Add(new TransformOutput(preset, onError, relativePriority));
                         outputs = transformOutputs.ToArray();
                     }

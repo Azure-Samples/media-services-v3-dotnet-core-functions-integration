@@ -16,7 +16,7 @@ Input:
         "mode": "simple",
 
         // The content key policy description.
-        "description": "Shared toekn restricted policy for Clear Key content key policy",
+        "description": "Shared token restricted policy for Clear Key content key policy",
 
         //
         // [mode = simple]
