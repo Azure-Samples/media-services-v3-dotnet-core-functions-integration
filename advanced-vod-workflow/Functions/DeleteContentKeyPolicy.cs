@@ -1,25 +1,19 @@
 //
 // Azure Media Services REST API v3 Functions
 //
-// DeleteAsset - This function deletes an existing asset.
+// DeleteContentKeyPolicy - This function deletes an ContentKeyPolicy object.
 //
 /*
 ```c#
 Input:
     {
-        // [Required] The name of the asset
-        "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85",
-
-        // [Required] The name of the Azure Media Service account
-        "accountName": "amsaccount",
-
-        // [Required] The resource group of the Azure Media Service account
-        "resourceGroup": "mediaservices-rg"
+        // [Required] The content key policy name.
+        "contentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
     }
 Output:
     {
-        // The name of the deleted asset
-        "assetName": "TestAssetName-180c777b-cd3c-4e02-b362-39b8d94d7a85"
+        // The name of the deleted content key policy.
+        "contentKeyPolicyName": "SharedContentKeyPolicyForClearKey",
     }
 
 ```
@@ -28,6 +22,7 @@ Output:
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -43,35 +38,35 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using advanced_vod_functions_v3.SharedLibs;
 
 
 namespace advanced_vod_functions_v3
 {
-    public static class DeleteAsset
+    public static class DeleteContentKeyPolicy
     {
-        [FunctionName("DeleteAsset")]
+        [FunctionName("DeleteContentKeyPolicy")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation($"AMS v3 Function - DeleteAsset was triggered!");
+            log.LogInformation($"AMS v3 Function - CreateContentKeyPolicy was triggered!");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            string assetName = data.assetName;
-            string accountName = data.accountName;
-            string resourceGroup = data.resourceGroup;
-
-            MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
+            if (data.contentKeyPolicyName == null)
+                return new BadRequestObjectResult("Please pass contentKeyPolicyName in the input object");
+            string contentKeyPolicyName = data.contentKeyPolicyName;
 
             try
             {
+                MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
 
-                client.Assets.Delete(resourceGroup, accountName, assetName);
+                client.ContentKeyPolicies.Delete(amsconfig.ResourceGroup, amsconfig.AccountName, contentKeyPolicyName);
             }
             catch (ApiErrorException e)
             {
@@ -84,10 +79,9 @@ namespace advanced_vod_functions_v3
                 return new BadRequestObjectResult("Error: " + e.Message);
             }
 
-            // compatible with AMS V2 API
             return (ActionResult)new OkObjectResult(new
             {
-                assetName = assetName
+                contentKeyPolicyName = contentKeyPolicyName
             });
         }
     }
