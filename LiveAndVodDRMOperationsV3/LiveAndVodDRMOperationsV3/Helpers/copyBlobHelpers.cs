@@ -5,15 +5,9 @@
 //
 
 using System;
-using System.Threading;
-using System.IO;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.Azure.WebJobs.Host;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Storage.Blob;
 
 namespace LiveDrmOperationsV3.Helpers
 {
@@ -38,11 +32,8 @@ namespace LiveDrmOperationsV3.Helpers
             CloudBlobClient sourceCloudBlobClient = sourceStorageAccount.CreateCloudBlobClient();
 
             return sourceCloudBlobClient.GetContainerReference(containerName);
-
         }
-
     }
-
 }
 
 

@@ -6,7 +6,7 @@ using LiveDrmOperationsV3.Models;
 using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage.Blob;
 
 namespace LiveDrmOperationsV3.Helpers
 {

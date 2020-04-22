@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Storage.Blob;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Microsoft.Rest.Azure.Authentication;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace LiveDrmOperationsV3.Helpers
 {
@@ -159,7 +159,7 @@ namespace LiveDrmOperationsV3.Helpers
                                 var myPath = uriBuilder.ToString();
                                 urls.Add(new OutputUrl
                                 {
-                                    Url = myPath ,
+                                    Url = myPath,
                                     Protocol = OutputProtocol.Download
                                 });
                             }
