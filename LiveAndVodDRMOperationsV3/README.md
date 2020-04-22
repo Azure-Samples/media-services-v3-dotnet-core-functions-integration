@@ -28,10 +28,12 @@ VOD
 - create-vtt-to-asset
 - generate-ism-manifest
 - generate-resource
+- get-asset-info
 - list-assets-startwith
 - publish-asset
 - publish-asset-simple
 - start-blob-copy-to-asset
+- submit-job
 
 As an option, two AMS accounts and two Azure functions deployments can be created in two different Azure regions. An Azure function deployment could manage either AMS account. For this to work, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name, or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
 
