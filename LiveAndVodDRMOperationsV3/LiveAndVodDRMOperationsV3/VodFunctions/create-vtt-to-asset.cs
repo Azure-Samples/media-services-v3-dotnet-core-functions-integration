@@ -9,9 +9,9 @@ This function start the copy of blobs to an asset container.
 ```c#
 Input:
 {
-    "assetName" : "asset-dgdccfcffs", // optional. Will be automatically generated if not provided
+    "assetName" : "asset-dgdccfcffs",
     "vttFileName" : "english.vtt",
-    "vttContent" : ,
+    "vttContent" :  "hjhkjhhhjk", // in base 64 encoding
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
             // Resource name is not changed if "ResourceGroupFinalName" in app settings is to a value non empty.
@@ -36,10 +36,12 @@ Output:
 */
 
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -134,8 +136,15 @@ namespace LiveDrmOperationsV3
                     string uploadSasUrl = responseListSas.AssetContainerSasUrls.First();
                     var sasUri = new Uri(uploadSasUrl);
                     var destinationBlobContainer = new CloudBlobContainer(sasUri);
+
                     var destinationBlob = destinationBlobContainer.GetBlockBlobReference(vttFileName);
-                    await destinationBlob.UploadTextAsync(vttContent);
+
+                    // Base 64 decoding
+                    byte[] dataVtt = Convert.FromBase64String(vttContent);
+                    string decodedString = Encoding.UTF8.GetString(dataVtt);
+                    
+                    // Uploading data
+                    await destinationBlob.UploadTextAsync(decodedString);
                 }
                 catch (Exception ex)
                 {
