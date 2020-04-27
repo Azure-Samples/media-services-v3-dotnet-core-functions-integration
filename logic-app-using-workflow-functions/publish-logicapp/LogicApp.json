@@ -1,0 +1,282 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "LogicAppLocation": {
+      "type": "string",
+      "minLength": 1,
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "uaecentral",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "defaultValue": "southeastasia"
+    },
+    "LogicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "raz-mediaservices-publish-workflow"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "GetAssetUrls": {
+              "type": "Function",
+              "inputs": {
+                "body": {
+                  "streamingEndpointName": "@{if(equals(triggerBody()?['streamingEndpointName'],null),'default',triggerBody()?['streamingEndpointName'])}",
+                  "streamingLocatorName": "@{body('Parse_JSON_-_PublishAsset')?['streamingLocatorName']}",
+                  "streamingUrlScheme": "https"
+                },
+                "function": {
+                  "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/GetAssetUrls"
+                }
+              },
+              "runAfter": {
+                "Parse_JSON_-_PublishAsset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_alternative-media-id": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "alternative-media-id",
+                    "type": "string",
+                    "value": "@{if(equals(triggerBody()?['alternative-media-id'],null),'',concat('\"alternative-media-id\": \"',triggerBody()?['alternative-media-id'],'\",'))}"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_endDateTime": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_contentKeyPolicyName": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "contentKeyPolicyName",
+                    "type": "string",
+                    "value": "@{if(equals(triggerBody()?['_contentKeyPolicyName'],null),'',concat('\"contentKeyPolicyName\": \"',triggerBody()?['_contentKeyPolicyName'],'\",'))}"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_alternative-media-id": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_contentKeys": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "contentKeys",
+                    "type": "string",
+                    "value": "\"contentKeys\": null,"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_contentKeyPolicyName": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_endDateTime": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "endDateTime",
+                    "type": "string",
+                    "value": "\"endDateTime\": \"@{ if(equals(triggerBody()?['endDateTime'],null),formatDateTime(addDays(utcNow(),365),'yyyy-MM-ddTHH:mmZ'),triggerBody()?['endDateTime'])}\","
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_startDateTime": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_startDateTime": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "startDateTime",
+                    "type": "string",
+                    "value": "\"startDateTime\": \"@{ if(equals(triggerBody()?['startDateTime'],null),formatDateTime(utcNow(),'yyyy-MM-ddTHH:mmZ'),triggerBody()?['startDateTime'])}\","
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+            "Initialize_variable_-_streamingLocatorId": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "streamingLocatorId",
+                    "type": "string",
+                    "value": "@{if(equals(triggerBody()?['streamingLocatorId'],null),'',concat('\"streamingLocatorId\": \"',triggerBody()?['streamingLocatorId'],'\",'))}"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_contentKeys": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parse_JSON_-_PublishAsset": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('PublishAsset')",
+                "schema": {
+                  "properties": {
+                    "streamingLocatorId": {
+                      "type": "string"
+                    },
+                    "streamingLocatorName": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "PublishAsset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "PublishAsset": {
+              "type": "Function",
+              "inputs": {
+                "body": "@concat(\r\n  '{\"assetName\": \"',\r\n  triggerBody()?['assetName'],\r\n  '\",',\r\n  variables('endDateTime'),\r\n  variables('startDateTime'),\r\n  variables('alternative-media-id'),\r\n  variables('contentKeyPolicyName'),\r\n  variables('contentKeys'),\r\n  variables('streamingLocatorId'),\r\n  '\"streamingPolicyName\": \"',\r\n  triggerBody()?['streamingPolicyName'],\r\n  '\"}')",
+                "function": {
+                  "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/PublishAsset"
+                }
+              },
+              "runAfter": {
+                "Initialize_variable_-_streamingLocatorId": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Response": {
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": "@outputs('GetAssetUrls')['statusCode']",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": "@body('GetAssetUrls')"
+              },
+              "runAfter": {
+                "GetAssetUrls": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {},
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "properties": {
+                    "alternative-media-id": {
+                      "type": "string"
+                    },
+                    "assetName": {
+                      "type": "string"
+                    },
+                    "contentKeyPolicyName": {
+                      "type": "string"
+                    },
+                    "endDateTime": {
+                      "type": "string"
+                    },
+                    "startDateTime": {
+                      "type": "string"
+                    },
+                    "streamingEndpointName": {
+                      "type": "string"
+                    },
+                    "streamingLocatorId": {
+                      "type": "string"
+                    },
+                    "streamingPolicyName": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "method": "POST"
+              },
+              "conditions": []
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {}
+      },
+      "name": "[parameters('LogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('LogicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01"
+    }
+  ],
+  "outputs": {}
+}
