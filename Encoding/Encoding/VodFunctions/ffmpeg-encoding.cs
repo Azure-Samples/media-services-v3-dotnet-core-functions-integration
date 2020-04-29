@@ -81,12 +81,13 @@ namespace Encoding
             try
             {
                 var folder = context.FunctionDirectory;
+                var tempFolder = Path.GetTempPath();
 
                 string inputFileName = System.IO.Path.GetFileName(new Uri(sasInputUrl).LocalPath);
-                string pathLocalInput = System.IO.Path.Combine(context.FunctionDirectory, inputFileName);
+                string pathLocalInput = System.IO.Path.Combine(tempFolder, inputFileName);
 
                 string outputFileName = System.IO.Path.GetFileName(new Uri(sasOutputUrl).LocalPath);
-                string pathLocalOutput = System.IO.Path.Combine(context.FunctionDirectory, outputFileName);
+                string pathLocalOutput = System.IO.Path.Combine(tempFolder, outputFileName);
 
                 foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady))
                 {
