@@ -118,8 +118,8 @@ namespace Encoding
 
                 process.StartInfo.Arguments = (ffmpegArguments ?? " -i {input} {output} -y")
                     .Replace("{input}", "\"" + pathLocalInput + "\"")
-                    .Replace("{output}", "\"" + pathLocalOutput + "\"");
-
+                    .Replace("{output}", "\"" + pathLocalOutput + "\"")
+                    .Replace("'", "\"");
 
                 log.LogInformation(process.StartInfo.Arguments);
 
