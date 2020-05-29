@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "videoindexer-v2_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "videoindexer-v2"
+    },
+    "videoindexer-v2_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "RazViConnection"
+    },
+    "videoindexer-v2_1_api_key": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The API Key for this api"
+      }
+    },
     "keyvault_1_Connection_Name": {
       "type": "string",
       "defaultValue": "keyvault"
@@ -22,7 +36,7 @@
       "metadata": {
         "description": "Client (or Application) ID of the Azure Active Directory application."
       },
-      "defaultValue": ""
+      "defaultValue": "cd7fe1ac-90d2-463d-bc7d-0e6f76afa6d1"
     },
     "keyvault_1_token:clientSecret": {
       "type": "securestring",
@@ -35,7 +49,7 @@
       "metadata": {
         "description": "The tenant ID for the Azure Active Directory application."
       },
-      "defaultValue": ""
+      "defaultValue": "72f988bf-86f1-41af-91ab-2d7cd011db47"
     },
     "keyvault_1_token:resourceUri": {
       "type": "string",
@@ -132,7 +146,7 @@
               "type": "Compose",
               "inputs": "@replace(replace(triggerBody()?['Name'],' ',''),'.mp4','')",
               "runAfter": {
-                "Initialize_variable_-_processlog": [
+                "Initialize_variable_-_videoIndexerAccountId": [
                   "Succeeded"
                 ]
               }
@@ -273,6 +287,26 @@
                       },
                       "runAfter": {
                         "Create_blob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Get_VI_Account_Access_Token": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['videoindexer-v2']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/auth/@{encodeURIComponent('southeastasia')}/Accounts/@{encodeURIComponent(variables('videoIndexerAccountId'))}/AccessToken",
+                        "queries": {
+                          "allowEdit": true
+                        }
+                      },
+                      "runAfter": {
+                        "Log:_Copy_success": [
                           "Succeeded"
                         ]
                       }
@@ -477,6 +511,28 @@
                       },
                       "runAfter": {
                         "Parse_JSON_-_SubmitMediaJob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Upload_video_and_index": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['videoindexer-v2']['connectionId']"
+                          }
+                        },
+                        "method": "post",
+                        "path": "/@{encodeURIComponent('southeastasia')}/Accounts/@{encodeURIComponent(variables('videoIndexerAccountId'))}/Videos",
+                        "queries": {
+                          "accessToken": "@body('Get_VI_Account_Access_Token')",
+                          "name": "@body('Parse_JSON_-_Create_Empty_Asset')?['assetName']",
+                          "assetId": "@body('Parse_JSON_-_Create_Empty_Asset')?['assetId']"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_VI_Account_Access_Token": [
                           "Succeeded"
                         ]
                       }
@@ -726,6 +782,23 @@
                 ]
               }
             },
+            "Initialize_variable_-_videoIndexerAccountId": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "videoIndexerAccountId",
+                    "type": "string",
+                    "value": "89be5acc-de29-4a3a-b747-3cc4894963b2"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_processlog": [
+                  "Succeeded"
+                ]
+              }
+            },
             "Log:_Empty_Asset_Created": {
               "type": "AppendToStringVariable",
               "inputs": {
@@ -941,12 +1014,17 @@
           "$connections": {
             "value": {
               "azureblob": {
-                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'azureblob')]",
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'azureblob')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]",
                 "connectionName": "[parameters('azureblob_1_Connection_Name')]"
               },
+              "videoindexer-v2": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'videoindexer-v2')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('videoindexer-v2_1_Connection_Name'))]",
+                "connectionName": "[parameters('videoindexer-v2_1_Connection_Name')]"
+              },
               "keyvault": {
-                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'keyvault')]",
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'keyvault')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', parameters('keyvault_1_Connection_Name'))]",
                 "connectionName": "[parameters('keyvault_1_Connection_Name')]"
               }
@@ -968,8 +1046,24 @@
       "apiVersion": "2016-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('videoindexer-v2_1_Connection_Name'))]",
         "[resourceId('Microsoft.Web/connections', parameters('keyvault_1_Connection_Name'))]"
       ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('videoindexer-v2_1_Connection_Name')]",
+      "location": "southeastasia",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'videoindexer-v2')]"
+        },
+        "displayName": "[parameters('videoindexer-v2_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "api_key": "[parameters('videoindexer-v2_1_api_key')]"
+        }
+      }
     },
     {
       "type": "MICROSOFT.WEB/CONNECTIONS",

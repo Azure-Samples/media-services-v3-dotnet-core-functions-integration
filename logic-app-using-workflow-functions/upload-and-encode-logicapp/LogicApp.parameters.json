@@ -1,6 +1,27 @@
-﻿{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "videoindexer-v2_1_Connection_Name": {
+      "value": "videoindexer-v2"
+    },
+    "azureblob_1_accessKey": {
+      "value": "j3KbcpO7O6RXlAPI7d0TWIdOWexMfAnNQ0RIvD+2JMmnkDFTY+uvwbLfiKidnv+PROyPK+apKzePKfGnbbh9Rw=="
+    },
+    "videoindexer-v2_1_api_key": {
+      "value": "ec30ed412f3742a190a6659fa2e851b8"
+    },
+    "keyvault_1_token:clientId": {
+      "value": "cd7fe1ac-90d2-463d-bc7d-0e6f76afa6d1"
+    },
+    "keyvault_1_token:clientSecret": {
+      "value": "0GKg9A5?s1?Mhwe.ug[CjFOufdk32s:l"
+    },
+    "keyvault_1_token:TenantId": {
+      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    },
+    "keyvault_1_token:resourceUri": {
+      "value": ""
+    }
   }
 }
