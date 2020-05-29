@@ -12,6 +12,8 @@ The project includes Logic Apps ARM templates that is dependent on the [advanced
 
 This Media Services Functions example is based on AMS REST API v3 on Azure Functions v2.
 
+See [here](https://raffertyuy.com/raztype/creating-an-azure-media-services-upload-workflow-using-azure-storage-and-logic-apps) to read more about how this logic app is implemented.
+
 ## Prerequisites for a sample Logic Apps deployments
 
 ### 1. Deploy the Advanced VOD Workflow Azure Functions
