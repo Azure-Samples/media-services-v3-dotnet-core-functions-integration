@@ -284,3 +284,16 @@ Example of information in Cosmos for a live event :
       ]
     }
 ```
+
+### 6. Test the "create-empty-asset" function
+You can go the Azure Function App instance / Functions / create-empty-asset / Code + Test / Test/Run.
+In the body, set an asset name :
+
+```json
+{
+  "assetName": "assetname-123"
+}
+```
+
+Click on Run.
+The log should show the execution and asset should be created in Azure Media Services account.
