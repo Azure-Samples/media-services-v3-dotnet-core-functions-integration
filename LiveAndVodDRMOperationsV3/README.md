@@ -121,6 +121,7 @@ local.settings.json will look like (please replace 'value' with the correct data
 ```
 
 ### 5. Optional but recommended : deploy a Cosmos Database
+
 This database is used to read the settings when creating a live event. It is also used to store all the information about the live event, output created, and vod assets.
 Database and collections are automatically created by the code if Cosmos fields are set in app settings. Collections use a partition key named "/partitionKey" and value is always "live".
 
