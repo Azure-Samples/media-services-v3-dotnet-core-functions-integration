@@ -377,7 +377,7 @@ namespace LiveDrmOperationsV3
                         name: liveEventName,
                         location: config.Region,
                         description: "",
-                        vanityUrl: eventInfoFromCosmos.VanityUrl,
+                        useStaticHostname: eventInfoFromCosmos.VanityUrl,
                         encoding: new LiveEventEncoding { EncodingType = LiveEventEncodingType.None },
                         input: liveEventInput,
                         preview: liveEventPreview,

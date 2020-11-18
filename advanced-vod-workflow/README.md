@@ -9,21 +9,21 @@ author: shigeyf
 This project contains advanced VOD media workflow examples of using Azure Functions with Azure Media Services.
 The project includes several folders of sample Azure Functions for use with Azure Media Services that show workflows related to ingesting content directly from blob storage, encoding, and writing content back to blob storage.
 
-This Media Services Functions example is based on AMS REST API v3 on Azure Functions v2.
+This Media Services Functions example is based on AMS REST API v3 on Azure Functions v3.
 
 ## Prerequisites for a sample Logic Apps deployments
 
 ### 1. Create an Azure Media Services account
 
-Create a Media Services account in your subscription if don't have it already ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/previous/media-services-portal-create-account)).
+Create a Media Services account in your subscription if don't have it already ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/create-account-howto?tabs=portal)).
 
 ### 2. Create a Service Principal
 
-Create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/media-services-portal-get-started-with-aad#service-principal-authentication)).
+Create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
 
 ### 3. Make sure the AMS streaming endpoint is started
 
-To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/previous/media-services-portal-vod-get-started#start-the-streaming-endpoint)).
+To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
 ### 4. Deploy the Azure functions
 

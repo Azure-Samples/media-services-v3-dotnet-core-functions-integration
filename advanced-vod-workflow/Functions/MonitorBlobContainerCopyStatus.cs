@@ -53,17 +53,11 @@ using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
 using Microsoft.Extensions.Logging;
-
-using Microsoft.WindowsAzure.Storage.Blob;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using advanced_vod_functions_v3.SharedLibs;
-
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace advanced_vod_functions_v3
 {
