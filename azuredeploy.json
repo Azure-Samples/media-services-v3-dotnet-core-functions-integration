@@ -145,7 +145,7 @@
           "appSettings": [
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "beta"
+              "value": "~3"
             }
           ]
         }
@@ -164,7 +164,7 @@
           "properties": {
             "Project": "[parameters('project')]",
             "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-            "FUNCTIONS_EXTENSION_VERSION": "~2",
+            "FUNCTIONS_EXTENSION_VERSION": "~3",
             "WEBSITE_NODE_DEFAULT_VERSION": "10.14.1",
             "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
             "WEBSITE_CONTENTSHARE": "[variables('functionsAppName')]",
