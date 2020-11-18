@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "functionsAppName": {
@@ -131,7 +131,7 @@
     {
       "type": "Microsoft.Web/sites",
       "name": "[variables('functionsAppName')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-11-01",
       "location": "[resourceGroup().location]",
       "comments": "This function app depends on the media services account and storage account and will pull down the source code from Github",
       "dependsOn": [
@@ -140,21 +140,13 @@
       ],
       "kind": "functionapp",
       "properties": {
-        "serverFarmId": "[variables('hostingPlanName')]",
-        "siteConfig": {
-          "appSettings": [
-            {
-              "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~3"
-            }
-          ]
-        }
+        "serverFarmId": "[variables('hostingPlanName')]"
       },
       "resources": [
         {
           "type": "config",
           "name": "appsettings",
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2018-11-01",
           "comments": "These are the default appsettings configured on the functions app.",
           "dependsOn": [
             "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -188,7 +180,7 @@
         {
           "type": "sourcecontrols",
           "name": "web",
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2018-11-01",
           "comments": "This section sets up source control for continuous integration on the Function app and pulls the source code down from Github.",
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites', variables('functionsAppName'))]",
