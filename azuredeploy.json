@@ -101,7 +101,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This storage account is used by the functions.",
       "sku": {
@@ -136,7 +136,7 @@
       ],
       "kind": "functionapp",
       "properties": {
-        "serverFarmId": "[variables('hostingPlanName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "siteConfig": {
           "appSettings": [
             {
@@ -229,8 +229,7 @@
           "apiVersion": "2019-08-01",
           "comments": "This section sets up source control for continuous integration on the Function app and pulls the source code down from Github.",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', variables('functionsAppName'))]",
-            "[concat('Microsoft.Web/sites/', variables('functionsAppName'), '/config/appsettings')]"
+            "[resourceId('Microsoft.Web/Sites', variables('functionsAppName'))]"
           ],
           "properties": {
             "repoUrl": "[parameters('sourceCodeRepositoryURL')]",
