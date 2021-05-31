@@ -134,7 +134,7 @@ Example of settings in Cosmos for a live event :
     "vendor": "Customer",
     "baseStorageName": "uhddstvstreaming",
     "archiveWindowLength": 10,
-    "vanityUrl": true,
+    "useStaticHostname": true,
     "lowLatency": false,
     "liveEventInputACL": [
         "192.168.0.0/24",
@@ -160,7 +160,7 @@ Example of information in Cosmos for a live event :
 {
       "liveEventName": "CH1",
       "resourceState": "Running",
-      "vanityUrl": true,
+      "useStaticHostname": true,
       "amsAccountName": "customerssrlivedeveuwe",
       "region": "West Europe",
       "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
