@@ -52,7 +52,7 @@ namespace LiveDrmOperationsV3.Models
         public LiveEventSettingsInfo()
         {
             ArchiveWindowLength = 10;
-            VanityUrl = false;
+            UseStaticHostname = false;
             InputProtocol = LiveEventInputProtocol.FragmentedMP4;
             AutoStart = true;
             LowLatency = false;
@@ -72,7 +72,7 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("archiveWindowLength")] public int ArchiveWindowLength { get; set; }
 
-        [JsonProperty("vanityUrl")] public bool VanityUrl { get; set; }
+        [JsonProperty("useStaticHostname")] public bool UseStaticHostname { get; set; }
 
         [JsonProperty("lowLatency")] public bool LowLatency { get; set; }
 

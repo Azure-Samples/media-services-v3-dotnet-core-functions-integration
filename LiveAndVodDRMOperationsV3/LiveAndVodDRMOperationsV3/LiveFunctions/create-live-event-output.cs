@@ -10,7 +10,7 @@ Input :
     "liveEventName": "CH1",
     "storageAccountName" : "", // optional. Specify in which attached storage account the asset should be created. If azureRegion is specified, then the region is appended to the name
     "inputProtocol" : "FragmentedMP4" or "RTMP",  // value is optional. Default is FragmentedMP4
-    "vanityUrl" : true, // VanityUrl if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
+    "useStaticHostname" : true, // UseStaticHostname if true then LiveEvent has a predictable ingest URL even when stopped. It takes more time to get it. Non Vanity URL Live Event are quicker to get, but ingest is only known when the live event is running
     "archiveWindowLength" : 20,  // value in minutes, optional. Default is 10 (minutes)
     "liveEventAutoStart": false,  // optional. Default is True
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
@@ -38,7 +38,7 @@ Output:
     {
       "liveEventName": "CH1",
       "resourceState": "Running",
-      "vanityUrl": true,
+      "useStaticHostname": true,
       "amsAccountName": "customerssrlivedeveuwe",
       "region": "West Europe",
       "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
@@ -136,6 +136,12 @@ Output:
 ```
 */
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
 using Microsoft.AspNetCore.Http;
@@ -147,16 +153,10 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace LiveDrmOperationsV3
 {
-
+   
     public static class CreateChannel
     {
         // This version registers keys in irdeto backend. For FairPlay and rpv3
@@ -242,7 +242,7 @@ namespace LiveDrmOperationsV3
 
             if (data.lowLatency != null) eventInfoFromCosmos.LowLatency = (bool)data.lowLatency;
 
-            if (data.vanityUrl != null) eventInfoFromCosmos.VanityUrl = (bool)data.vanityUrl;
+            if (data.useStaticHostname != null) eventInfoFromCosmos.UseStaticHostname = (bool)data.useStaticHostname;
 
             var cencKey = new StreamingLocatorContentKey();
             var cbcsKey = new StreamingLocatorContentKey();
@@ -377,7 +377,7 @@ namespace LiveDrmOperationsV3
                         name: liveEventName,
                         location: config.Region,
                         description: "",
-                        useStaticHostname: eventInfoFromCosmos.VanityUrl,
+                        useStaticHostname: eventInfoFromCosmos.UseStaticHostname,
                         encoding: new LiveEventEncoding { EncodingType = LiveEventEncodingType.None },
                         input: liveEventInput,
                         preview: liveEventPreview,

@@ -12,7 +12,7 @@ Input :
     "vendor": "Customer",
     "baseStorageName": "storagename",
     "archiveWindowLength": 10,
-    "vanityUrl": true,
+    "useStaticHostname": true,
     "lowLatency": false,
     "liveEventInputACL": [
         "192.168.0.0/24",

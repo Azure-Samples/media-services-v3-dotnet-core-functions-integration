@@ -25,7 +25,7 @@ Output:
     {
       "liveEventName": "CH1",
       "resourceState": "Stopped",
-      "vanityUrl": true,
+      "useStaticHostname": true,
       "amsAccountName": "customerssrlivedeveuwe",
       "region": "West Europe",
       "resourceGroup": "GD-INIT-DISTLSV-dev-euwe",
