@@ -6,7 +6,7 @@ author: xpouyat
 
 # Media Services v3 Dynamic Encryption with Irdeto license delivery service (Live and VOD)
 
-This Visual Studio 2017 Solution exposes several Azure functions that can be used to manage live streaming and VOD with DRM, using Irdeto back-end to deliver the licenses. The functions communicate with Irdeto backend using SOAP. Optionaly, a Cosmos database can be used to store the result of the functions, and to specify the settings of the live event(s) to be created : ArchiveWindow, baseStorageName, ACLs, autostart, Vanity URL mode.
+This Visual Studio 2019 Solution exposes several Azure functions that can be used to manage live streaming and VOD with DRM, using Irdeto back-end to deliver the licenses. The functions communicate with Irdeto backend using SOAP. Optionaly, a Cosmos database can be used to store the result of the functions, and to specify the settings of the live event(s) to be created : ArchiveWindow, baseStorageName, ACLs, autostart, Vanity URL mode.
 
 Here are the list of functions available:
 
