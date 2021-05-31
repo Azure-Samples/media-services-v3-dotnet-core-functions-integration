@@ -4,10 +4,8 @@
 // Shared Library
 //
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Rest;
+using System;
 
 
 namespace advanced_vod_functions_v3.SharedLibs.Widevine
@@ -95,13 +93,13 @@ namespace advanced_vod_functions_v3.SharedLibs.Widevine
 
         // All heartbeat (renewal) requests for this license shall be directed to the specified URL.
         // This field is only used if can_renew is true.
-        [Newtonsoft.Json.JsonProperty("renewal_server_url", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("renewal_server_url", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string RenewalServerUrl { get; set; }
 
         // How many seconds after license_start_time, before renewal is first attempted.
         // This field is only used if can_renew is true.
         // Default = 0.
-        [Newtonsoft.Json.JsonProperty("renewal_delay_seconds", DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("renewal_delay_seconds", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
         public int RenewalDelaySeconds { get; set; }
 
         // Specifies the delay in seconds between subsequent license renewal requests, in case of failure.

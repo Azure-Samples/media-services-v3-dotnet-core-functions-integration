@@ -36,10 +36,6 @@ Output:
 ```
 */
 
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
 using Microsoft.AspNetCore.Http;
@@ -50,6 +46,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace LiveDrmOperationsV3
 {
@@ -67,7 +67,7 @@ namespace LiveDrmOperationsV3
             bool success = true;
 
             var requestBody = new StreamReader(req.Body).ReadToEnd();
-                        
+
             LiveEventSettingsInfo settings = null;
             try
             {

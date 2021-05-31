@@ -1,12 +1,12 @@
-﻿using Microsoft.Azure.Management.Media.Models;
+﻿using LiveDRMOperationsV3.Models;
+using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using LiveDRMOperationsV3.Models;
-using Microsoft.Azure.Storage.Blob;
 
 namespace LiveDRMOperationsV3.Helpers
 {

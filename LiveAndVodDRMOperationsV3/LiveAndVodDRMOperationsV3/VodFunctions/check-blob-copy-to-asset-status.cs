@@ -35,24 +35,24 @@ Output:
 ```
 */
 
+using LiveDrmOperationsV3.Helpers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using LiveDrmOperationsV3.Helpers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Management.Media;
-using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Azure.Storage.Blob;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 
 namespace LiveDrmOperationsV3
@@ -128,7 +128,7 @@ namespace LiveDrmOperationsV3
                     string uploadSasUrl = responseListSas.AssetContainerSasUrls.First();
                     var sasUri = new Uri(uploadSasUrl);
                     var destinationBlobContainer = new CloudBlobContainer(sasUri);
-                  
+
                     List<IListBlobItem> blobsresult = new List<IListBlobItem>();
                     BlobContinuationToken continuationToken = null;
                     do

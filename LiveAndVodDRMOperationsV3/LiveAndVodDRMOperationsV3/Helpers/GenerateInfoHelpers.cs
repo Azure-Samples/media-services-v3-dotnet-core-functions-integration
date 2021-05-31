@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using LiveDrmOperationsV3.Models;
+﻿using LiveDrmOperationsV3.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LiveDrmOperationsV3.Helpers
 {

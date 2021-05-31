@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
-    <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="NewFolder\**" />
@@ -10,14 +9,13 @@
     <None Remove="NewFolder\**" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
     <PackageReference Include="Microsoft.Azure.Management.Media" Version="3.0.4" />
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.12" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure.Authentication" Version="2.4.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.1" />
-     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.12" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
-  </PropertyGroup>
+  </ItemGroup>
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>

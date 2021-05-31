@@ -70,27 +70,27 @@ Example of generated manifest file :
 ```
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
 using LiveDRMOperationsV3.Helpers;
+using LiveDRMOperationsV3.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using LiveDRMOperationsV3.Models;
-using Microsoft.Azure.Storage.Blob;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace LiveDrmOperationsV3
 {

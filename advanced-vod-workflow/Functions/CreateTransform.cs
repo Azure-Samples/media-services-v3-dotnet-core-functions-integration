@@ -120,27 +120,19 @@ Output:
 //
 //
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
+using advanced_vod_functions_v3.SharedLibs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
-
-using advanced_vod_functions_v3.SharedLibs;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 
 namespace advanced_vod_functions_v3
@@ -224,7 +216,8 @@ namespace advanced_vod_functions_v3
                         {
                             preset = JsonConvert.DeserializeObject<StandardEncoderPreset>(data.customPresetJson.ToString(), jsonReaders);
                         }
-                        else {
+                        else
+                        {
                             if (!EncoderNamedPresetList.ContainsKey(presetName))
                                 return new BadRequestObjectResult("Preset not found");
                             preset = new BuiltInStandardEncoderPreset(EncoderNamedPresetList[presetName]);
@@ -234,7 +227,7 @@ namespace advanced_vod_functions_v3
                         string temp = data.onError;
                         if (!string.IsNullOrEmpty(temp) && OnErrorTypeList.ContainsKey(temp))
                             onError = OnErrorTypeList[temp];
-                        
+
                         Priority relativePriority = Priority.Normal;
                         temp = data.relativePriority;
                         if (!string.IsNullOrEmpty(temp) && PriorityList.ContainsKey(temp))

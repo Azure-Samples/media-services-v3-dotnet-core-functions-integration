@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
-using LiveDrmOperationsV3.Helpers;
-using LiveDRMOperationsV3.Models;
-using Microsoft.Azure.Management.Media.Models;
+﻿using LiveDRMOperationsV3.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
 
 namespace LiveDrmOperationsV3.Models
 {
@@ -85,7 +80,7 @@ namespace LiveDrmOperationsV3.Models
         public string Id => ((new Uri(ResourceList[0]?.Url)).Host + "-" + (new Uri(ResourceList[0]?.Url)).Segments[1].Replace("/", string.Empty)).ToLower();
 
         [JsonProperty(PropertyName = "partitionKey", NullValueHandling = NullValueHandling.Ignore)]
-        public override string PartitionKey => (MainAsset.Semaphore.DrmContentId?? DefaultPartitionValue).ToLower();
+        public override string PartitionKey => (MainAsset.Semaphore.DrmContentId ?? DefaultPartitionValue).ToLower();
 
         public new static string DefaultPartitionValue = "vod";
     }

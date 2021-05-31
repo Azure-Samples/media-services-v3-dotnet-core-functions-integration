@@ -4,15 +4,11 @@
 // Shared Library
 //
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Reflection;
-
-using Microsoft.Azure.Management.Media.Models;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 
 namespace advanced_vod_functions_v3.SharedLibs
@@ -267,7 +263,8 @@ namespace advanced_vod_functions_v3.SharedLibs
             if (value.StartsWith("P"))
             {
                 return System.Xml.XmlConvert.ToTimeSpan(value);
-            } else
+            }
+            else
             {
                 return token.ToObject<TimeSpan>();
             }

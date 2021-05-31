@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using LiveDrmOperationsV3.Helpers;
-using LiveDRMOperationsV3.Models;
+﻿using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace LiveDrmOperationsV3.Models
 {

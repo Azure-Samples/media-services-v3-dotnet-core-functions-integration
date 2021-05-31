@@ -64,13 +64,10 @@ SAMPLE JSON :
 
 */
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
-using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel;
+using System.Globalization;
 
 namespace LiveDRMOperationsV3.Models
 {

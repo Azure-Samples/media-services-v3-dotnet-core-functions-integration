@@ -4,10 +4,10 @@
 // Shared Library
 //
 
-using System;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
+using System;
 
 namespace LiveDrmOperationsV3.Helpers
 {
@@ -35,8 +35,3 @@ namespace LiveDrmOperationsV3.Helpers
         }
     }
 }
-
-
-
-
-
