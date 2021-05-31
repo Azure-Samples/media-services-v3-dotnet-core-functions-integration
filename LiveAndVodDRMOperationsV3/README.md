@@ -31,10 +31,12 @@ VOD
 - create-vtt-to-asset
 - generate-ism-manifest
 - generate-resource
+- get-asset-info
 - list-assets-startwith
 - publish-asset
 - publish-asset-simple
 - start-blob-copy-to-asset
+- submit-job
 
 As an option, two AMS accounts and two Azure functions deployments can be created in two different Azure regions. An Azure function deployment could manage either AMS account. For this to work, it is needed that the AMS account names ended with 2 or 4 letters which defines the region (euwe/euno OR we/no). Resource group names could have the same convention name, or a single resource group name can be used (in that case, use ResourceGroupFinalName proporty set to a non empty string).
 
@@ -47,7 +49,7 @@ For Live, it is also possible to execute all operations in two regions at the sa
 }
 ```
 
-This Media Services Functions code is based on AMS REST API v3 using Azure Functions v2.
+This Media Services Functions code is based on AMS REST API v3 using Azure Functions v3.
 
 Overall architecture :
 
@@ -57,22 +59,21 @@ Overall architecture :
 
 ### 1. Create an Azure Media Services account
 
-Create a Media Services account in your subscription if don't have it already ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/previous/media-services-portal-create-account)).
+Create a Media Services account in your subscription if don't have it already ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/create-account-howto?tabs=portal)).
 
 ### 2. Create a Service Principal
 
-Create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/media-services-portal-get-started-with-aad#service-principal-authentication)).
+Create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
 
 ### 3. Make sure the AMS streaming endpoint is started
 
-To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/previous/media-services-portal-vod-get-started#start-the-streaming-endpoint)).
+To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
 ### 4. Deploy the Azure functions
 
 If not already done : fork the repo, download a local copy. Open the solution with Visual Studio and publish the functions to Azure.
 It is recommended to use a **dedicated plan** to avoid functions timeout.
 The redirector function (with anonymous access), if used, should be deployed on a separate plan as a **consumption plan** to get better scalability if this function is called by end-users.
-
 
 These functions have been designed to work with Irdeto back-end. It requires credentials and urls to be set in application settings. If you run the functions locally, you need to specify the values in the local settings file.
 
@@ -83,6 +84,7 @@ local.settings.json will look like (please replace 'value' with the correct data
     "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
     "AadClientId": "value",
     "AadEndpoint": "https://login.microsoftonline.com",
@@ -112,7 +114,6 @@ local.settings.json will look like (please replace 'value' with the correct data
     "CosmosCollectionOutputs": "liveEventOutputInfo", // optional but needed for storing the output to Cosmos
     "CosmosCollectionVODAssets": "vodAssets", // optional but needed for storing the asset info to Cosmos
     "CosmosCollectionStreamingPolicies": "streamingPolicies", // optional but needed for storing the streaming policy to Cosmos
-    "CosmosCollectionVODAssets": "vodAssets",
     "CosmosCollectionVODResources": "vodResources",
     "AllowClearStream" : "true" // optional, use only by redirector
   }
@@ -283,3 +284,17 @@ Example of information in Cosmos for a live event :
       ]
     }
 ```
+
+### 6. Test the "create-empty-asset" function
+You can go the Azure Function App instance / Functions / create-empty-asset / Code + Test / Test/Run.
+In the body, set an asset name :
+
+```json
+{
+  "assetName": "assetname-123"
+}
+```
+
+Click on Run.
+The log should show the execution and asset should be created in Azure Media Services account.
+

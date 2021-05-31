@@ -38,8 +38,8 @@ namespace LiveDrmOperationsV3.Helpers
                 var liveEventInfo = new LiveEventEntry()
                 {
                     LiveEventName = liveEvent.Name,
-                    
                     UseStaticHostname = liveEvent.UseStaticHostname,
+                    ResourceState = liveEvent.ResourceState.ToString(),
                     Input = liveEvent.Input.Endpoints
                         .Select(endPoint => new UrlEntry { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
                     InputACL = liveEvent.Input.AccessControl?.Ip.Allow

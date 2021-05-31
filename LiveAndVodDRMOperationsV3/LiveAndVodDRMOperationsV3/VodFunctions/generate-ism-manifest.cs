@@ -75,7 +75,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
@@ -88,11 +87,10 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using LiveDRMOperationsV3.Models;
-
+using Microsoft.Azure.Storage.Blob;
 
 namespace LiveDrmOperationsV3
 {

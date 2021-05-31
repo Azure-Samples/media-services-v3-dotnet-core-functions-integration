@@ -17,20 +17,14 @@ Input :
 */
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using Encoding.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Management.Media;
-using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
@@ -81,12 +75,13 @@ namespace Encoding
             try
             {
                 var folder = context.FunctionDirectory;
+                var tempFolder = Path.GetTempPath();
 
                 string inputFileName = System.IO.Path.GetFileName(new Uri(sasInputUrl).LocalPath);
-                string pathLocalInput = System.IO.Path.Combine(context.FunctionDirectory, inputFileName);
+                string pathLocalInput = System.IO.Path.Combine(tempFolder, inputFileName);
 
                 string outputFileName = System.IO.Path.GetFileName(new Uri(sasOutputUrl).LocalPath);
-                string pathLocalOutput = System.IO.Path.Combine(context.FunctionDirectory, outputFileName);
+                string pathLocalOutput = System.IO.Path.Combine(tempFolder, outputFileName);
 
                 foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady))
                 {
@@ -117,8 +112,8 @@ namespace Encoding
 
                 process.StartInfo.Arguments = (ffmpegArguments ?? " -i {input} {output} -y")
                     .Replace("{input}", "\"" + pathLocalInput + "\"")
-                    .Replace("{output}", "\"" + pathLocalOutput + "\"");
-
+                    .Replace("{output}", "\"" + pathLocalOutput + "\"")
+                    .Replace("'", "\"");
 
                 log.LogInformation(process.StartInfo.Arguments);
 

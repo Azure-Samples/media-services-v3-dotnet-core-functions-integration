@@ -1,5 +1,5 @@
 //
-// Azure Media Services REST API v2 Functions
+// Azure Media Services REST API v3 Functions
 //
 // SubmitMediaJob - This function submits media job.
 //

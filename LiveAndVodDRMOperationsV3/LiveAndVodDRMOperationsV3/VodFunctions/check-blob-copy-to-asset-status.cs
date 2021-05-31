@@ -3,13 +3,13 @@
 //
 // check-blob-copy-to-asset-status
 /*
-This function start the copy of blobs to an asset container.
+This function checks the copy of blobs to an asset (container).
 
 
 ```c#
 Input:
 {
-    "assetName" : "asset-dgdccfcffs", // optional. Will be automatically generated if not provided
+    "assetName" : "asset-dgdccfcffs"
 
     "azureRegion": "euwe" or "we" or "euno" or "no" or "euwe,euno" or "we,no"
             // optional. If this value is set, then the AMS account name and resource group are appended with this value.
@@ -40,22 +40,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
-using LiveDrmOperationsV3.Models;
-using LiveDRMOperationsV3.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -84,8 +79,6 @@ namespace LiveDrmOperationsV3
             var assetName = (string)data.assetName;
             if (assetName == null)
                 return IrdetoHelpers.ReturnErrorException(log, "Error - please pass assetName in the JSON");
-
-
 
             // Azure region management
             var azureRegions = new List<string>();

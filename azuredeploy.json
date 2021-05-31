@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "functionsAppName": {
@@ -101,7 +101,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This storage account is used by the functions.",
       "sku": {
@@ -112,26 +112,22 @@
     {
       "type": "Microsoft.Web/serverfarms",
       "name": "[variables('hostingPlanName')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This hosting plan is created to deploy the function app and set the billing sku tier",
       "sku": {
         "name": "Y1",
-        "tier": "Dynamic",
-        "size": "Y1",
-        "family": "Y",
-        "capacity": 0
+        "tier": "Dynamic"
       },
-      "kind": "functionapp",
       "properties": {
         "name": "[variables('hostingPlanName')]",
-        "computeMode": "0"
+        "computeMode": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Web/sites",
       "name": "[variables('functionsAppName')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This function app depends on the media services account and storage account and will pull down the source code from Github",
       "dependsOn": [
@@ -140,62 +136,103 @@
       ],
       "kind": "functionapp",
       "properties": {
-        "serverFarmId": "[variables('hostingPlanName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "siteConfig": {
           "appSettings": [
             {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionsAppName'))]"
+            },
+            {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "beta"
+              "value": "~3"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "Project",
+              "value": "[parameters('project')]"
+            },
+            {
+              "name": "SubscriptionId",
+              "value": "[parameters('mediaServicesAccountSubscriptionId')]"
+            },
+            {
+              "name": "Region",
+              "value": "[parameters('mediaServicesAccountRegion')]"
+            },
+            {
+              "name": "ResourceGroup",
+              "value": "[parameters('mediaServicesAccountResourceGroup')]"
+            },
+            {
+              "name": "AccountName",
+              "value": "[parameters('mediaServicesAccountName')]"
+            },
+            {
+              "name": "AadClientId",
+              "value": "[parameters('mediaServicesAccountServicePrincipalClientId')]"
+            },
+            {
+              "name": "AadClientSecret",
+              "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
+            },
+            {
+              "name": "AadEndpoint",
+              "value": "https://login.microsoftonline.com"
+            },
+            {
+              "name": "AadTenantId",
+              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]"
+            },
+            {
+              "name": "ArmEndpoint",
+              "value": "https://management.azure.com/"
+            },
+            {
+              "name": "ArmAadAudience",
+              "value": "https://management.core.windows.net/"
+            },
+            {
+              "name": "StorageConnection",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "SigningKey",
+              "value": "wOlDEUJ4/VN1No8HxVxpsRvej0DZrO5DXvImGLjFhfctPGFiMkUA0Cj8HSfJW7lePX9XsfHAMhw30p0yYqG+1A=="
+            },
+            {
+              "name": "WebHookEndpoint",
+              "value": "[concat(resourceId('Microsoft.Web/sites', variables('functionsAppName')),'/api/Notification_Webhook_Function?code=', parameters('functionKey'))]"
             }
           ]
         }
       },
       "resources": [
         {
-          "type": "config",
-          "name": "appsettings",
-          "apiVersion": "2015-08-01",
-          "comments": "These are the default appsettings configured on the functions app.",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-            "[resourceId('Microsoft.Web/Sites', variables('functionsAppName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          ],
-          "properties": {
-            "Project": "[parameters('project')]",
-            "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-            "FUNCTIONS_EXTENSION_VERSION": "~2",
-            "WEBSITE_NODE_DEFAULT_VERSION": "10.14.1",
-            "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
-            "WEBSITE_CONTENTSHARE": "[variables('functionsAppName')]",
-            "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
-            "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
-            "SubscriptionId": "[parameters('mediaServicesAccountSubscriptionId')]",
-            "Region": "[parameters('mediaServicesAccountRegion')]",
-            "ResourceGroup": "[parameters('mediaServicesAccountResourceGroup')]",
-            "AccountName": "[parameters('mediaServicesAccountName')]",
-            "AadClientId": "[parameters('mediaServicesAccountServicePrincipalClientId')]",
-            "AadClientSecret": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]",
-            "AadEndpoint": "https://login.microsoftonline.com",
-            "AadTenantId": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]",
-            "ArmEndpoint": "https://management.azure.com/",
-            "ArmAadAudience": "https://management.core.windows.net/",
-            "StorageConnection": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]",
-            "SigningKey": "wOlDEUJ4/VN1No8HxVxpsRvej0DZrO5DXvImGLjFhfctPGFiMkUA0Cj8HSfJW7lePX9XsfHAMhw30p0yYqG+1A==",
-            "WebHookEndpoint": "[concat(resourceId('Microsoft.Web/sites', variables('functionsAppName')),'/api/Notification_Webhook_Function?code=', parameters('functionKey'))]"
-          }
-        },
-        {
           "type": "sourcecontrols",
           "name": "web",
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2019-08-01",
           "comments": "This section sets up source control for continuous integration on the Function app and pulls the source code down from Github.",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', variables('functionsAppName'))]",
-            "[concat('Microsoft.Web/sites/', variables('functionsAppName'), '/config/appsettings')]"
+            "[resourceId('Microsoft.Web/Sites', variables('functionsAppName'))]"
           ],
           "properties": {
-            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "repoUrl": "[parameters('sourceCodeRepositoryURL')]",
             "branch": "[parameters('sourceCodeBranch')]",
             "IsManualIntegration": "true"
           }
