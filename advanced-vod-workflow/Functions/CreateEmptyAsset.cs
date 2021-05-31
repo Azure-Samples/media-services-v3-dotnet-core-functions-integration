@@ -10,6 +10,9 @@ Input:
         // [Required] The name of the asset
         "assetNamePrefix": "TestAssetName",
 
+        // The description of the asset,
+        "assetDescription": "Filename",
+
         // The name of attached storage account where to create the asset
         "assetStorageAccount":  "storage01"
     }
@@ -22,7 +25,7 @@ Output:
         "assetId": "nb:cid:UUID:68adb036-43b7-45e6-81bd-8cf32013c810",
 
         // The name of the destination container name for the asset created
-        "destinationContainer": "destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
+        "destinationContainer": "asset-4a5f429c-686c-4f6f-ae86-4078a4e6139e"
     }
 
 ```
@@ -30,24 +33,18 @@ Output:
 //
 //
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
+using advanced_vod_functions_v3.SharedLibs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-
-using advanced_vod_functions_v3.SharedLibs;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 
 namespace advanced_vod_functions_v3
@@ -65,12 +62,17 @@ namespace advanced_vod_functions_v3
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
             if (data.assetNamePrefix == null)
-                return new BadRequestObjectResult("Please pass assetNamePrefix in the input object" );
+                return new BadRequestObjectResult("Please pass assetNamePrefix in the input object");
             string assetStorageAccount = null;
             if (data.assetStorageAccount != null)
                 assetStorageAccount = data.assetStorageAccount;
+
             Guid assetGuid = Guid.NewGuid();
             string assetName = data.assetNamePrefix + "-" + assetGuid.ToString();
+
+            string assetDescription = assetName;
+            if (data.assetDescription != null)
+                assetDescription = data.assetDescription;
 
             MediaServicesConfigWrapper amsconfig = new MediaServicesConfigWrapper();
             Asset asset = null;
@@ -79,7 +81,7 @@ namespace advanced_vod_functions_v3
             {
                 IAzureMediaServicesClient client = MediaServicesHelper.CreateMediaServicesClientAsync(amsconfig);
 
-                Asset assetParams = new Asset(null, assetName, null, assetGuid, DateTime.Now, DateTime.Now, null, assetName, null, assetStorageAccount, AssetStorageEncryptionFormat.None);
+                Asset assetParams = new Asset(null, assetName, null, assetGuid, DateTime.Now, DateTime.Now, null, assetDescription, null, assetStorageAccount, AssetStorageEncryptionFormat.None);
                 asset = client.Assets.CreateOrUpdate(amsconfig.ResourceGroup, amsconfig.AccountName, assetName, assetParams);
                 //asset = client.Assets.CreateOrUpdate(amsconfig.ResourceGroup, amsconfig.AccountName, assetName, new Asset());
             }

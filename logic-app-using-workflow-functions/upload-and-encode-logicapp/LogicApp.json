@@ -1,0 +1,1106 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "videoindexer-v2_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "videoindexer-v2"
+    },
+    "videoindexer-v2_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "RazViConnection"
+    },
+    "videoindexer-v2_1_api_key": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The API Key for this api"
+      }
+    },
+    "keyvault_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "keyvault"
+    },
+    "keyvault_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "razmskeyvaultconn"
+    },
+    "keyvault_1_vaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the vault"
+      },
+      "defaultValue": "razmskeyvault"
+    },
+    "keyvault_1_token:clientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Client (or Application) ID of the Azure Active Directory application."
+      },
+      "defaultValue": "cd7fe1ac-90d2-463d-bc7d-0e6f76afa6d1"
+    },
+    "keyvault_1_token:clientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client secret of the Azure Active Directory application."
+      }
+    },
+    "keyvault_1_token:TenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The tenant ID for the Azure Active Directory application."
+      },
+      "defaultValue": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    },
+    "keyvault_1_token:resourceUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource you are requesting authorization to use, for instance https://vault.azure.net"
+      }
+    },
+    "keyvault_1_token:grantType": {
+      "type": "string",
+      "metadata": {
+        "description": "Grant type"
+      },
+      "defaultValue": "client_credentials",
+      "allowedValues": [
+        "code",
+        "client_credentials"
+      ]
+    },
+    "azureblob_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "azureblob"
+    },
+    "azureblob_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "razmediauploadstoreconn"
+    },
+    "azureblob_1_accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account the connector should use."
+      },
+      "defaultValue": "razmediauploadstore"
+    },
+    "azureblob_1_accessKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specify a valid primary/secondary storage account access key."
+      }
+    },
+    "LogicAppLocation": {
+      "type": "string",
+      "minLength": 1,
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2",
+        "koreacentral",
+        "koreasouth",
+        "francecentral",
+        "francesouth",
+        "uaecentral",
+        "southafricanorth",
+        "southafricawest"
+      ],
+      "defaultValue": "southeastasia"
+    },
+    "LogicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "raz-mediaservices-uploadworkflow-logic"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Compose_-_Asset_Prefix": {
+              "type": "Compose",
+              "inputs": "@replace(replace(triggerBody()?['Name'],' ',''),'.mp4','')",
+              "runAfter": {
+                "Initialize_variable_-_videoIndexerAccountId": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Compose_Log": {
+              "type": "Compose",
+              "inputs": "@variables('processlog')",
+              "runAfter": {
+                "For_each_copied_asset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "CreateEmptyAsset": {
+              "type": "Function",
+              "inputs": {
+                "body": {
+                  "assetDescription": "@{triggerBody()?['Name']}",
+                  "assetNamePrefix": "@{outputs('Compose_-_Asset_Prefix')}",
+                  "assetStorageAccount": "@{variables('mediaServiceStorageName')}"
+                },
+                "function": {
+                  "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/CreateEmptyAsset"
+                }
+              },
+              "runAfter": {
+                "Get_secret_-_Source_Storage_Access_Key": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Create_Log_File": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "@outputs('Compose_Log')",
+                "path": "/datasets/default/files",
+                "queries": {
+                  "folderPath": "/mezanine-processlogs",
+                  "name": "processlog-@{formatDateTime(utcNow(),'yyyyMMdd-hhmmss')}.log",
+                  "queryParametersSingleEncoded": true
+                }
+              },
+              "runAfter": {
+                "Compose_Log": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "For_each_copied_asset": {
+              "type": "Foreach",
+              "foreach": "@body('Parse_JSON_-_MonitorBlobContainerCopyStatus')?['blobCopyStatusList']",
+              "actions": {
+                "Condition": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@items('For_each_copied_asset')?['blobCopyStatus']",
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "CreateTransform": {
+                      "type": "Function",
+                      "inputs": {
+                        "body": {
+                          "audioLanguage": "en-US",
+                          "description": "Transform for @{variables('encodingPreset')} preset",
+                          "insightsToExtract": "AllInsights",
+                          "mode": "simple",
+                          "onError": "StopProcessingJob",
+                          "preset": "@{variables('encodingPreset')}",
+                          "relativePriority": "Normal",
+                          "transformName": "StandardEncoder-@{variables('encodingPreset')}"
+                        },
+                        "function": {
+                          "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/CreateTransform"
+                        }
+                      },
+                      "runAfter": {
+                        "Log:_Copy_success": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Create_blob": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['azureblob']['connectionId']"
+                          }
+                        },
+                        "method": "post",
+                        "body": "@body('Get_blob_content')",
+                        "path": "/datasets/default/files",
+                        "queries": {
+                          "folderPath": "/@{variables('sourceStorageProcessedContainer')}",
+                          "name": "@triggerBody()?['Name']",
+                          "queryParametersSingleEncoded": true
+                        }
+                      },
+                      "runAfter": {
+                        "Log:_Encoding_complete": [
+                          "Succeeded"
+                        ]
+                      },
+                      "runtimeConfiguration": {
+                        "contentTransfer": {
+                          "transferMode": "Chunked"
+                        }
+                      }
+                    },
+                    "Delete_blob": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['azureblob']['connectionId']"
+                          }
+                        },
+                        "method": "delete",
+                        "path": "/datasets/default/files/@{encodeURIComponent(encodeURIComponent(triggerBody()?['Path']))}"
+                      },
+                      "runAfter": {
+                        "Create_blob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Get_VI_Account_Access_Token": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['videoindexer-v2']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/auth/@{encodeURIComponent('southeastasia')}/Accounts/@{encodeURIComponent(variables('videoIndexerAccountId'))}/AccessToken",
+                        "queries": {
+                          "allowEdit": true
+                        }
+                      },
+                      "runAfter": {
+                        "Log:_Copy_success": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Log:_Blob_moved_to_processed_folder": {
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "processlog",
+                        "value": "Media file @{triggerBody()?['Name']} moved to the @{variables('sourceStorageProcessedContainer')} container.\n"
+                      },
+                      "runAfter": {
+                        "Delete_blob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Log:_Copy_success": {
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "processlog",
+                        "value": "Copy of asset @{triggerBody()?['Name']} to @{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']} successful.\n"
+                      },
+                      "runAfter": {}
+                    },
+                    "Log:_Encoding_complete": {
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "processlog",
+                        "value": "Encoding of @{triggerBody()?['Name']} with asset name @{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']} to @{variables('encodingPreset')} completed.\n"
+                      },
+                      "runAfter": {
+                        "Until_MediaJob_Encoding_is_complete": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Parse_JSON_-_CreateTransform": {
+                      "type": "ParseJson",
+                      "inputs": {
+                        "content": "@body('CreateTransform')",
+                        "schema": {
+                          "properties": {
+                            "transformId": {
+                              "type": "string"
+                            },
+                            "transformName": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "runAfter": {
+                        "CreateTransform": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Parse_JSON_-_SubmitMediaJob": {
+                      "type": "ParseJson",
+                      "inputs": {
+                        "content": "@body('SubmitMediaJob')",
+                        "schema": {
+                          "properties": {
+                            "audioAnalyzerOutputAssetName": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "encoderOutputAssetName": {
+                              "type": "string"
+                            },
+                            "jobName": {
+                              "type": "string"
+                            },
+                            "videoAnalyzerOutputAssetName": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "runAfter": {
+                        "SubmitMediaJob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Set_variable_isMediaProcessed_=_true": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "isMediaProcessed",
+                        "value": true
+                      },
+                      "runAfter": {
+                        "Log:_Blob_moved_to_processed_folder": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "SubmitMediaJob": {
+                      "type": "Function",
+                      "inputs": {
+                        "body": {
+                          "assetStorageAccount": "@{variables('mediaServiceStorageName')}",
+                          "inputAssetName": "@{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']}",
+                          "outputAssetDescription": "@{triggerBody()?['Name']} - @{variables('encodingPreset')}",
+                          "outputAssetNamePrefix": "@{outputs('Compose_-_Asset_Prefix')}",
+                          "transformName": "@{body('Parse_JSON_-_CreateTransform')?['transformName']}"
+                        },
+                        "function": {
+                          "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/SubmitMediaJob"
+                        }
+                      },
+                      "runAfter": {
+                        "Parse_JSON_-_CreateTransform": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Until_MediaJob_Encoding_is_complete": {
+                      "type": "Until",
+                      "expression": "@equals(body('Parse_JSON_-_MonitorMediaJob')?['jobStatus'], 'Finished')",
+                      "limit": {
+                        "count": 5000,
+                        "timeout": "PT5H"
+                      },
+                      "actions": {
+                        "Delay_5_seconds": {
+                          "type": "Wait",
+                          "inputs": {
+                            "interval": {
+                              "count": 5,
+                              "unit": "Second"
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "MonitorMediaJob": {
+                          "type": "Function",
+                          "inputs": {
+                            "body": {
+                              "jobName": "@{body('Parse_JSON_-_SubmitMediaJob')?['jobName']}",
+                              "transformName": "@{body('Parse_JSON_-_CreateTransform')?['transformName']}"
+                            },
+                            "function": {
+                              "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/MonitorMediaJob"
+                            }
+                          },
+                          "runAfter": {
+                            "Delay_5_seconds": [
+                              "Succeeded"
+                            ]
+                          },
+                          "operationOptions": "DisableAsyncPattern"
+                        },
+                        "Parse_JSON_-_MonitorMediaJob": {
+                          "type": "ParseJson",
+                          "inputs": {
+                            "content": "@body('MonitorMediaJob')",
+                            "schema": {
+                              "properties": {
+                                "jobOutputStateList": {
+                                  "items": {
+                                    "properties": {
+                                      "AssetName": {
+                                        "type": "string"
+                                      },
+                                      "Progress": {
+                                        "type": "integer"
+                                      },
+                                      "State": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "AssetName",
+                                      "State",
+                                      "Progress"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                "jobStatus": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "runAfter": {
+                            "MonitorMediaJob": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Parse_JSON_-_SubmitMediaJob": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Upload_video_and_index": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['videoindexer-v2']['connectionId']"
+                          }
+                        },
+                        "method": "post",
+                        "path": "/@{encodeURIComponent('southeastasia')}/Accounts/@{encodeURIComponent(variables('videoIndexerAccountId'))}/Videos",
+                        "queries": {
+                          "accessToken": "@body('Get_VI_Account_Access_Token')",
+                          "name": "@body('Parse_JSON_-_Create_Empty_Asset')?['assetName']",
+                          "assetId": "@body('Parse_JSON_-_Create_Empty_Asset')?['assetId']"
+                        }
+                      },
+                      "runAfter": {
+                        "Get_VI_Account_Access_Token": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "else": {
+                    "actions": {
+                      "DeleteAsset": {
+                        "type": "Function",
+                        "inputs": {
+                          "body": {
+                            "accountName": "@{variables('mediaServiceAccountName')}",
+                            "assetName": "@{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']}",
+                            "resourceGroup": "@{variables('resourceGroup')}"
+                          },
+                          "function": {
+                            "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/DeleteAsset"
+                          }
+                        },
+                        "runAfter": {
+                          "Log:_Copy_failure": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Log:_Asset_Deleted": {
+                        "type": "AppendToStringVariable",
+                        "inputs": {
+                          "name": "processlog",
+                          "value": "Asset @{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']} deleted.\n"
+                        },
+                        "runAfter": {
+                          "DeleteAsset": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Log:_Copy_failure": {
+                        "type": "AppendToStringVariable",
+                        "inputs": {
+                          "name": "processlog",
+                          "value": "Copy of asset @{triggerBody()?['Name']} to @{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']} failed. Skipping this file for the next batch run.\n"
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Until_BlobContainerCopyStatus_is_complete": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_blob_content": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/default/files/@{encodeURIComponent(encodeURIComponent(triggerBody()?['Path']))}/content",
+                "queries": {
+                  "inferContentType": true
+                }
+              },
+              "runAfter": {
+                "Compose_-_Asset_Prefix": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Get_secret_-_Source_Storage_Access_Key": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['keyvault']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/secrets/@{encodeURIComponent('razmediauploadstore-accesskey')}/value"
+              },
+              "runAfter": {
+                "Get_blob_content": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "secureData": {
+                  "properties": [
+                    "outputs"
+                  ]
+                }
+              }
+            },
+            "Initialize_variable_-_Media_Service_Account_Name": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "mediaServiceAccountName",
+                    "type": "string",
+                    "value": "razmediaservice"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_encodingPreset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_Media_Service_Resource_Group": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "resourceGroup",
+                    "type": "string",
+                    "value": "raz-mediaservices-rg"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_Media_Service_Account_Name": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_encodingPreset": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "encodingPreset",
+                    "type": "string",
+                    "value": "H264MultipleBitrate1080p"
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+            "Initialize_variable_-_isMediaProcessed": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "isMediaProcessed",
+                    "type": "boolean",
+                    "value": false
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_mediaServiceStorageName": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_mediaServiceStorageName": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "mediaServiceStorageName",
+                    "type": "string",
+                    "value": "razmediastore"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_sourceStorageProcessedContainer": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_processlog": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "processlog",
+                    "type": "string",
+                    "value": "Upload workflow run start on @{formatDateTime(utcNow(),'yyyy-MM-dd hh:mm:ss')}\n"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_isMediaProcessed": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_sourceStorageContainer": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "sourceStorageContainer",
+                    "type": "string",
+                    "value": "mezzanine"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_sourceStorageName": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_sourceStorageName": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "sourceStorageName",
+                    "type": "string",
+                    "value": "razmediauploadstore"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_Media_Service_Resource_Group": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_sourceStorageProcessedContainer": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "sourceStorageProcessedContainer",
+                    "type": "string",
+                    "value": "mezzanine-processed"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_sourceStorageContainer": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_-_videoIndexerAccountId": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "videoIndexerAccountId",
+                    "type": "string",
+                    "value": "89be5acc-de29-4a3a-b747-3cc4894963b2"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_variable_-_processlog": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Log:_Empty_Asset_Created": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "processlog",
+                "value": "Empty asset created: @{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']}\n"
+              },
+              "runAfter": {
+                "Parse_JSON_-_Create_Empty_Asset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parse_JSON_-_Create_Empty_Asset": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('CreateEmptyAsset')",
+                "schema": {
+                  "properties": {
+                    "assetId": {
+                      "type": "string"
+                    },
+                    "assetName": {
+                      "type": "string"
+                    },
+                    "destinationContainer": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "CreateEmptyAsset": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Send_failure_if_media_was_not_processed": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@variables('isMediaProcessed')",
+                      true
+                    ]
+                  }
+                ]
+              },
+              "actions": {},
+              "runAfter": {
+                "Create_Log_File": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Terminate": {
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Failed",
+                      "runError": {
+                        "message": "The media file @{triggerBody()?['Name']} was not processed successfully."
+                      }
+                    },
+                    "runAfter": {}
+                  }
+                }
+              }
+            },
+            "StartBlobContainerCopyToAsset": {
+              "type": "Function",
+              "inputs": {
+                "body": {
+                  "assetId": "@{body('Parse_JSON_-_Create_Empty_Asset')?['assetId']}",
+                  "assetName": "@{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']}",
+                  "fileNames": [
+                    "@{triggerBody()?['Name']}"
+                  ],
+                  "sourceContainer": "@{variables('sourceStorageContainer')}",
+                  "sourceStorageAccountKey": "@{body('Get_secret_-_Source_Storage_Access_Key')?['value']}",
+                  "sourceStorageAccountName": "@{variables('sourceStorageName')}"
+                },
+                "function": {
+                  "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/StartBlobContainerCopyToAsset"
+                }
+              },
+              "runAfter": {
+                "Log:_Empty_Asset_Created": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Until_BlobContainerCopyStatus_is_complete": {
+              "type": "Until",
+              "expression": "@equals(body('Parse_JSON_-_MonitorBlobContainerCopyStatus')?['copyStatus'], true)",
+              "limit": {
+                "count": 5000,
+                "timeout": "PT2H"
+              },
+              "actions": {
+                "Delay_3_seconds": {
+                  "type": "Wait",
+                  "inputs": {
+                    "interval": {
+                      "count": 3,
+                      "unit": "Second"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "MonitorBlobContainerCopyStatus": {
+                  "type": "Function",
+                  "inputs": {
+                    "body": {
+                      "assetName": "@{body('Parse_JSON_-_Create_Empty_Asset')?['assetName']}",
+                      "fileNames": [
+                        "@{triggerBody()?['Name']}"
+                      ]
+                    },
+                    "function": {
+                      "id": "/subscriptions/cd85d402-93c1-4339-af18-42930460489c/resourceGroups/raz-mediaservices-workflow-rg/providers/Microsoft.Web/sites/razamsv3functions/functions/MonitorBlobContainerCopyStatus"
+                    }
+                  },
+                  "runAfter": {
+                    "Delay_3_seconds": [
+                      "Succeeded"
+                    ]
+                  },
+                  "operationOptions": "DisableAsyncPattern"
+                },
+                "Parse_JSON_-_MonitorBlobContainerCopyStatus": {
+                  "type": "ParseJson",
+                  "inputs": {
+                    "content": "@body('MonitorBlobContainerCopyStatus')",
+                    "schema": {
+                      "properties": {
+                        "blobCopyStatusList": {
+                          "items": {
+                            "properties": {
+                              "blobCopyStatus": {
+                                "type": "integer"
+                              },
+                              "blobName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "blobName",
+                              "blobCopyStatus"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "copyStatus": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "runAfter": {
+                    "MonitorBlobContainerCopyStatus": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {
+                "StartBlobContainerCopyToAsset": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_blob_is_added_or_modified_(properties_only)": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/default/triggers/batch/onupdatedfile",
+                "queries": {
+                  "folderId": "JTJmbWV6emFuaW5l",
+                  "maxFileCount": 100
+                }
+              },
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1
+              },
+              "metadata": {
+                "JTJmbWV6emFuaW5l": "/mezzanine"
+              },
+              "splitOn": "@triggerBody()"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azureblob": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'azureblob')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]",
+                "connectionName": "[parameters('azureblob_1_Connection_Name')]"
+              },
+              "videoindexer-v2": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'videoindexer-v2')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('videoindexer-v2_1_Connection_Name'))]",
+                "connectionName": "[parameters('videoindexer-v2_1_Connection_Name')]"
+              },
+              "keyvault": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', 'keyvault')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('keyvault_1_Connection_Name'))]",
+                "connectionName": "[parameters('keyvault_1_Connection_Name')]"
+              }
+            }
+          }
+        }
+      },
+      "name": "[parameters('LogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('LogicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "identity": {
+        "type": "SystemAssigned",
+        "principalId": "c56ec58e-e9bd-450f-898a-4ab59dafb055",
+        "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+      },
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('videoindexer-v2_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('keyvault_1_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('videoindexer-v2_1_Connection_Name')]",
+      "location": "southeastasia",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'videoindexer-v2')]"
+        },
+        "displayName": "[parameters('videoindexer-v2_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "api_key": "[parameters('videoindexer-v2_1_api_key')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('keyvault_1_Connection_Name')]",
+      "location": "southeastasia",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'keyvault')]"
+        },
+        "displayName": "[parameters('keyvault_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "vaultName": "[parameters('keyvault_1_vaultName')]",
+          "token:clientId": "[parameters('keyvault_1_token:clientId')]",
+          "token:clientSecret": "[parameters('keyvault_1_token:clientSecret')]",
+          "token:TenantId": "[parameters('keyvault_1_token:TenantId')]",
+          "token:resourceUri": "[parameters('keyvault_1_token:resourceUri')]",
+          "token:grantType": "[parameters('keyvault_1_token:grantType')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[parameters('azureblob_1_Connection_Name')]",
+      "location": "southeastasia",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', 'southeastasia', '/managedApis/', 'azureblob')]"
+        },
+        "displayName": "[parameters('azureblob_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "accountName": "[parameters('azureblob_1_accountName')]",
+          "accessKey": "[parameters('azureblob_1_accessKey')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

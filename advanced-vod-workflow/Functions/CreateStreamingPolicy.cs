@@ -174,26 +174,19 @@ Output:
 //
 //
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
+using advanced_vod_functions_v3.SharedLibs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using advanced_vod_functions_v3.SharedLibs;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 
 namespace advanced_vod_functions_v3
@@ -334,27 +327,35 @@ namespace advanced_vod_functions_v3
                         }
 
                         // Envelope Encryption Argument
-                        if (data.envelopeClearTracks != null)
+                        if (data.envelopeClearTracks != null || data.envelopeDefaultKeyLabel != null || data.envelopeDefaultKeyPolicyName != null
+                            || data.envelopeClearTracks || data.envelopeTemplate != null || data.envelopeTemplate != null || data.envelopeProtocols != null)
                         {
-                            List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.envelopeClearTracks.ToString(), jsonReaders);
-                            parameters.EnvelopeEncryption.ClearTracks = tracks;
-                        }
-                        if (data.envelopeDefaultKeyLabel != null) parameters.EnvelopeEncryption.ContentKeys.DefaultKey.Label = data.envelopeDefaultKeyLabel;
-                        if (data.envelopeDefaultKeyPolicyName != null) parameters.EnvelopeEncryption.ContentKeys.DefaultKey.PolicyName = data.envelopeDefaultKeyPolicyName;
-                        if (data.envelopeClearTracks != null)
-                        {
-                            List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.envelopeKeyToTrackMappings.ToString(), jsonReaders);
-                            parameters.EnvelopeEncryption.ContentKeys.KeyToTrackMappings = mappings;
-                        }
-                        if (data.envelopeTemplate != null)
-                            parameters.EnvelopeEncryption.CustomKeyAcquisitionUrlTemplate = data.envelopeTemplate;
-                        if (data.envelopeProtocols != null)
-                        {
-                            String[] envelopeEncryptionProtocols = data.envelopeProtocols.ToString().Split(';');
-                            if (Array.IndexOf(envelopeEncryptionProtocols, "Dash") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Dash = true;
-                            if (Array.IndexOf(envelopeEncryptionProtocols, "Download") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Download = true;
-                            if (Array.IndexOf(envelopeEncryptionProtocols, "Hls") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Hls = true;
-                            if (Array.IndexOf(envelopeEncryptionProtocols, "SmoothStreaming") > -1) parameters.EnvelopeEncryption.EnabledProtocols.SmoothStreaming = true;
+                            parameters.EnvelopeEncryption = new EnvelopeEncryption();
+                            if (data.envelopeClearTracks != null)
+                            {
+                                List<TrackSelection> tracks = JsonConvert.DeserializeObject<List<TrackSelection>>(data.envelopeClearTracks.ToString(), jsonReaders);
+                                parameters.EnvelopeEncryption.ClearTracks = tracks;
+                            }
+
+                            parameters.EnvelopeEncryption.ContentKeys = new StreamingPolicyContentKeys();
+                            parameters.EnvelopeEncryption.ContentKeys.DefaultKey = new DefaultKey(data.envelopeDefaultKeyLabel as string, data.envelopeDefaultKeyPolicyName as string);
+                            if (data.envelopeClearTracks != null)
+                            {
+                                List<StreamingPolicyContentKey> mappings = JsonConvert.DeserializeObject<List<StreamingPolicyContentKey>>(data.envelopeKeyToTrackMappings.ToString(), jsonReaders);
+                                parameters.EnvelopeEncryption.ContentKeys.KeyToTrackMappings = mappings;
+                            }
+
+                            if (data.envelopeTemplate != null)
+                                parameters.EnvelopeEncryption.CustomKeyAcquisitionUrlTemplate = data.envelopeTemplate;
+                            if (data.envelopeProtocols != null)
+                            {
+                                parameters.EnvelopeEncryption.EnabledProtocols = new EnabledProtocols();
+                                String[] envelopeEncryptionProtocols = data.envelopeProtocols.ToString().Split(';');
+                                if (Array.IndexOf(envelopeEncryptionProtocols, "Dash") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Dash = true;
+                                if (Array.IndexOf(envelopeEncryptionProtocols, "Download") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Download = true;
+                                if (Array.IndexOf(envelopeEncryptionProtocols, "Hls") > -1) parameters.EnvelopeEncryption.EnabledProtocols.Hls = true;
+                                if (Array.IndexOf(envelopeEncryptionProtocols, "SmoothStreaming") > -1) parameters.EnvelopeEncryption.EnabledProtocols.SmoothStreaming = true;
+                            }
                         }
 
                     }
@@ -367,8 +368,8 @@ namespace advanced_vod_functions_v3
 
                         if (data.jsonNoEncryption != null) noEncryptionArguments = JsonConvert.DeserializeObject<NoEncryption>(data.configNoEncryption.ToString(), jsonReaders);
                         if (data.jsonCommonEncryptionCbcs != null) commonEncryptionCbcsArguments = JsonConvert.DeserializeObject<CommonEncryptionCbcs>(data.jsonCommonEncryptionCbcs.ToString(), jsonReaders);
-                        if (data.jsonCommonEncryptionCenc != null) commonEncryptionCencArguments = JsonConvert.DeserializeObject<CommonEncryptionCenc>(data.configCommonEncryptionCenc.ToString(), jsonReaders);
-                        if (data.jsonEnvelopeEncryption != null) envelopeEncryptionArguments = JsonConvert.DeserializeObject<EnvelopeEncryption>(data.configEnvelopeEncryption.ToString(), jsonReaders);
+                        if (data.jsonCommonEncryptionCenc != null) commonEncryptionCencArguments = JsonConvert.DeserializeObject<CommonEncryptionCenc>(data.jsonCommonEncryptionCenc.ToString(), jsonReaders);
+                        if (data.jsonEnvelopeEncryption != null) envelopeEncryptionArguments = JsonConvert.DeserializeObject<EnvelopeEncryption>(data.jsonEnvelopeEncryption.ToString(), jsonReaders);
                         parameters.NoEncryption = noEncryptionArguments;
                         parameters.CommonEncryptionCbcs = commonEncryptionCbcsArguments;
                         parameters.CommonEncryptionCenc = commonEncryptionCencArguments;

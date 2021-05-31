@@ -4,16 +4,14 @@
 // Shared Library
 //
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-using Microsoft.Rest;
-using Microsoft.Rest.Azure.Authentication;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
-
+using Microsoft.Rest;
+using Microsoft.Rest.Azure.Authentication;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace advanced_vod_functions_v3.SharedLibs

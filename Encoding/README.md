@@ -6,7 +6,7 @@ author: xpouyat
 
 # Ffmpeg encoding with an Azure function
 
-This Visual Studio 2019 Solution exposes an Azure Function that encodes an Azure Storage blob with ffmpeg. [Azure Functions Premium plan](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan
+This Visual Studio 2017 Solution exposes an Azure Function that encodes an Azure Storage blob with ffmpeg. [Azure Functions Premium plan](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan
 ) is recommended.
 
 This Functions code is based on Azure Functions v3.

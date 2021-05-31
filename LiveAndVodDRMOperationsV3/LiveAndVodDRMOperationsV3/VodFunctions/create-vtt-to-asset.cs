@@ -35,14 +35,6 @@ Output:
 ```
 */
 
-using System;
-using System.Buffers.Text;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -55,6 +47,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 
 
 namespace LiveDrmOperationsV3
@@ -142,7 +141,7 @@ namespace LiveDrmOperationsV3
                     // Base 64 decoding
                     byte[] dataVtt = Convert.FromBase64String(vttContent);
                     string decodedString = Encoding.UTF8.GetString(dataVtt);
-                    
+
                     // Uploading data
                     await destinationBlob.UploadTextAsync(decodedString);
                 }

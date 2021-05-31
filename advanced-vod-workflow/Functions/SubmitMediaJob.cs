@@ -16,6 +16,9 @@ Input:
         // [Required] The name of the Assets for media job outputs
         "outputAssetNamePrefix": "TestOutputAssetName",
 
+        // The description of the Assets for media job outputs
+        "outputAssetDescription": "Asset Name - Encoded",
+
         // The name of attached storage account where to create the Output Assets
         "assetStorageAccount": "storage01"
     }
@@ -35,28 +38,21 @@ Output:
 */
 //
 
+using advanced_vod_functions_v3.SharedLibs;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
-using Microsoft.Azure.Management.Media;
-using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
-using Microsoft.Extensions.Logging;
-
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using advanced_vod_functions_v3.SharedLibs;
 
 
 namespace advanced_vod_functions_v3
@@ -83,6 +79,9 @@ namespace advanced_vod_functions_v3
             string inputAssetName = data.inputAssetName;
             string transformName = data.transformName;
             string outputAssetNamePrefix = data.outputAssetNamePrefix;
+            string outputAssetDescription = null;
+            if (data.outputAssetDescription != null)
+                outputAssetDescription = data.outputAssetDescription;
             string assetStorageAccount = null;
             if (data.assetStorageAccount != null)
                 assetStorageAccount = data.assetStorageAccount;
@@ -113,7 +112,11 @@ namespace advanced_vod_functions_v3
                 {
                     Guid assetGuid = Guid.NewGuid();
                     string outputAssetName = outputAssetNamePrefix + "-" + assetGuid.ToString();
-                    Asset assetParams = new Asset(null, outputAssetName, null, assetGuid, DateTime.Now, DateTime.Now, null, outputAssetName, null, assetStorageAccount, AssetStorageEncryptionFormat.None);
+
+                    if (outputAssetDescription == null)
+                        outputAssetDescription = outputAssetName;
+
+                    Asset assetParams = new Asset(null, outputAssetName, null, assetGuid, DateTime.Now, DateTime.Now, null, outputAssetDescription, null, assetStorageAccount, AssetStorageEncryptionFormat.None);
                     Asset outputAsset = client.Assets.CreateOrUpdate(amsconfig.ResourceGroup, amsconfig.AccountName, outputAssetName, assetParams);
                     jobOutputList.Add(new JobOutputAsset(outputAssetName));
 

@@ -16,7 +16,7 @@ azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-d
 This repository contains projects that show how to integrate Azure Media Services with Azure Functions & Azure Logic Apps.
 These Media Services Functions examples are based on AMS REST API v3 on Azure Functions v3. Most of the functions can also be used from Logic Apps.
 
-This repository can be accessed directly using https://aka.ms/ams3functions.
+This repository can be accessed directly using <https://aka.ms/ams3functions>.
 
 ## Prerequisites for a sample Logic Apps deployments
 

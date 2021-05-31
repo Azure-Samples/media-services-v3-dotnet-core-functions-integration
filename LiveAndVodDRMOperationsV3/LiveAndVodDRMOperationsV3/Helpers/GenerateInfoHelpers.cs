@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using LiveDrmOperationsV3.Models;
+﻿using LiveDrmOperationsV3.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LiveDrmOperationsV3.Helpers
 {
@@ -38,8 +38,8 @@ namespace LiveDrmOperationsV3.Helpers
                 var liveEventInfo = new LiveEventEntry()
                 {
                     LiveEventName = liveEvent.Name,
+                    UseStaticHostname = liveEvent.UseStaticHostname,
                     ResourceState = liveEvent.ResourceState.ToString(),
-                    VanityUrl = liveEvent.UseStaticHostname,
                     Input = liveEvent.Input.Endpoints
                         .Select(endPoint => new UrlEntry { Protocol = endPoint.Protocol, Url = endPoint.Url }).ToList(),
                     InputACL = liveEvent.Input.AccessControl?.Ip.Allow

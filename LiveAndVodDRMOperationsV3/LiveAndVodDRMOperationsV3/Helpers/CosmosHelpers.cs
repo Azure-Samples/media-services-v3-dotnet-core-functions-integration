@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Dynamic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading.Tasks;
-using LiveDrmOperationsV3.Models;
+﻿using LiveDrmOperationsV3.Models;
 using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace LiveDrmOperationsV3.Helpers
 {

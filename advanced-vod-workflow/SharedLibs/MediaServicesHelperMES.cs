@@ -6,13 +6,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 
 //using Microsoft.Azure.Management.Media.Models;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 
 namespace advanced_vod_functions_v3.SharedLibs.amsv2

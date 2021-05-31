@@ -159,12 +159,6 @@ Output:
 ```
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using LiveDrmOperationsV3.Helpers;
 using LiveDrmOperationsV3.Models;
 using Microsoft.AspNetCore.Http;
@@ -176,6 +170,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LiveDrmOperationsV3
 {
@@ -383,7 +382,7 @@ namespace LiveDrmOperationsV3
                             // STREAMING POLICY CREATION
                             if (streamingPolicyName == null) // not found in Cosmos let's create a new one
                             {
-                                StreamingPolicy  streamingPolicy;
+                                StreamingPolicy streamingPolicy;
                                 MediaServicesHelpers.LogInformation(log, "Creating streaming policy.", region);
                                 try
                                 {

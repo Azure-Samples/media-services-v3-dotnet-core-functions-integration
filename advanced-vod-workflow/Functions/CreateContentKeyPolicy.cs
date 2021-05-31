@@ -16,7 +16,7 @@ Input:
         "mode": "simple",
 
         // The content key policy description.
-        "description": "Shared toekn restricted policy for Clear Key content key policy",
+        "description": "Shared token restricted policy for Clear Key content key policy",
 
         //
         // [mode = simple]
@@ -125,26 +125,19 @@ Output:
 //
 //
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
+using advanced_vod_functions_v3.SharedLibs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
 using Microsoft.Extensions.Logging;
-
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using advanced_vod_functions_v3.SharedLibs;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 
 namespace advanced_vod_functions_v3
@@ -223,14 +216,16 @@ namespace advanced_vod_functions_v3
                         option.Name = data.policyOptionName;
 
                         // Restrictions
-                        if (data.openRestriction)
+                        if ((bool)data.openRestriction)
                             option.Restriction = new ContentKeyPolicyOpenRestriction();
                         else
                         {
                             ContentKeyPolicyTokenRestriction restriction = new ContentKeyPolicyTokenRestriction();
                             restriction.Audience = data.audience;
                             restriction.Issuer = data.issuer;
-                            switch (data.tokenType)
+
+                            string tokenType = data.tokenType;
+                            switch (tokenType)
                             {
                                 case "Jwt":
                                     restriction.RestrictionTokenType = ContentKeyPolicyRestrictionTokenType.Jwt;
@@ -241,7 +236,9 @@ namespace advanced_vod_functions_v3
                                 default:
                                     return new BadRequestObjectResult("Please pass valid tokenType in the input object");
                             }
-                            switch (data.tokenKeyType)
+
+                            string tokenKeyType = data.tokenKeyType;
+                            switch (tokenKeyType)
                             {
                                 case "Symmetric":
                                     restriction.PrimaryVerificationKey = new ContentKeyPolicySymmetricTokenKey(Convert.FromBase64String(data.tokenKey.ToString()));
@@ -255,16 +252,20 @@ namespace advanced_vod_functions_v3
                                 default:
                                     return new BadRequestObjectResult("Please pass valid tokenKeyType in the input object");
                             }
-                            if (data.tokenClaims)
+                            if (data.tokenClaims != null)
                             {
                                 restriction.RequiredClaims = new List<ContentKeyPolicyTokenClaim>();
                                 String[] tokenClaims = data.tokenClaims.ToString().Split(';');
                                 foreach (string tokenClaim in tokenClaims)
                                 {
                                     String[] tokenClaimKVP = tokenClaim.Split('=');
-                                    if (tokenClaimKVP.Length > 1)
+
+                                    if (tokenClaimKVP.Length == 2)
+                                        restriction.RequiredClaims.Add(new ContentKeyPolicyTokenClaim(tokenClaimKVP[0], tokenClaimKVP[1] == "null" ? null : tokenClaimKVP[1]));
+                                    else if (tokenClaimKVP.Length == 1)
+                                        restriction.RequiredClaims.Add(new ContentKeyPolicyTokenClaim(tokenClaimKVP[0]));
+                                    else
                                         return new BadRequestObjectResult("Please pass valid tokenClaims in the input object");
-                                    restriction.RequiredClaims.Add(new ContentKeyPolicyTokenClaim(tokenClaimKVP[0], tokenClaimKVP[1]));
                                 }
                             }
                             if (data.openIdConnectDiscoveryDocument != null)
@@ -272,8 +273,10 @@ namespace advanced_vod_functions_v3
 
                             option.Restriction = restriction;
                         }
+
                         // Configuration
-                        switch (data.configurationType)
+                        string configurationType = data.configurationType;
+                        switch (configurationType)
                         {
                             case "ClearKey":
                                 option.Configuration = new ContentKeyPolicyClearKeyConfiguration();

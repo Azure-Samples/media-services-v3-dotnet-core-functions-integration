@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using LiveDrmOperationsV3.Helpers;
-using LiveDRMOperationsV3.Models;
+﻿using LiveDRMOperationsV3.Models;
 using Microsoft.Azure.Management.Media.Models;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace LiveDrmOperationsV3.Models
 {
@@ -62,7 +61,7 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("resourceState")] public string ResourceState { get; set; }
 
-        [JsonProperty("vanityUrl")] public bool? VanityUrl { get; set; }
+        [JsonProperty("useStaticHostname")] public bool? UseStaticHostname { get; set; }
 
         [JsonProperty("amsAccountName")] public string AMSAccountName { get; set; }
 

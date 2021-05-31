@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "videoindexer-v2_1_Connection_Name": {
+      "value": "videoindexer-v2"
+    },
+    "azureblob_1_accessKey": {
+      "value": ""
+    },
+    "videoindexer-v2_1_api_key": {
+      "value": ""
+    },
+    "keyvault_1_token:clientId": {
+      "value": ""
+    },
+    "keyvault_1_token:clientSecret": {
+      "value": ""
+    },
+    "keyvault_1_token:TenantId": {
+      "value": ""
+    },
+    "keyvault_1_token:resourceUri": {
+      "value": ""
+    }
+  }
+}
