@@ -62,7 +62,7 @@ namespace LiveDrmOperationsV3.Models
 
         [JsonProperty("resourceState")] public string ResourceState { get; set; }
 
-        [JsonProperty("vanityUrl")] public bool? VanityUrl { get; set; }
+        [JsonProperty("useStaticHostname")] public bool? UseStaticHostname { get; set; }
 
         [JsonProperty("amsAccountName")] public string AMSAccountName { get; set; }
 
