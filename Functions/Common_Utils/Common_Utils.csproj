@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.Media" Version="4.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.34.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.35.1" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>

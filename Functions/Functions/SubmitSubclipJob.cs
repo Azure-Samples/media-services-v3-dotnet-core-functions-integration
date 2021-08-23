@@ -18,6 +18,9 @@ namespace Functions
 {
     public static class SubmitSubclipJob
     {
+        /// <summary>
+        /// Data to pass as an input to the function
+        /// </summary>
         private class RequestBodyModel
         {
             [JsonProperty("liveEventName")]
@@ -37,6 +40,9 @@ namespace Functions
             public int? IntervalSec { get; set; }
         }
 
+        /// <summary>
+        /// Data output by the function
+        /// </summary>
         private class AnswerBodyModel
         {
             [JsonProperty("subclipAssetName")]
@@ -51,12 +57,16 @@ namespace Functions
             [System.Text.Json.Serialization.JsonConverterAttribute(typeof(TimeSpanConverter))]
             [JsonProperty("subclipEndTime")]
             public TimeSpan SubclipEndTime { get; set; }
-
-
         }
 
         private const string SubclipTransformName = "FunctionSubclipTransform";
 
+        /// <summary>
+        /// Function which submits a subclipping job for a live output / asset
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="executionContext"></param>
+        /// <returns></returns>
         [Function("SubmitSubclipJob")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
             FunctionContext executionContext)
@@ -90,7 +100,7 @@ namespace Functions
 
             }
 
-            ConfigWrapper config = new ConfigWrapper(new ConfigurationBuilder()
+            ConfigWrapper config = new(new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables() // parses the values from the optional .env file at the solution root
@@ -328,7 +338,10 @@ namespace Functions
             return job;
         }
 
-
+        /// <summary>
+        /// Preset for subclipping. It archives the top bitrate as a single MP4 file in a new asset.
+        /// </summary>
+        /// <returns></returns>
         public static StandardEncoderPreset CopyOnlyPreset()
         {
             return new StandardEncoderPreset(
@@ -347,11 +360,6 @@ namespace Functions
                         )
          });
         }
-
-
-
-
-
     }
 
     public class TimeSpanConverter : System.Text.Json.Serialization.JsonConverter<TimeSpan>
@@ -366,5 +374,4 @@ namespace Functions
             writer.WriteStringValue(value.ToString());
         }
     }
-
 }

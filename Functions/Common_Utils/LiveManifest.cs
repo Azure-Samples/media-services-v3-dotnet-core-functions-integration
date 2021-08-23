@@ -66,7 +66,10 @@ namespace Common_Utils
         public static ManifestTimingData GetManifestTimingData(XDocument manifest)
         {
 
-            if (manifest == null) throw new ArgumentNullException();
+            if (manifest == null)
+            {
+                throw new ArgumentNullException();
+            }
 
             ManifestTimingData response = new() { IsLive = false, Error = false, TimestampOffset = 0, TimestampList = new List<ulong>(), DiscontinuityDetected = false };
 
