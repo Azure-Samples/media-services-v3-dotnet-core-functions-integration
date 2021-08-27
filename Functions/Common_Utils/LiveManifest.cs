@@ -1,11 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Identity.Client;
-using Microsoft.Rest;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,30 +29,27 @@ namespace Common_Utils
 
             string uploadSasUrl = responseSas.AssetContainerSasUrls.First();
 
-            Uri sasUri = new(uploadSasUrl);
-            CloudBlobContainer container = new(sasUri);
+            var sasUri = new Uri(uploadSasUrl);
+            var container = new BlobContainerClient(sasUri);
 
-            BlobContinuationToken continuationToken = null;
-            List<CloudBlockBlob> blobs = new();
-
-            do
+            var blobs = new List<BlobItem>();
+            await foreach (Azure.Page<BlobItem> page in container.GetBlobsAsync().AsPages()) // BlobTraits.All, BlobStates.All
             {
-                BlobResultSegment segment = await container.ListBlobsSegmentedAsync(null, false, BlobListingDetails.Metadata, null, continuationToken, null, null);
-                blobs.AddRange(segment.Results.Where(blob => blob is CloudBlockBlob).Select(b => b as CloudBlockBlob));
-
-                continuationToken = segment.ContinuationToken;
+                blobs.AddRange(page.Values);
             }
-            while (continuationToken != null);
-            IEnumerable<CloudBlockBlob> ismc = blobs.Where(b => b.Name.EndsWith(".ismc", StringComparison.OrdinalIgnoreCase));
+
+            var ismc = blobs.Where(b => b.Properties.BlobType == BlobType.Block && b.Name.EndsWith(".ismc", StringComparison.OrdinalIgnoreCase));
 
             if (!ismc.Any())
             {
                 throw new Exception("No ISMC file in asset.");
             }
 
-            string content = await ismc.First().DownloadTextAsync();
+            BlobClient blobClient = container.GetBlobClient(ismc.First().Name);
 
-            return XDocument.Parse(content);
+            var response = new BlobClient(blobClient.Uri).DownloadContent();
+
+            return XDocument.Parse(response.Value.Content.ToString());
         }
 
 
