@@ -3,6 +3,7 @@
 
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace Common_Utils
         /// <param name="assetName">The output asset name.</param>
         /// <param name="storageAccountName">The output asset storage name.</param>
         /// <returns></returns>
-        public static async Task<Asset> CreateOutputAssetAsync(IAzureMediaServicesClient client, string resourceGroupName, string accountName, string assetName, string storageAccountName = null)
+        public static async Task<Asset> CreateOutputAssetAsync(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string assetName, string storageAccountName = null)
         {
             // Check if an Asset already exists
             Asset outputAsset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
@@ -28,11 +29,11 @@ namespace Common_Utils
             {
                 // The asset already exists and we are going to overwrite it. In your application, if you don't want to overwrite
                 // an existing asset, use an unique name.
-                Console.WriteLine($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
+                log.LogInformation($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
             }
             else
             {
-                Console.WriteLine("Creating an output asset..");
+                log.LogInformation("Creating an output asset..");
                 outputAsset = new Asset(storageAccountName: storageAccountName);
             }
 

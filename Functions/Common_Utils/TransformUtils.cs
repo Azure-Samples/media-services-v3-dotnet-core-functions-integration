@@ -3,6 +3,7 @@
 
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace Common_Utils
         /// <param name="transformName">The transform name.</param>
         /// <param name="builtInPreset">The built in standard encoder preset to use if the transform is created.</param>
         /// <returns></returns>
-        public static async Task<Transform> CreateEncodingTransform(IAzureMediaServicesClient client, string resourceGroupName, string accountName, string transformName, string builtInPreset)
+        public static async Task<Transform> CreateEncodingTransform(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string transformName, string builtInPreset)
         {
             // Does a transform already exist with the desired name? Assume that an existing Transform with the desired name
             // also uses the same recipe or Preset for processing content.
@@ -29,7 +30,7 @@ namespace Common_Utils
 
             if (transform == null)
             {
-                Console.WriteLine("Creating the transform...");
+                log.LogInformation($"Creating transform '{transformName}'...");
                 // Create a new Transform Outputs array - this defines the set of outputs for the Transform
                 TransformOutput[] outputs = new TransformOutput[]
                 {
@@ -47,10 +48,14 @@ namespace Common_Utils
                     )
                 };
 
-                string description = $"A encoding transform using {builtInPreset} preset";
+                string description = $"An encoding transform using {builtInPreset} preset";
 
                 // Create the Transform with the outputs defined above
                 transform = await client.Transforms.CreateOrUpdateAsync(resourceGroupName, accountName, transformName, outputs, description);
+            }
+            else
+            {
+                log.LogInformation($"Transform '{transformName}' found in AMS account.");
             }
 
             return transform;
@@ -67,7 +72,7 @@ namespace Common_Utils
         /// <param name="accountName"> The Media Services account name.</param>
         /// <param name="transformName">The transform name.</param>
         /// <returns></returns>
-        public static async Task<Transform> CreateSubclipTransform(IAzureMediaServicesClient client, string resourceGroupName, string accountName, string transformName)
+        public static async Task<Transform> CreateSubclipTransform(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string transformName)
         {
             // Does a transform already exist with the desired name? Assume that an existing Transform with the desired name
             // also uses the same recipe or Preset for processing content.
@@ -75,7 +80,7 @@ namespace Common_Utils
 
             if (transform == null)
             {
-                Console.WriteLine("Creating a custom transform...");
+                log.LogInformation($"Creating a custom transform '{transformName}'...");
                 // Create a new Transform Outputs array - this defines the set of outputs for the Transform
                 TransformOutput[] outputs = new TransformOutput[]
                 {
@@ -92,6 +97,10 @@ namespace Common_Utils
                 string description = "A subclip transform with top bitrate archiving";
                 // Create the custom Transform with the outputs defined above
                 transform = await client.Transforms.CreateOrUpdateAsync(resourceGroupName, accountName, transformName, outputs, description);
+            }
+            else
+            {
+                log.LogInformation($"Transform '{transformName}' found in AMS account.");
             }
 
             return transform;

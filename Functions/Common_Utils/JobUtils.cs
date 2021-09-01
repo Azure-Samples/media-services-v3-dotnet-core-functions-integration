@@ -3,6 +3,7 @@
 
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -14,6 +15,7 @@ namespace Common_Utils
         /// Submits a request to Media Services to apply the specified Transform to a given input video.
         /// </summary>
         /// <param name="client">The Media Services client.</param>
+        /// <param name="log">Function logger.</param>
         /// <param name="resourceGroupName">The name of the resource group within the Azure subscription.</param>
         /// <param name="accountName"> The Media Services account name.</param>
         /// <param name="transformName">The name of the transform.</param>
@@ -22,6 +24,7 @@ namespace Common_Utils
         /// <param name="outputAssetName">The (unique) name of the  output asset that will store the result of the encoding job. </param>
         public static async Task<Job> SubmitJobAsync(
             IAzureMediaServicesClient client,
+            ILogger log,
             string resourceGroupName,
             string accountName,
             string transformName,
@@ -43,7 +46,7 @@ namespace Common_Utils
             Job job;
             try
             {
-                Console.WriteLine("Creating a job...");
+                log.LogInformation("Creating a job...");
                 job = await client.Jobs.CreateAsync(
                          resourceGroupName,
                          accountName,
@@ -60,8 +63,8 @@ namespace Common_Utils
             {
                 if (exception.GetBaseException() is ApiErrorException apiException)
                 {
-                    Console.Error.WriteLine(
-                        $"ERROR: API call failed with error code '{apiException.Body.Error.Code}' and message '{apiException.Body.Error.Message}'.");
+                    log.LogError(
+                          $"ERROR: API call failed with error code '{apiException.Body.Error.Code}' and message '{apiException.Body.Error.Message}'.");
                 }
                 throw;
             }

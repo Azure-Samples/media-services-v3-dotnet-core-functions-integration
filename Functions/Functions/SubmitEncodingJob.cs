@@ -131,16 +131,16 @@ namespace Functions
             IAzureMediaServicesClient client;
             try
             {
-                client = await Authentication.CreateMediaServicesClientAsync(config);
+                client = await Authentication.CreateMediaServicesClientAsync(config, log);
+                log.LogInformation("AMS Client created.");
             }
             catch (Exception e)
             {
                 if (e.Source.Contains("ActiveDirectory"))
                 {
-                    Console.Error.WriteLine("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
-                    Console.Error.WriteLine();
+                    log.LogError("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
                 }
-                Console.Error.WriteLine($"{e.Message}");
+                log.LogError($"{e.Message}");
 
                 return new BadRequestObjectResult(e.Message);
             }
@@ -159,12 +159,13 @@ namespace Functions
             try
             {
                 // Ensure that you have the encoding Transform.  This is really a one time setup operation.
-                transform = await TransformUtils.CreateEncodingTransform(client, config.ResourceGroup, config.AccountName, data.TransformName, data.BuiltInPreset);
+                transform = await TransformUtils.CreateEncodingTransform(client, log, config.ResourceGroup, config.AccountName, data.TransformName, data.BuiltInPreset);
+                log.LogInformation("Transform retrieved.");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Error when creating/getting the transform.");
-                Console.Error.WriteLine($"{e.Message}");
+                log.LogError("Error when creating/getting the transform.");
+                log.LogError($"{e.Message}");
                 return new BadRequestObjectResult(e.Message);
             }
 
@@ -172,12 +173,13 @@ namespace Functions
             try
             {
                 // Output from the job must be written to an Asset, so let's create one
-                outputAsset = await AssetUtils.CreateOutputAssetAsync(client, config.ResourceGroup, config.AccountName, outputAssetName, data.OutputAssetStorageAccount);
+                outputAsset = await AssetUtils.CreateOutputAssetAsync(client, log, config.ResourceGroup, config.AccountName, outputAssetName, data.OutputAssetStorageAccount);
+                log.LogInformation($"Output asset '{outputAssetName}' created.");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Error when creating the output asset.");
-                Console.Error.WriteLine($"{e.Message}");
+                log.LogError("Error when creating the output asset.");
+                log.LogError($"{e.Message}");
                 return new BadRequestObjectResult(e.Message);
             }
 
@@ -186,10 +188,12 @@ namespace Functions
             if (data.InputUrl != null)
             {
                 jobInput = new JobInputHttp(files: new[] { data.InputUrl });
+                log.LogInformation("Input is a Url.");
             }
             else
             {
                 jobInput = new JobInputAsset(assetName: data.InputAssetName);
+                log.LogInformation($"Input is asset '{data.InputAssetName}'.");
             }
 
             Job job;
@@ -198,6 +202,7 @@ namespace Functions
                 // Job submission to Azure Media Services
                 job = await JobUtils.SubmitJobAsync(
                                            client,
+                                           log,
                                            config.ResourceGroup,
                                            config.AccountName,
                                            data.TransformName,
@@ -205,11 +210,12 @@ namespace Functions
                                            jobInput,
                                            outputAssetName
                                            );
+                log.LogInformation($"Job '{jobName}' submitted.");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Error when submitting the job.");
-                Console.Error.WriteLine($"{e.Message}");
+                log.LogError("Error when submitting the job.");
+                log.LogError($"{e.Message}");
                 return new BadRequestObjectResult(e.Message);
             }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.Azure.Management.Media;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
 using System;
@@ -21,11 +22,11 @@ namespace Common_Utils
         /// <param name="config">The param is of type ConfigWrapper, which reads values from local configuration file.</param>
         /// <returns>A task.</returns>
         // <CreateMediaServicesClientAsync>
-        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config, bool interactive = false)
+        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config, ILogger log, bool interactive = false)
         {
             ServiceClientCredentials credentials;
             if (interactive)
-                credentials = await GetCredentialsInteractiveAuthAsync(config);
+                credentials = await GetCredentialsInteractiveAuthAsync(config, log);
             else
                 credentials = await GetCredentialsAsync(config);
 
@@ -68,7 +69,7 @@ namespace Common_Utils
         /// <param name="config">The param is of type ConfigWrapper. This class reads values from local configuration file.</param>
         /// <returns></returns>
         // <GetCredentialsInteractiveAuthAsync>
-        private static async Task<ServiceClientCredentials> GetCredentialsInteractiveAuthAsync(ConfigWrapper config)
+        private static async Task<ServiceClientCredentials> GetCredentialsInteractiveAuthAsync(ConfigWrapper config, ILogger log)
         {
             var scopes = new[] { config.ArmAadAudience + "/user_impersonation" };
 
@@ -96,12 +97,12 @@ namespace Common_Utils
                 }
                 catch (MsalException maslException)
                 {
-                    Console.Error.WriteLine($"ERROR: MSAL interactive authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
+                    log.LogError($"ERROR: MSAL interactive authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
                 }
             }
             catch (MsalException maslException)
             {
-                Console.Error.WriteLine($"ERROR: MSAL silent authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
+                log.LogError($"ERROR: MSAL silent authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
             }
 
             return new TokenCredentials(result.AccessToken, TokenType);

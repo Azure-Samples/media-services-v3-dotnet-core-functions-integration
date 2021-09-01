@@ -111,16 +111,15 @@ namespace Functions
             IAzureMediaServicesClient client;
             try
             {
-                client = await Authentication.CreateMediaServicesClientAsync(config);
+                client = await Authentication.CreateMediaServicesClientAsync(config, log);
             }
             catch (Exception e)
             {
                 if (e.Source.Contains("ActiveDirectory"))
                 {
-                    Console.Error.WriteLine("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
-                    Console.Error.WriteLine();
+                    log.LogError("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
                 }
-                Console.Error.WriteLine($"{e.Message}");
+                log.LogError($"{e.Message}");
 
                 return new BadRequestObjectResult(e.Message);
             }
@@ -130,7 +129,7 @@ namespace Functions
             client.LongRunningOperationRetryTimeout = 2;
 
             // Ensure that you have customized encoding Transform.  This is really a one time setup operation.
-            Transform transform = await TransformUtils.CreateSubclipTransform(client, config.ResourceGroup, config.AccountName, SubclipTransformName);
+            Transform transform = await TransformUtils.CreateSubclipTransform(client, log, config.ResourceGroup, config.AccountName, SubclipTransformName);
 
             var liveOutput = await client.LiveOutputs.GetAsync(config.ResourceGroup, config.AccountName, data.LiveEventName, data.LiveOutputName);
 
@@ -182,7 +181,7 @@ namespace Functions
             }
 
             // Output from the Job must be written to an Asset, so let's create one
-            Asset outputAsset = await AssetUtils.CreateOutputAssetAsync(client, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
+            Asset outputAsset = await AssetUtils.CreateOutputAssetAsync(client, log, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
 
             JobInput jobInput = new JobInputAsset(
                 assetName: liveOutput.AssetName,
@@ -192,6 +191,7 @@ namespace Functions
 
             Job job = await JobUtils.SubmitJobAsync(
                client,
+               log,
                config.ResourceGroup,
                config.AccountName,
                SubclipTransformName,
