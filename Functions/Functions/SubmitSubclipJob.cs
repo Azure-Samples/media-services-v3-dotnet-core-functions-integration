@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.IO;
 using System.Linq;
@@ -12,7 +15,6 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-
 
 namespace Functions
 {
@@ -71,7 +73,7 @@ namespace Functions
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
             FunctionContext executionContext)
         {
-            var log = executionContext.GetLogger("Function1");
+            var log = executionContext.GetLogger("SubmitSubclipJob");
             log.LogInformation("C# HTTP trigger function processed a request.");
 
             string triggerStart = DateTime.UtcNow.ToString("yyMMddHHmmss");
@@ -128,7 +130,7 @@ namespace Functions
             client.LongRunningOperationRetryTimeout = 2;
 
             // Ensure that you have customized encoding Transform.  This is really a one time setup operation.
-            Transform transform = await CreateSubclipTransform(client, config.ResourceGroup, config.AccountName, SubclipTransformName);
+            Transform transform = await TransformUtils.CreateSubclipTransform(client, config.ResourceGroup, config.AccountName, SubclipTransformName);
 
             var liveOutput = await client.LiveOutputs.GetAsync(config.ResourceGroup, config.AccountName, data.LiveEventName, data.LiveOutputName);
 
@@ -180,20 +182,23 @@ namespace Functions
             }
 
             // Output from the Job must be written to an Asset, so let's create one
-            Asset outputAsset = await CreateOutputAssetAsync(client, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
+            Asset outputAsset = await AssetUtils.CreateOutputAssetAsync(client, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
 
-            Job job = await SubmitJobAsync(
-                client,
-                config.ResourceGroup,
-                config.AccountName,
-                SubclipTransformName,
-                $"Subclip-{liveOutput.Name}-{triggerStart}",
-                liveOutput.AssetName,
-                outputAsset.Name,
-                new AbsoluteClipTime(starttime.Subtract(TimeSpan.FromMilliseconds(100))),
-                new AbsoluteClipTime(livetime.Add(TimeSpan.FromMilliseconds(100)))
+            JobInput jobInput = new JobInputAsset(
+                assetName: liveOutput.AssetName,
+                start: new AbsoluteClipTime(starttime.Subtract(TimeSpan.FromMilliseconds(100))),
+                end: new AbsoluteClipTime(livetime.Add(TimeSpan.FromMilliseconds(100)))
                 );
 
+            Job job = await JobUtils.SubmitJobAsync(
+               client,
+               config.ResourceGroup,
+               config.AccountName,
+               SubclipTransformName,
+               $"Subclip-{liveOutput.Name}-{triggerStart}",
+               jobInput,
+               outputAsset.Name
+               );
 
             return new OkObjectResult(new AnswerBodyModel
             {
@@ -202,163 +207,6 @@ namespace Functions
                 SubclipTransformName = SubclipTransformName,
                 SubclipEndTime = starttime + duration
             });
-        }
-
-
-        /// <summary>
-        /// If the specified transform exists, return that transform. If the it does not
-        /// exist, creates a new transform with the specified output. In this case, the
-        /// output is set to encode a video using a custom preset.
-        /// </summary>
-        /// <param name="client">The Media Services client.</param>
-        /// <param name="resourceGroupName">The name of the resource group within the Azure subscription.</param>
-        /// <param name="accountName"> The Media Services account name.</param>
-        /// <param name="transformName">The transform name.</param>
-        /// <returns></returns>
-        private static async Task<Transform> CreateSubclipTransform(IAzureMediaServicesClient client, string resourceGroupName, string accountName, string transformName)
-        {
-            // Does a transform already exist with the desired name? Assume that an existing Transform with the desired name
-            // also uses the same recipe or Preset for processing content.
-            Transform transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
-
-            if (transform == null)
-            {
-                Console.WriteLine("Creating a custom transform...");
-                // Create a new Transform Outputs array - this defines the set of outputs for the Transform
-                TransformOutput[] outputs = new TransformOutput[]
-                {
-                    // Create a new TransformOutput with a custom Standard Encoder Preset
-                    // This demonstrates how to create custom codec and layer output settings
-
-                  new TransformOutput(
-                        CopyOnlyPreset(),
-                        onError: OnErrorType.StopProcessingJob,
-                        relativePriority: Priority.Normal
-                    )
-                };
-
-                string description = "A subclip transform with top bitrate archiving";
-                // Create the custom Transform with the outputs defined above
-                transform = await client.Transforms.CreateOrUpdateAsync(resourceGroupName, accountName, transformName, outputs, description);
-            }
-
-            return transform;
-        }
-
-
-        /// <summary>
-        /// Creates an output asset. The output from the encoding Job must be written to an Asset.
-        /// </summary>
-        /// <param name="client">The Media Services client.</param>
-        /// <param name="resourceGroupName">The name of the resource group within the Azure subscription.</param>
-        /// <param name="accountName"> The Media Services account name.</param>
-        /// <param name="assetName">The output asset name.</param>
-        /// <returns></returns>
-        private static async Task<Asset> CreateOutputAssetAsync(IAzureMediaServicesClient client, string resourceGroupName, string accountName, string assetName, string storageAccountName = null)
-        {
-            // Check if an Asset already exists
-            Asset outputAsset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
-
-            if (outputAsset != null)
-            {
-                // The asset already exists and we are going to overwrite it. In your application, if you don't want to overwrite
-                // an existing asset, use an unique name.
-                Console.WriteLine($"Warning: The asset named {assetName} already exists. It will be overwritten in this sample.");
-            }
-            else
-            {
-                Console.WriteLine("Creating an output asset..");
-                outputAsset = new Asset(storageAccountName: storageAccountName);
-            }
-
-            return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, outputAsset);
-        }
-
-
-        /// <summary>
-        /// Submits a request to Media Services to apply the specified Transform to a given input video.
-        /// </summary>
-        /// <param name="client">The Media Services client.</param>
-        /// <param name="resourceGroupName">The name of the resource group within the Azure subscription.</param>
-        /// <param name="accountName"> The Media Services account name.</param>
-        /// <param name="transformName">The name of the transform.</param>
-        /// <param name="jobName">The (unique) name of the job.</param>
-        /// <param name="inputAssetName"></param>
-        /// <param name="outputAssetName">The (unique) name of the  output asset that will store the result of the encoding job. </param>
-        private static async Task<Job> SubmitJobAsync(
-            IAzureMediaServicesClient client,
-            string resourceGroupName,
-            string accountName,
-            string transformName,
-            string jobName,
-            string inputAssetName,
-            string outputAssetName,
-            ClipTime start = null,
-            ClipTime end = null
-            )
-        {
-            JobInput jobInput = new JobInputAsset(assetName: inputAssetName, start: start, end: end);
-
-            JobOutput[] jobOutputs =
-            {
-                new JobOutputAsset(outputAssetName),
-            };
-
-            // In this example, we are assuming that the job name is unique.
-            //
-            // If you already have a job with the desired name, use the Jobs.Get method
-            // to get the existing job. In Media Services v3, Get methods on entities returns null 
-            // if the entity doesn't exist (a case-insensitive check on the name).
-            Job job;
-            try
-            {
-                Console.WriteLine("Creating a job...");
-                job = await client.Jobs.CreateAsync(
-                         resourceGroupName,
-                         accountName,
-                         transformName,
-                         jobName,
-                         new Job
-                         {
-                             Input = jobInput,
-                             Outputs = jobOutputs,
-                         });
-
-            }
-            catch (Exception exception)
-            {
-                if (exception.GetBaseException() is ApiErrorException apiException)
-                {
-                    Console.Error.WriteLine(
-                        $"ERROR: API call failed with error code '{apiException.Body.Error.Code}' and message '{apiException.Body.Error.Message}'.");
-                }
-                throw;
-            }
-
-            return job;
-        }
-
-        /// <summary>
-        /// Preset for subclipping. It archives the top bitrate as a single MP4 file in a new asset.
-        /// </summary>
-        /// <returns></returns>
-        public static StandardEncoderPreset CopyOnlyPreset()
-        {
-            return new StandardEncoderPreset(
-       codecs: new Codec[]
-       {
-                        // Add an Audio layer for the audio copy
-                        new CopyAudio(),                 
-                        // Next, add a Video for the video copy
-                       new CopyVideo()
-        },
-         // Specify the format for the output files - one for video+audio, and another for the thumbnails
-         formats: new Format[]
-         {
-                        new Mp4Format(
-                            filenamePattern:"Archive-{Basename}{Extension}"
-                        )
-         });
         }
     }
 

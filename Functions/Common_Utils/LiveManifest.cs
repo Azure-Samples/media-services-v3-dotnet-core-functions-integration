@@ -165,10 +165,13 @@ namespace Common_Utils
             }
             return response;
         }
-
-
-
-        // return the exact timespan on GOP
+                        
+        /// <summary>
+        /// Return the exact timespan on GOP
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="ts"></param>
+        /// <returns></returns>
         static public TimeSpan ReturnTimeSpanOnGOP(ManifestTimingData data, TimeSpan ts)
         {
             var response = ts;
@@ -186,8 +189,5 @@ namespace Common_Utils
             }
             return response;
         }
-
-
     }
-
 }
