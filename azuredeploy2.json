@@ -18,10 +18,9 @@
     },
     "project": {
       "type": "string",
-      "defaultValue": "advanced-vod-workflow",
+      "defaultValue": "Functions",
       "allowedValues": [
-        "advanced-vod-workflow",
-        "LiveAndVodDRMOperationsV3\\LiveAndVodDRMOperationsV3"
+        "Functions"
       ],
       "metadata": {
         "description": "The project in the Media Services Functions samples to deploy. Choose the name that matches the folder name containing the functions samples that you wish to deploy."
