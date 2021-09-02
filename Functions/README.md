@@ -52,6 +52,8 @@ Make sure that you have a .env file created and filled correctly.
 
 Then use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
 
+Use Postman to test your local functions.
+
 ### 2. Deploy the Azure functions to Azure
 
 VSCode or Azure CLI is recommended for the deployment.
@@ -114,7 +116,7 @@ Go the Azure portal, select your Azure functions deployment, go to the 'Configur
   },
   {
     "name": "SUBSCRIPTIONID",
-    "value": "28a75405-95db-4d15-9a7f-ab84003a63aa",
+    "value": "00000000-0000-0000-0000-000000000000",
     "slotSetting": false
   }
 ```
@@ -123,9 +125,11 @@ These application settings are used by the functions code to connect to your Med
 
 ![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
 
+Use Postman to test your Azure functions.
+
 ## Functions documentation
 
-### SubmitEncodingJob Funtion
+### SubmitEncodingJob Function
 
 Input body :
 
