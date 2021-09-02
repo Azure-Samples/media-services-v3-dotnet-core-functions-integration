@@ -9,6 +9,8 @@
 *.userosscache
 *.sln.docstates
 
+# Ignore .env files
+.env
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -26,8 +28,7 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
-# Visual Studio Code cache/options directory
-.vscode/
+
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -335,4 +336,3 @@ ASALocalRun/
 /LiveAndVodDRMOperationsV3/LiveAndVodDRMOperationsV3/logicapp1-preencoded-asset-deploy.json
 /LiveAndVodDRMOperationsV3/LiveAndVodDRMOperationsV3/local.settings*.json
 
-/.env
