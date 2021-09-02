@@ -44,11 +44,15 @@ Create a Service Principal and save the password. It will be needed in step #4. 
 
 To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
-### 4. Run the Functions locally
+## How to run and deploy
 
-With Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally).
+### 1. Run the Functions locally
 
-### 5. Deploy the Azure functions to Azure
+Make sure that you have a .env file created and filled correctly.
+
+Then use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
+
+### 2. Deploy the Azure functions to Azure
 
 VSCode or Azure CLI is recommended for the deployment.
 For Aure CLI commands, read [this](https://github.com/Azure/azure-functions-dotnet-worker).
@@ -62,6 +66,62 @@ To get the function Url, use the Functions explorer in VSCode.
 ![Screen capture](../Images/azfunc5geturl.png?raw=true)
 
 More details in the [documentation](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#sign-in-to-azure).
+
+### Add your settings to the deployment
+
+Go the Azure portal, select your Azure functions deployment, go to the 'Configuration' tab, select 'Advanced Edit' and add the following entries with your values.
+
+```json
+  {
+    "name": "AADCLIENTID",
+    "value": "00000000-0000-0000-0000-000000000000",
+    "slotSetting": false
+  },
+  {
+    "name": "AADSECRET",
+    "value": "00000000-0000-0000-0000-000000000000",
+    "slotSetting": false
+  },
+  {
+    "name": "AADTENANTDOMAIN",
+    "value": "microsoft.onmicrosoft.com",
+    "slotSetting": false
+  },
+  {
+    "name": "AADTENANTID",
+    "value": "00000000-0000-0000-0000-000000000000",
+    "slotSetting": false
+  },
+  {
+    "name": "ACCOUNTNAME",
+    "value": "amsaccount",
+    "slotSetting": false
+  },
+  {
+    "name": "RESOURCEGROUP",
+    "value": "amsResourceGroup",
+    "slotSetting": false
+  },
+  {
+    "name": "ARMAADAUDIENCE",
+    "value": "https://management.core.windows.net",
+    "slotSetting": false
+  },
+  {
+    "name": "ARMENDPOINT",
+    "value": "https://management.azure.com",
+    "slotSetting": false
+  },
+  {
+    "name": "SUBSCRIPTIONID",
+    "value": "28a75405-95db-4d15-9a7f-ab84003a63aa",
+    "slotSetting": false
+  }
+```
+
+These application settings are used by the functions code to connect to your Media Services account.
+
+![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
 
 ## Functions documentation
 
