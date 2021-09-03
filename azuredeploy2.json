@@ -11,9 +11,9 @@
     },
       "project": {
       "type": "string",
-      "defaultValue": "Functions/Functions/Functions.csproj",
+      "defaultValue": "Functions/Functions.csproj",
       "allowedValues": [
-        "Functions/Functions/Functions.csproj"
+        "Functions/Functions.csproj"
       ],
       "metadata": {
         "description": "The project in the Media Services Functions samples to deploy. Choose the name that matches the folder name containing the functions samples that you wish to deploy."
