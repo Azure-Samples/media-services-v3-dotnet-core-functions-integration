@@ -137,7 +137,7 @@ Use Postman to test your Azure functions.
 
 This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
 
-See the model for the [input](Functions/SubmitEncodingJob.cs#L22-L63) and [output](Functions/SubmitEncodingJob.cs#L65-L81).
+See the model for the [input](SubmitEncodingJob.cs#L22-L63) and [output](SubmitEncodingJob.cs#L65-L81).
 
 Input body sample :
 
