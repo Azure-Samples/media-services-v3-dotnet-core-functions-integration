@@ -69,6 +69,8 @@ To get the function Url, use the Functions explorer in VSCode, or the Azure port
 
 More details in the [documentation](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#sign-in-to-azure).
 
+Note : we recommend deploying the functions using VS Code as it has been successfully tested. Deploying them using the ARM template [azuredeploy2.json](../azuredeploy2.json) and continuous integration from GitHub seems problematic for now (functions are not visible in the deployment).
+
 ### Add your settings to the deployment
 
 Go the Azure portal, select your Azure functions deployment, go to the 'Configuration' tab, select 'Advanced Edit' and add the following entries with your values.
@@ -121,7 +123,7 @@ Go the Azure portal, select your Azure functions deployment, go to the 'Configur
   }
 ```
 
-These application settings are used by the functions code to connect to your Media Services account.
+These application settings are used by the functions to connect to your Media Services account.
 
 ![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
 
