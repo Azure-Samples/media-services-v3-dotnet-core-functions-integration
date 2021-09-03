@@ -44,6 +44,8 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 
 ### 4. Deploy the Azure functions
 
+For the 'Functions" project, do not use the link below. Please see the dedicated [Readme](/Functions/README.md).
+
 If not already done : fork the repo, deploy Azure Functions and select the right project (IMPORTANT!).
 
 Note : if you never provided your GitHub account in the Azure portal before, the continuous integration probably will probably fail and you won't see the functions. In that case, you need to setup it manually. Go to your Azure Function App / Deployment / Deployment Center. Select GitHub as a source and configure it to use your fork.
