@@ -6,8 +6,10 @@ author: xpouyat
 
 # .NET 5 Functions for Azure Media Services v3
 
-This project contains examples of Azure Functions for Azure Media Services v3.
+This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing.
 You can use Visual Studio 2019 or Visual Studio Code to run and deploy the functions.
+
+The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this readme file.
 
 ## .NET solution file and how to launch project
 
@@ -15,8 +17,6 @@ Open the root /Functions/Functions.sln (or just open the Functions folder in VS 
 The main solution contains the Azure Functions project.
 
 When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
-
-This Media Services Functions example is based on .NET 5 Azure Functions.
 
 For more on information on .NET 5 & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
 
@@ -56,14 +56,14 @@ Use Postman to test your local functions.
 
 ### 2. Deploy the Azure functions to Azure
 
-VSCode or Azure CLI is recommended for the deployment.
+VS Code or Azure CLI is recommended for the deployment.
 For Aure CLI commands, read [this](https://github.com/Azure/azure-functions-dotnet-worker).
 
-With VSCode, select the Azure tab and click on the icon to deploy it to Azure.
+With VS Code, select the Azure tab and click on the icon to deploy it to Azure.
 
 ![Screen capture](../Images/azfunc5deploy.png?raw=true)
 
-To get the function Url, use the Functions explorer in VSCode.
+To get the function Url, use the Functions explorer in VSCode, or the Azure portal.
 
 ![Screen capture](../Images/azfunc5geturl.png?raw=true)
 
@@ -131,7 +131,9 @@ Use Postman to test your Azure functions.
 
 ### **SubmitEncodingJob** Function
 
-See the model for the [input](Functions/SubmitEncodingJob.cs#L25-L63) and [output](Functions/SubmitEncodingJob.cs#L65-L81).
+This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
+
+See the model for the [input](Functions/SubmitEncodingJob.cs#L22-L63) and [output](Functions/SubmitEncodingJob.cs#L65-L81).
 
 Input body sample :
 

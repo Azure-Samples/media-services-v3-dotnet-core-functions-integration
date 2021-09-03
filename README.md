@@ -22,7 +22,7 @@ This repository can be accessed directly using <https://aka.ms/ams3functions>.
 
 | Folder | Description |
 |-------------|-------------|
-| [Functions](/Functions)|**New** This sample exposes two Azure Functions based on .NET 5 with the latest Media Services and Azure Functions SDKs.|
+| [Functions](/Functions)|**New** This sample exposes two Azure Functions based on .NET 5 using the latest Media Services and Azure Functions SDKs.|
 | [Encoding](/Encoding)|The sample exposes an Azure Function that encodes an Azure Storage blob with ffmpeg. Azure Functions Premium plan is recommended.|
 | [LiveAndVodDRMOperationsV3](/LiveAndVodDRMOperationsV3)|The sample exposes several Azure functions that can be used to manage live streaming and VOD with DRM with Azure Media Services v3, using Irdeto back-end to deliver the licenses.|
 | [advanced-vod-workflow](/advanced-vod-workflow)|This project contains advanced VOD media workflow examples of using Azure Functions with Azure Media Services v3. The project includes several folders of sample Azure Functions for use with Azure Media Services that show workflows related to ingesting content directly from blob storage, encoding, and writing content back to blob storage.|

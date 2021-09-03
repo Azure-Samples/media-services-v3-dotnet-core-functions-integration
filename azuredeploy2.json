@@ -2,21 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "functionsAppName": {
+    "appName": {
       "type": "string",
-      "defaultValue": "amsv3functions",
+       "defaultValue": "[concat('amsv3functions', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Function application to be deployed. The name will automatically be made unique on deployment, all lowercase letters or numbers with no spaces."
       }
     },
-    "functionKey": {
-      "type": "string",
-      "defaultValue": "j0txf1f8msjytzvpe40nxbpxdcxtqcgxy0nt",
-      "metadata": {
-        "description": "Function App Key to use for authorization of Webhook. You should replace this with the key you want to use for your Function application authorization"
-      }
-    },
-    "project": {
+      "project": {
       "type": "string",
       "defaultValue": "Functions",
       "allowedValues": [
@@ -37,7 +30,7 @@
       "type": "string",
       "defaultValue": "main",
       "metadata": {
-        "description": "Sourcecode Repo branch. This should be set to Master for the public sample. You can adjust this to point to your own fork branch as recommended"
+        "description": "Sourcecode Repo branch. This should be set to Main for the public sample. You can adjust this to point to your own fork branch as recommended"
       }
     },
     "mediaServicesAccountSubscriptionId": {
@@ -45,13 +38,6 @@
       "defaultValue": "[subscription().subscriptionId]",
       "metadata": {
         "description": "Subscription Id for your media services account name."
-      }
-    },
-    "mediaServicesAccountRegion": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Region name of your media services account name."
       }
     },
     "mediaServicesAccountResourceGroup": {
@@ -79,22 +65,21 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Service Principal Client ID to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/media-services-portal-get-started-with-aad#service-principal-authentication"
+        "description": "Service Principal Client ID to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal"
       }
     },
     "mediaServicesAccountServicePrincipalClientSecret": {
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
-        "description": "Service Principal Client Secret to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/media-services-portal-get-started-with-aad#service-principal-authentication"
+        "description": "Service Principal Client Secret to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal"
       }
     }
   },
   "variables": {
-    "functionsAppName": "[concat(toLower(parameters('functionsAppName')),'-',uniqueString(resourceGroup().id))]",
-    "storageAccountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-    "storageAccountName": "[concat('azfnstorage',uniqueString(resourceGroup().id))]",
-    "hostingPlanName": "[concat(variables('functionsAppName'), '-plan')]"
+   "functionAppName": "[parameters('appName')]",
+   "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+    "hostingPlanName": "[parameters('appName')]"
   },
   "resources": [
     {
@@ -125,7 +110,7 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "name": "[variables('functionsAppName')]",
+      "name": "[variables('functionAppName')]",
       "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This function app depends on the media services account and storage account and will pull down the source code from Github",
@@ -148,7 +133,7 @@
             },
             {
               "name": "WEBSITE_CONTENTSHARE",
-              "value": "[toLower(variables('functionsAppName'))]"
+              "value": "[toLower(variables('functionAppName'))]"
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -169,10 +154,6 @@
             {
               "name": "SubscriptionId",
               "value": "[parameters('mediaServicesAccountSubscriptionId')]"
-            },
-            {
-              "name": "Region",
-              "value": "[parameters('mediaServicesAccountRegion')]"
             },
             {
               "name": "ResourceGroup",
@@ -205,18 +186,6 @@
             {
               "name": "ArmAadAudience",
               "value": "https://management.core.windows.net/"
-            },
-            {
-              "name": "StorageConnection",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').keys[0].value)]"
-            },
-            {
-              "name": "SigningKey",
-              "value": "wOlDEUJ4/VN1No8HxVxpsRvej0DZrO5DXvImGLjFhfctPGFiMkUA0Cj8HSfJW7lePX9XsfHAMhw30p0yYqG+1A=="
-            },
-            {
-              "name": "WebHookEndpoint",
-              "value": "[concat(resourceId('Microsoft.Web/sites', variables('functionsAppName')),'/api/Notification_Webhook_Function?code=', parameters('functionKey'))]"
             }
           ]
         }
@@ -228,12 +197,12 @@
           "apiVersion": "2019-08-01",
           "comments": "This section sets up source control for continuous integration on the Function app and pulls the source code down from Github.",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', variables('functionsAppName'))]"
+            "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
           ],
           "properties": {
             "repoUrl": "[parameters('sourceCodeRepositoryURL')]",
             "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": "true"
+            "IsManualIntegration": true
           }
         }
       ]
