@@ -129,9 +129,11 @@ Use Postman to test your Azure functions.
 
 ## Functions documentation
 
-### SubmitEncodingJob Function
+### **SubmitEncodingJob** Function
 
-Input body :
+See the model for the [input](/Functions/SubmitEncodingJob.cs#L25-L63) and [output](/Functions/SubmitEncodingJob.cs#L65-L81).
+
+Input body sample :
 
 ```json
 {
