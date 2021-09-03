@@ -133,7 +133,7 @@ Use Postman to test your Azure functions.
 
 ## Functions documentation
 
-### **SubmitEncodingJob** Function
+### SubmitEncodingJob
 
 This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
 
