@@ -54,6 +54,8 @@ Then use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/
 
 Use Postman to test your local functions.
 
+![Screen capture](../Images/azfunc5deploy.png?raw=true)
+
 ### 2. Deploy the Azure functions to Azure
 
 VS Code or Azure CLI is recommended for the deployment.
