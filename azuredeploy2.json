@@ -11,7 +11,7 @@
     },
       "project": {
       "type": "string",
-      "defaultValue": "Functions",
+      "defaultValue": "Functions/Functions/Functions.csproj",
       "allowedValues": [
         "Functions/Functions/Functions.csproj"
       ],

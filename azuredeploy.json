@@ -38,7 +38,7 @@
       "type": "string",
       "defaultValue": "main",
       "metadata": {
-        "description": "Sourcecode Repo branch. This should be set to Master for the public sample. You can adjust this to point to your own fork branch as recommended"
+        "description": "Sourcecode Repo branch. This should be set to Main for the public sample. You can adjust this to point to your own fork branch as recommended"
       }
     },
     "mediaServicesAccountSubscriptionId": {
