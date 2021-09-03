@@ -13,7 +13,7 @@
       "type": "string",
       "defaultValue": "Functions",
       "allowedValues": [
-        "Functions"
+        "Functions/Functions/Functions.csproj"
       ],
       "metadata": {
         "description": "The project in the Media Services Functions samples to deploy. Choose the name that matches the folder name containing the functions samples that you wish to deploy."
@@ -140,12 +140,8 @@
               "value": "~3"
             },
             {
-              "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "~10"
-            },
-            {
               "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "dotnet"
+              "value": "dotnet-isolated"
             },
             {
               "name": "Project",
@@ -168,7 +164,7 @@
               "value": "[parameters('mediaServicesAccountServicePrincipalClientId')]"
             },
             {
-              "name": "AadClientSecret",
+              "name": "AadSecret",
               "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
             },
             {
