@@ -127,7 +127,7 @@ These application settings are used by the functions to connect to your Media Se
 
 Use Postman to test your Azure functions.
 
-### B) Second option : deploy using an ARM template and setup GitHub Actions
+### B) Second option : deploy using an ARM template and GitHub Actions
 
 In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push code updates to the Function App using GitHub Actions.
 
