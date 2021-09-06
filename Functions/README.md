@@ -238,7 +238,7 @@ You can use Postman to test your Azure functions.
 
 ![Screen capture](../Images/azfunc5postmandeployed.png?raw=true)
 
-For more information on this type of deployment, see [GitHub Actions for deploying to Azure Functions](https://github.com/marketplace/actions/azure-functions-action).
+For more information on this type of deployment, see [GitHub Actions for deploying to Azure Functions](https://github.com/Azure/functions-action).
 
 ## Code documentation
 
