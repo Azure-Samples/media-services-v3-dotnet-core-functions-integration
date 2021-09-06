@@ -11,25 +11,6 @@ You can use Visual Studio 2019 or Visual Studio Code to run and deploy the funct
 
 The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this readme file.
 
-## .NET solution file and how to launch project
-
-Open the root /Functions/Functions.sln (or just open the Functions folder in VS Code).
-The main solution contains the Azure Functions project.
-
-When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
-
-For more on information on .NET 5 & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
-
-## How to set variables for a local execution
-
-Create a **.env file** at the root with your account settings.
-For more information, see [Access APIs](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto).
-
-Use [sample.env](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
-Connect to the Azure portal with your browser and go to your media services account / API access to get the .ENV data to store to the .env file.
-
-Then build and run the sample in Visual Studio or VS Code.
-
 ## Prerequisites
 
 ### 1. Create an Azure Media Services account
@@ -44,11 +25,28 @@ Create a Service Principal and save the password. It will be needed in step #4. 
 
 To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
-## How to test and run the Functions locally
+## .NET solution file and how to launch project
 
-Make sure that you have a .env file created and filled correctly.
+Open the root /Functions/Functions.sln (or just open the Functions folder in VS Code).
+The main solution contains the Azure Functions project.
 
-Then use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
+When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
+
+For more on information on .NET 5 & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
+
+### How to set variables for a local execution
+
+Create a **.env file** at the root with your account settings.
+For more information, see [Access APIs](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto).
+
+Use [sample.env](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
+Connect to the Azure portal with your browser and go to your media services account / API access to get the .ENV data to store to the .env file.
+
+Then build and run the sample in Visual Studio or VS Code.
+
+### How to test and run the Functions locally
+
+Use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
 
 Use Postman to test your local functions.
 
@@ -56,10 +54,10 @@ Use Postman to test your local functions.
 
 ## How to deploy the functions to Azure
 
-In this document, we propose two options to deploy the resources (Storage, Plan and Functions App) and deploy the code to the Azure Functions app:
+In this document, we propose two options to deploy the resources (Storage, Plan and Functions App) and deploy the code to the Azure Functions app.
 
-- A. Using Visual Studio Code or Azure CLI
-- B. Using an ARM template and GitHub Actions for continuous integration. With such deployment, the Azure app instance will be updated when you commit code update to your repo.
+- First option (A) : using Visual Studio Code or Azure CLI
+- Second option (B) : using an ARM template and GitHub Actions for continuous integration. With such deployment, the Azure app instance will be updated when you commit code update to your repo.
 
 ### A) First option : deploy from Visual Studio Code or Azure CLI
 
@@ -131,21 +129,23 @@ These application settings are used by the functions to connect to your Media Se
 
 Use Postman to test your Azure functions.
 
-### B) Second option : deploy using an ARM template and GitHub Actions
+### B) Second option : deploy using an ARM template and setup GitHub Actions
 
 In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push the compiled code to the Function App using GitHub Actions.
 
-#### B.1) ARM Deployment
-
-We'll deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json).
+#### B.1) Fork the repo
 
 If not already done : fork the repo.
+
+#### B.2) ARM Deployment
+
+You can deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json).
 
 Click on this button to deploy the resources to your subscription :
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-#### B.2) Using Publish Profile as Deployment Credential
+#### B.3) Use Publish Profile as Deployment Credential
 
 When the deployment is complete, go to your new Functions App to get the publish profile.
 
@@ -153,10 +153,12 @@ When the deployment is complete, go to your new Functions App to get the publish
 2. Click **Manage publish profile**, **Download publish profile** to download **.PublishSettings** file.
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
-5. Edit the [`.github/workflows/deploy-functions.yml`](../github/workflows/deploy-functions.yml) file in your project repository. You can also create a new file by going to the 'Actions' section in your GitHub repo and select 'set up a workflow yourself'.
+5. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow file used by GitHub Actions.
 6. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
-7. Commit and push your project to GitHub repository, you should see a new GitHub workflow initiated in **Actions** tab.
-8. Enable the workflow if it is disabled (by default, workflows coming from the source repo are disabled in the fork)
+7. Commit the change.
+8. Go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork). You should see a new GitHub workflow initiated in **Actions** tab named **Build and deploy dotnet 5 app to Azure Function App**.
+
+`deploy-functions.yml` based file :
 
 ```yml
 name: Build and deploy dotnet 5 app to Azure Function App
@@ -218,7 +220,7 @@ jobs:
 
 Note : This script installs two versions of .NET and asks the engine to deploy the code which is stored in /Functions folder of the repo.
 
-If everything worked fine, you should see the functions in the portal.
+Check the status of the workflow in GitHub Actions. If everything worked fine, you should see the functions in the portal.
 
 ![Screen capture](../Images/azfunc5appinstance.png?raw=true)
 
@@ -226,7 +228,7 @@ You can get the URL from there.
 
 ![Screen capture](../Images/azfunc5geturlportal.png?raw=true)
 
-Use Postman to test your Azure functions.
+You can use Postman to test your Azure functions.
 
 ## Functions documentation
 
