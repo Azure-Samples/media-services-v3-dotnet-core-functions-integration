@@ -137,7 +137,7 @@ In this section, we deploy and configure an Azure Functions App using an ARM tem
 
 #### B.1) ARM Deployment
 
-We'll deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json) and will use continuous integration from GitHub.
+We'll deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json).
 
 If not already done : fork the repo.
 
@@ -153,7 +153,7 @@ When the deployment is complete, go to your new Functions App to get the publish
 2. Click **Manage publish profile**, **Download publish profile** to download **.PublishSettings** file.
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
-5. Edit the `.github/workflows/deploy-functions.yml` file in your project repository. You can also create a new file by going to the 'Actions' section in your GitHub repo and select 'set up a workflow yourself'.
+5. Edit the [`.github/workflows/deploy-functions.yml`](../github/workflows/deploy-functions.yml) file in your project repository. You can also create a new file by going to the 'Actions' section in your GitHub repo and select 'set up a workflow yourself'.
 6. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
 7. Commit and push your project to GitHub repository, you should see a new GitHub workflow initiated in **Actions** tab.
 8. Enable the workflow if it is disabled (by default, workflows coming from the source repo are disabled in the fork)
@@ -176,7 +176,7 @@ on:
 # 2. Change these variables for your configuration:
 env:
   AZURE_FUNCTIONAPP_NAME: amsv3functionsxxxxxxxxxxxx  # set this to your application's name
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, defaults to the repository root
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, set to '.' to use repository root
   DOTNET_VERSION: '5.0.400'              # set this to the dotnet version to use
   DOTNET_VERSION_WORKER: '3.1.409'       # set this to the dotnet version to use to build the the Functions Worker Extension
 
