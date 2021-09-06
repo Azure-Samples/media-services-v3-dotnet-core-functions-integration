@@ -129,13 +129,13 @@ Use Postman to test your Azure functions.
 
 ### B) Second option : deploy using an ARM template and setup GitHub Actions
 
-In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push the updates of the code to the Function App using GitHub Actions.
+In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push code updates to the Function App using GitHub Actions.
 
 #### B.1) Fork the repo
 
 If not already done : fork the repo.
 
-#### B.2) ARM Deployment
+#### B.2) Deploy the resources using ARM
 
 You can deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json).
 
@@ -152,9 +152,9 @@ When the deployment is complete, go to your new Functions App to get the publish
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
 
-#### B.3) Continuous deployment setup
+#### B.3) Setup Continuous deployment
 
-Let's customize the workflow file to enable continuous deployment (CD).
+Let's customize the workflow file to enable continuous deployment (CD) with GitHub Actions.
 
 1. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow for GitHub Actions.
 2. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
