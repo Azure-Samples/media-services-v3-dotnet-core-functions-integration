@@ -14,8 +14,8 @@ on:
 #
 # 2. Change these variables for your configuration:
 env:
-  AZURE_FUNCTIONAPP_NAME: amsv3functionse5l7hovth7bgo  # set this to your application's name
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, defaults to the repository root
+  AZURE_FUNCTIONAPP_NAME: amsv3functionsxxxxxxxxxxxxx  # set this to your application's name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, set to '.' to use repository root
   DOTNET_VERSION: '5.0.400'              # set this to the dotnet version to use
   DOTNET_VERSION_WORKER: '3.1.409'       # set this to the dotnet version to use to build the the Functions Worker Extension
 
