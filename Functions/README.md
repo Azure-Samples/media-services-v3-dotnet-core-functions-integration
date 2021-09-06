@@ -1,5 +1,5 @@
 ---
-services: media-services,functions,logic-app
+services: media-services,functions,github
 platforms: dotnetcore
 author: xpouyat
 ---
@@ -7,9 +7,9 @@ author: xpouyat
 # .NET 5 Functions for Azure Media Services v3
 
 This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing.
-You can use Visual Studio 2019 or Visual Studio Code to run and deploy the functions.
+You can use Visual Studio 2019 or Visual Studio Code to run and deploy the functions. Deployment can aso be done using an ARM template and GitHub Actions.
 
-The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this readme file.
+The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this file.
 
 ## Prerequisites
 
@@ -42,8 +42,6 @@ For more information, see [Access APIs](https://docs.microsoft.com/en-us/azure/m
 Use [sample.env](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
 Connect to the Azure portal with your browser and go to your media services account / API access to get the .ENV data to store to the .env file.
 
-Then build and run the sample in Visual Studio or VS Code.
-
 ### How to test and run the Functions locally
 
 Use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
@@ -57,7 +55,7 @@ Use Postman to test your local functions.
 In this document, we propose two options to deploy the resources (Storage, Plan and Functions App) and deploy the code to the Azure Functions app.
 
 - First option (A) : using Visual Studio Code or Azure CLI
-- Second option (B) : using an ARM template and GitHub Actions for continuous integration. With such deployment, the Azure app instance will be updated when you commit code update to your repo.
+- Second option (B) : using an ARM template to deploy the infrastructure, and GitHub Actions for continuous deployment (CD). With such deployment, the Azure app instance will be automatically updated when you commit code to your repo.
 
 ### A) First option : deploy from Visual Studio Code or Azure CLI
 
@@ -131,7 +129,7 @@ Use Postman to test your Azure functions.
 
 ### B) Second option : deploy using an ARM template and setup GitHub Actions
 
-In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push the compiled code to the Function App using GitHub Actions.
+In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push the updates of the code to the Function App using GitHub Actions.
 
 #### B.1) Fork the repo
 
@@ -154,13 +152,15 @@ When the deployment is complete, go to your new Functions App to get the publish
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
 
-Customize the workflow file for your deployment.
+#### B.3) Continuous deployment setup
 
-1. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow file used by GitHub Actions.
+Let's customize the workflow file to enable continuous deployment (CD).
+
+1. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow for GitHub Actions.
 2. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
 3. Commit the change.
-4. Go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
-5. You should see a new GitHub workflow initiated in **Actions** tab named **Build and deploy dotnet 5 app to Azure Function App**.
+4. Still in GitHub, go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
+5. You should see a new GitHub workflow initiated in **Actions** tab, called **Build and deploy dotnet 5 app to Azure Function App**.
 
 `deploy-functions.yml` based file :
 
@@ -222,7 +222,7 @@ jobs:
 # For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
 ```
 
-Note : This script installs two versions of .NET and asks the engine to deploy the code which is stored in /Functions folder of the repo.
+Note : This script installs two versions of .NET and asks the engine to deploy the code from the /Functions folder of the repo.
 
 ![Screen capture](../Images/azfunc5githubactions.png?raw=true)
 
@@ -238,13 +238,13 @@ You can use Postman to test your Azure functions.
 
 ![Screen capture](../Images/azfunc5postmandeployed.png?raw=true)
 
-For more information, see [GitHub Actions for deploying to Azure Functions](https://github.com/marketplace/actions/azure-functions-action).
+For more information on this type of deployment, see [GitHub Actions for deploying to Azure Functions](https://github.com/marketplace/actions/azure-functions-action).
 
-## Functions documentation
+## Code documentation
 
 ### SubmitEncodingJob
 
-This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
+This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates one based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
 
 See the model for the [input](SubmitEncodingJob.cs#L22-L63) and [output](SubmitEncodingJob.cs#L65-L81).
 
