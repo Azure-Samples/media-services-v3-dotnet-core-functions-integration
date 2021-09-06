@@ -236,6 +236,8 @@ You can get the URL from there.
 
 You can use Postman to test your Azure functions.
 
+For more information, see [GitHub Actions for deploying to Azure Functions](https://github.com/marketplace/actions/azure-functions-action).
+
 ## Functions documentation
 
 ### SubmitEncodingJob
