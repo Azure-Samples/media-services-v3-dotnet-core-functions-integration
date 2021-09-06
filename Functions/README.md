@@ -58,7 +58,8 @@ Use Postman to test your local functions.
 
 ### 2. Deploy the Azure functions to Azure
 
-VS Code or Azure CLI is recommended for the deployment.
+#### 2.A First option : deploy from Visual Studio Code or Azure CLI
+
 For Aure CLI commands, read [this](https://github.com/Azure/azure-functions-dotnet-worker).
 
 With VS Code, select the Azure tab and click on the icon to deploy it to Azure.
@@ -71,11 +72,7 @@ To get the function Url, use the Functions explorer in VSCode, or the Azure port
 
 More details in the [documentation](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#sign-in-to-azure).
 
-Note : we recommend deploying the functions using VS Code as it has been successfully tested. Deploying them using the ARM template [azuredeploy2.json](../azuredeploy2.json) and continuous integration from GitHub seems problematic for now (functions are not visible in the deployment).
-
-### Add your settings to the deployment
-
-Go the Azure portal, select your Azure functions deployment, go to the 'Configuration' tab, select 'Advanced Edit' and add the following entries with your values.
+Then go the Azure portal, select your Azure functions deployment, go to the 'Configuration' tab, select 'Advanced Edit' and add the following entries with your values.
 
 ```json
   {
@@ -128,6 +125,102 @@ Go the Azure portal, select your Azure functions deployment, go to the 'Configur
 These application settings are used by the functions to connect to your Media Services account.
 
 ![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
+
+Use Postman to test your Azure functions.
+
+#### 2.B Second option : deploy using ARM and GitHub Actions
+
+In this section, we deploy and configure Azure Functions App using an ARM template, then we will configure your GitHub repo to push the compiled code to the Function App using GitHub Actions.
+
+##### ARM Deployment
+
+We'll deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json) and will use continuous integration from GitHub.
+
+If not already done : fork the repo.
+
+Click on this button to deploy the resources to your subscription :
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+
+##### Using Publish Profile as Deployment Credential
+
+When the deployment is complete, go to your new Functions App to get the publish profile.
+
+1. In Azure portal, go to your function app, then Deployment Center tab.
+2. Click **Manage publish profile**, **Download publish profile** to download **.PublishSettings** file.
+3. Open the **.PublishSettings** file and copy the content.
+4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
+5. Use the below template to create the `.github/workflows/deploy.yml` file in your project repository. You can also create the file by going to the 'Actions' section in your GitHub repo.
+6. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
+7. Commit and push your project to GitHub repository, you should see a new GitHub workflow initiated in **Actions** tab.
+
+```yml
+name: Build and deploy dotnet 5 app to Azure Function App
+
+on:
+  push:
+#    branches:
+#      - main
+#  workflow_dispatch:
+
+# CONFIGURATION
+# For help, go to https://github.com/Azure/Actions
+#
+# 1. Set up the following secrets in your repository:
+#   AZURE_FUNCTIONAPP_PUBLISH_PROFILE
+#
+# 2. Change these variables for your configuration:
+env:
+  AZURE_FUNCTIONAPP_NAME: amsv3functionsxxxxxxxxxxxx  # set this to your application's name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, defaults to the repository root
+  DOTNET_VERSION: '5.0.400'              # set this to the dotnet version to use
+  DOTNET_VERSION_WORKER: '3.1.409'       # set this to the dotnet version to use to build the the Functions Worker Extension
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    environment: dev
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@master
+
+    - name: Setup DotNet ${{ env.DOTNET_VERSION_WORKER }} Function Worker Environment
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION_WORKER }}
+
+    - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: 'Resolve Project Dependencies Using Dotnet'
+      shell: pwsh
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        dotnet build --configuration Release --output ./output
+        popd
+
+    - name: 'Run Azure Functions Action'
+      uses: Azure/functions-action@v1
+      id: fa
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+
+# For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
+```
+
+Note : This script installs two versions of .NET and ask the engine to deploy the code which in in /Functions folder.
+
+If everything worked fine, you should see the functions in the portal.
+
+![Screen capture](../Images/azfunc5appinstance.png?raw=true)
+
+You can get the URL from there.
+
+![Screen capture](../Images/azfunc5geturlportal.png?raw=true)
 
 Use Postman to test your Azure functions.
 
