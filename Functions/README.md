@@ -152,7 +152,7 @@ When the deployment is complete, go to your new Functions App to get the publish
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
 
-#### B.3) Setup Continuous deployment
+#### B.4) Setup Continuous deployment
 
 Let's customize the workflow file to enable continuous deployment (CD) with GitHub Actions.
 
