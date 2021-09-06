@@ -4,33 +4,9 @@
   "parameters": {
     "appName": {
       "type": "string",
-       "defaultValue": "[concat('amsv3functions', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('amsv3functions', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Function application to be deployed. The name will automatically be made unique on deployment, all lowercase letters or numbers with no spaces."
-      }
-    },
-      "project": {
-      "type": "string",
-      "defaultValue": "Functions/Functions.csproj",
-      "allowedValues": [
-        "Functions/Functions.csproj"
-      ],
-      "metadata": {
-        "description": "The project in the Media Services Functions samples to deploy. Choose the name that matches the folder name containing the functions samples that you wish to deploy."
-      }
-    },
-    "sourceCodeRepositoryURL": {
-      "type": "string",
-      "defaultValue": "https://github.com/YOURGITHUBACCOUNTNAME/media-services-v3-dotnet-core-functions-integration",
-      "metadata": {
-        "description": "Source code repository URL. Is is REQUIRED that you first fork the samples repository and point this to your fork. If you are using your own fork, you may see an error in deployment related to GitHub auth. We require this for your own good, as we may update and break your application or testing as we deploy new updates to the public samples repository."
-      }
-    },
-    "sourceCodeBranch": {
-      "type": "string",
-      "defaultValue": "main",
-      "metadata": {
-        "description": "Sourcecode Repo branch. This should be set to Main for the public sample. You can adjust this to point to your own fork branch as recommended"
       }
     },
     "mediaServicesAccountSubscriptionId": {
@@ -54,9 +30,9 @@
         "description": "Your media services account name."
       }
     },
-    "mediaServicesAccountAzureActiveDirectoryTenantId": {
+    "mediaServicesAccountAzureActiveDirectoryTenantDomain": {
       "type": "string",
-      "defaultValue": "ENTER YOUR TENANT ID (GUID)",
+      "defaultValue": "microsoft.onmicrosoft.com",
       "metadata": {
         "description": "Azure Active Directory tenant domain of your media services account."
       }
@@ -77,8 +53,8 @@
     }
   },
   "variables": {
-   "functionAppName": "[parameters('appName')]",
-   "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+    "functionAppName": "[parameters('appName')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
     "hostingPlanName": "[parameters('appName')]"
   },
   "resources": [
@@ -113,7 +89,7 @@
       "name": "[variables('functionAppName')]",
       "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
-      "comments": "This function app depends on the media services account and storage account and will pull down the source code from Github",
+      "comments": "This function app depends on the media services account and storage account",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
@@ -144,8 +120,8 @@
               "value": "dotnet-isolated"
             },
             {
-              "name": "Project",
-              "value": "[parameters('project')]"
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
             },
             {
               "name": "SubscriptionId",
@@ -168,12 +144,12 @@
               "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
             },
             {
-              "name": "AadEndpoint",
-              "value": "https://login.microsoftonline.com"
+              "name": "AadTenantDomain",
+              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantDomain')]"
             },
             {
-              "name": "AadTenantId",
-              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]"
+              "name": "AadEndpoint",
+              "value": "https://login.microsoftonline.com"
             },
             {
               "name": "ArmEndpoint",
@@ -185,23 +161,7 @@
             }
           ]
         }
-      },
-      "resources": [
-        {
-          "type": "sourcecontrols",
-          "name": "web",
-          "apiVersion": "2019-08-01",
-          "comments": "This section sets up source control for continuous integration on the Function app and pulls the source code down from Github.",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
-          ],
-          "properties": {
-            "repoUrl": "[parameters('sourceCodeRepositoryURL')]",
-            "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": true
-          }
-        }
-      ]
+      }
     }
   ],
   "outputs": {}
