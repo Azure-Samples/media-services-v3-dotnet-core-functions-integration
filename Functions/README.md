@@ -147,16 +147,20 @@ Click on this button to deploy the resources to your subscription :
 
 #### B.3) Use Publish Profile as Deployment Credential
 
-When the deployment is complete, go to your new Functions App to get the publish profile.
+When the deployment is complete, go to your new Functions App to get the publish profile and store it as a secret in your GitHub repository.
 
 1. In Azure portal, go to your function app, then Deployment Center tab.
 2. Click **Manage publish profile**, **Download publish profile** to download **.PublishSettings** file.
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
-5. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow file used by GitHub Actions.
-6. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
-7. Commit the change.
-8. Go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork). You should see a new GitHub workflow initiated in **Actions** tab named **Build and deploy dotnet 5 app to Azure Function App**.
+
+Customize the workflow file for your deployment.
+
+1. Edit the [`.github/workflows/deploy-functions.yml`](../.github/workflows/deploy-functions.yml) file in your project repository. This file is the workflow file used by GitHub Actions.
+2. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
+3. Commit the change.
+4. Go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
+5. You should see a new GitHub workflow initiated in **Actions** tab named **Build and deploy dotnet 5 app to Azure Function App**.
 
 `deploy-functions.yml` based file :
 
@@ -219,6 +223,8 @@ jobs:
 ```
 
 Note : This script installs two versions of .NET and asks the engine to deploy the code which is stored in /Functions folder of the repo.
+
+![Screen capture](../Images/azfunc5githubactions.png?raw=true)
 
 Check the status of the workflow in GitHub Actions. If everything worked fine, you should see the functions in the portal.
 
