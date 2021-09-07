@@ -242,11 +242,13 @@ Check the status of the workflow in GitHub Actions. If everything worked fine, y
 
 ![Screen capture](../Images/azfunc5appinstance.png?raw=true)
 
-You can get the URL from there.
+#### B.5) Test the functions
+
+In the portal, you can now get the URLs for your functions.
 
 ![Screen capture](../Images/azfunc5geturlportal.png?raw=true)
 
-You can use Postman to test your Azure functions.
+Run Postman to test your Azure functions.
 
 ![Screen capture](../Images/azfunc5postmandeployed.png?raw=true)
 
