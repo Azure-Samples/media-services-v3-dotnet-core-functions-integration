@@ -25,7 +25,7 @@ Create a Service Principal and save the password. It will be needed in step #4. 
 
 To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
-### 4. VS Code or Visual Studio
+### 4. Install VS Code or Visual Studio
 
 - Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2019](https://visualstudio.microsoft.com/).
 - [.NET Core 3.1 and .NET 5.0 SDKs](https://dotnet.microsoft.com/download/dotnet).
