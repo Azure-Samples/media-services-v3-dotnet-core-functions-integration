@@ -274,6 +274,19 @@ Or
 }
  ```
 
+### DeleteAsset
+
+This function deletes a Media Services asset.
+See the model for the [input](DeleteAsset.cs#L20-L31).
+
+Input body sample :
+
+```json
+{
+    "assetName": "test"
+}
+```
+
 ### SubmitEncodingJob
 
 This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates one based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
