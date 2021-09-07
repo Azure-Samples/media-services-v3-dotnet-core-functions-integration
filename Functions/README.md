@@ -48,6 +48,8 @@ For more information, see [Access APIs](https://docs.microsoft.com/en-us/azure/m
 Use [sample.env](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
 Connect to the Azure portal with your browser and go to your media services account / API access to get the .ENV data to store to the .env file.
 
+As an alternative, you can edit the `local.settings.json` file. In that case, make sure to exclude the file from source control.
+
 ### How to test and run the Functions locally
 
 Use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
