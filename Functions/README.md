@@ -36,8 +36,6 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 Open the root `/Functions/Functions.sln` (or just open the Functions folder in VS Code).
 The main solution contains the Azure Functions project.
 
-When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
-
 For more on information on .NET 5 & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
 
 ### How to set variables for a local execution
@@ -53,6 +51,9 @@ As an alternative, you can edit the `local.settings.json` file. In that case, ma
 ### How to test and run the Functions locally
 
 Use Visual Studio or [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp?tabs=in-process#run-the-function-locally) to run the functions.
+When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
+
+![Screen capture](../Images/azfunc5runvscode.png?raw=true)
 
 Use Postman to test your local functions.
 
