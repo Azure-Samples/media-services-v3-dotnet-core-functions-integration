@@ -11,6 +11,8 @@ You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to A
 
 The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More functions and documentation at [the end of this file](#code-documentation).
 
+![Deployment architecture using ARM and GitHub Actions](../Images/DrawingAzureFunctionsNet5.png?raw=true)
+
 ## Prerequisites
 
 ### 1. Create an Azure Media Services account
