@@ -6,8 +6,8 @@ author: xpouyat
 
 # .NET 5 Functions for Azure Media Services v3
 
-This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing.
-You can use Visual Studio 2019 or Visual Studio Code to run and deploy the functions. Deployment can aso be done using an ARM template and GitHub Actions.
+This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 5.
+You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to Azure. Deployment can also be done using an ARM template and GitHub Actions.
 
 The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this file.
 
@@ -25,9 +25,15 @@ Create a Service Principal and save the password. It will be needed in step #4. 
 
 To enable streaming, go to the Azure portal, select the Azure Media Services account which has been created, and start the default streaming endpoint.
 
+### 4. VS Code or Visual Studio
+
+- Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2019](https://visualstudio.microsoft.com/).
+- [.NET Core 3.1 and .NET 5 SDKs](https://dotnet.microsoft.com/download/dotnet).
+- The [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) for Visual Studio Code.
+
 ## .NET solution file and how to launch project
 
-Open the root /Functions/Functions.sln (or just open the Functions folder in VS Code).
+Open the root `/Functions/Functions.sln` (or just open the Functions folder in VS Code).
 The main solution contains the Azure Functions project.
 
 When using VS Code, you can launch the Functions in the Debugger console (Ctrl-shift-D).
@@ -125,7 +131,7 @@ These application settings are used by the functions to connect to your Media Se
 
 ![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
 
-Use Postman to test your Azure functions.
+You can use Postman to test your Azure functions.
 
 ### B) Second option : deploy using an ARM template and GitHub Actions
 
