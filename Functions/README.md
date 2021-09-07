@@ -9,7 +9,7 @@ author: xpouyat
 This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 5.
 You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to Azure. Deployment can also be done using an ARM template and GitHub Actions.
 
-The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More information at the end this file.
+The **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body. More functions and documentation at [the end of this file](#code-documentation).
 
 ## Prerequisites
 
