@@ -28,7 +28,7 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 ### 4. VS Code or Visual Studio
 
 - Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2019](https://visualstudio.microsoft.com/).
-- [.NET Core 3.1 and .NET 5 SDKs](https://dotnet.microsoft.com/download/dotnet).
+- [.NET Core 3.1 and .NET 5.0 SDKs](https://dotnet.microsoft.com/download/dotnet).
 - The [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) for Visual Studio Code.
 
 ## .NET solution file and how to launch project
