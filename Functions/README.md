@@ -251,10 +251,32 @@ For more information on this type of deployment, see [GitHub Actions for deployi
 
 ## Code documentation
 
+### CreateEmptyAsset
+
+This function creates a Media Services asset. It returns back the asset name, asset Id and storage container.
+See the model for the [input](CreateEmptyAsset.cs#L20-L47) and [output](CreateEmptyAsset.cs#L49-L71).
+
+Input body sample :
+
+```json
+{
+    "assetNamePrefix": "test"
+}
+ ```
+
+Or
+
+```json
+{
+    "assetNamePrefix": "test",
+    "assetDescription" : "a new asset created by a function",
+    "assetStorageAccount" : "storageams01"
+}
+ ```
+
 ### SubmitEncodingJob
 
 This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates one based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
-
 See the model for the [input](SubmitEncodingJob.cs#L22-L63) and [output](SubmitEncodingJob.cs#L65-L81).
 
 Input body sample :

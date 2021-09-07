@@ -1,21 +1,45 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 
 namespace Common_Utils
 {
     /// <summary>
-    /// This class is used to read the ".env" file if the IDE is Visual Studio. (VS Code has its own way to read it using launch.json)
+    /// This class is used to load the configuration and settings
     /// </summary>
-    public static class DotEnv
+    public static class ConfigUtils
     {
+        public static ConfigWrapper GetConfig()
+        {
+            // If Visual Studio is used, let's read the .env file which should be in the root folder (same folder than the solution .sln file).
+            // Same code will work in VS Code, but VS Code uses also launch.json to get the .env file.
+            // You can create this ".env" file by saving the "sample.env" file as ".env" file and fill it with the right values.
+            try
+            {
+                Load(".env");
+            }
+            catch
+            {
+
+            }
+
+            ConfigWrapper config = new(new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables() // parses the values from the optional .env file at the solution root
+                .Build());
+            return config;
+        }
+
+
         /// <summary>
         /// Loads the .env file and stores the values as variables
         /// </summary>
         /// <param name="filePath"></param>
-        public static void Load(string envFileName)
+        private static void Load(string envFileName)
         {
             // let's find the root folder where the .env file can be found
             var rootPath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)))));

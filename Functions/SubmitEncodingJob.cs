@@ -11,7 +11,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -110,23 +109,7 @@ namespace Functions
                 return new BadRequestObjectResult("Please pass the transform name in the request body");
             }
 
-            // If Visual Studio is used, let's read the .env file which should be in the root folder (same folder than the solution .sln file).
-            // Same code will work in VS Code, but VS Code uses also launch.json to get the .env file.
-            // You can create this ".env" file by saving the "sample.env" file as ".env" file and fill it with the right values.
-            try
-            {
-                DotEnv.Load(".env");
-            }
-            catch
-            {
-
-            }
-
-            ConfigWrapper config = new(new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables() // parses the values from the optional .env file at the solution root
-                .Build());
+            ConfigWrapper config = ConfigUtils.GetConfig();
 
             IAzureMediaServicesClient client;
             try
@@ -173,7 +156,7 @@ namespace Functions
             try
             {
                 // Output from the job must be written to an Asset, so let's create one
-                outputAsset = await AssetUtils.CreateOutputAssetAsync(client, log, config.ResourceGroup, config.AccountName, outputAssetName, data.OutputAssetStorageAccount);
+                outputAsset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, outputAssetName, data.OutputAssetStorageAccount);
                 log.LogInformation($"Output asset '{outputAssetName}' created.");
             }
             catch (Exception e)
