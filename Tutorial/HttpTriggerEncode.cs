@@ -88,6 +88,7 @@ namespace Functions
         /// <param name="req"></param>
         /// <param name="executionContext"></param>
         /// <returns></returns>
+        // <Run>
         [Function("HttpTriggerEncode")]
         public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
             FunctionContext executionContext)
@@ -217,6 +218,7 @@ namespace Functions
 
             return ResponseOk(req, dataOk);
         }
+        // </Run>
 
         /// <summary>
         /// Generates the response with HttpStatusCode.OK and JSON body
