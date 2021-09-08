@@ -6,7 +6,6 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
@@ -37,8 +36,7 @@ namespace Functions
         /// <param name="executionContext"></param>
         /// <returns></returns>
         [Function("DeleteAsset")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            FunctionContext executionContext)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, FunctionContext executionContext)
         {
             var log = executionContext.GetLogger("DeleteAsset");
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -46,11 +44,11 @@ namespace Functions
             // Get request body data.
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = (RequestBodyModel)JsonConvert.DeserializeObject(requestBody, typeof(RequestBodyModel));
-            
+
             // Return bad request if asset name is not passed in
             if (data.AssetName == null)
             {
-                return new BadRequestObjectResult("Please pass asset name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass asset name in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();
@@ -69,13 +67,14 @@ namespace Functions
                 }
                 log.LogError($"{e.Message}");
 
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
+
             }
 
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
-  
+
             try
             {
                 // let's delete the asset
@@ -86,10 +85,10 @@ namespace Functions
             {
                 log.LogError("Error when deleting the asset.");
                 log.LogError($"{e.Message}");
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
-            return new OkResult();
+            return HttpRequest.ResponseOk(req, null);
         }
     }
 }

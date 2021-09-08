@@ -6,13 +6,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.9.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.0.4" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.5.1" />
     <PackageReference Include="Microsoft.Azure.Management.Media" Version="4.0.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.36.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.36.1" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

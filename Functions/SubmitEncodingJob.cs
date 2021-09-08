@@ -6,7 +6,6 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
@@ -87,8 +86,7 @@ namespace Functions
         /// <param name="executionContext"></param>
         /// <returns></returns>
         [Function("SubmitEncodingJob")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            FunctionContext executionContext)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, FunctionContext executionContext)
         {
             var log = executionContext.GetLogger("SubmitEncodingJob");
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -100,13 +98,13 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.InputAssetName == null && data.InputUrl == null)
             {
-                return new BadRequestObjectResult("Please pass asset name or input Url in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass asset name or input Url in the request body");
             }
 
             // Return bad request if input asset name is not passed in
             if (data.TransformName == null)
             {
-                return new BadRequestObjectResult("Please pass the transform name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass the transform name in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();
@@ -125,7 +123,7 @@ namespace Functions
                 }
                 log.LogError($"{e.Message}");
 
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
             // Set the polling interval for long running operations to 2 seconds.
@@ -149,7 +147,7 @@ namespace Functions
             {
                 log.LogError("Error when creating/getting the transform.");
                 log.LogError($"{e.Message}");
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
             Asset outputAsset;
@@ -163,7 +161,7 @@ namespace Functions
             {
                 log.LogError("Error when creating the output asset.");
                 log.LogError($"{e.Message}");
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
             // Job input prepration : asset or url
@@ -199,14 +197,16 @@ namespace Functions
             {
                 log.LogError("Error when submitting the job.");
                 log.LogError($"{e.Message}");
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
-
-            return new OkObjectResult(new AnswerBodyModel
+                      
+            AnswerBodyModel dataOk = new()
             {
                 OutputAssetName = outputAsset.Name,
                 JobName = job.Name
-            });
+            };
+
+            return HttpRequest.ResponseOk(req, dataOk);
         }
     }
 }

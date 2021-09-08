@@ -6,7 +6,6 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
@@ -77,8 +76,7 @@ namespace Functions
         /// <param name="executionContext"></param>
         /// <returns></returns>
         [Function("CreateEmptyAsset")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            FunctionContext executionContext)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, FunctionContext executionContext)
         {
             var log = executionContext.GetLogger("CreateEmptyAsset");
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -86,11 +84,11 @@ namespace Functions
             // Get request body data.
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = (RequestBodyModel)JsonConvert.DeserializeObject(requestBody, typeof(RequestBodyModel));
-            
+
             // Return bad request if input asset name is not passed in
             if (data.AssetNamePrefix == null)
             {
-                return new BadRequestObjectResult("Please pass asset name prefix in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass asset name prefix in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();
@@ -108,14 +106,13 @@ namespace Functions
                     log.LogError("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
                 }
                 log.LogError($"{e.Message}");
-
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
             // Set the polling interval for long running operations to 2 seconds.
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
-            
+
             // Creating a unique suffix so that we don't have name collisions if you run the sample
             // multiple times without cleaning up.
             string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
@@ -135,15 +132,17 @@ namespace Functions
             {
                 log.LogError("Error when creating the asset.");
                 log.LogError($"{e.Message}");
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
-            return new OkObjectResult(new AnswerBodyModel
+            AnswerBodyModel dataOk = new()
             {
                 AssetName = asset.Name,
                 AssetId = asset.AssetId,
                 Container = asset.Container
-            });
+            };
+
+            return HttpRequest.ResponseOk(req, dataOk);
         }
     }
 }

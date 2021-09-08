@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
@@ -69,8 +68,7 @@ namespace Functions
         /// <param name="executionContext"></param>
         /// <returns></returns>
         [Function("SubmitSubclipJob")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            FunctionContext executionContext)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, FunctionContext executionContext)
         {
             var log = executionContext.GetLogger("SubmitSubclipJob");
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -84,7 +82,7 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.LiveEventName == null || data.LiveOutputName == null)
             {
-                return new BadRequestObjectResult("Please pass live event name and live output name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass live event name and live output name in the request body");
             }
 
             data.IntervalSec ??= 60;
@@ -104,7 +102,7 @@ namespace Functions
                 }
                 log.LogError($"{e.Message}");
 
-                return new BadRequestObjectResult(e.Message);
+                return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
             // Set the polling interval for long running operations to 2 seconds.
@@ -123,10 +121,7 @@ namespace Functions
 
             if (assetmanifestdata.Error)
             {
-                return new NotFoundObjectResult(new
-                {
-                    message = "Data cannot be read from live output / asset manifest."
-                });
+                return HttpRequest.ResponseBadRequest(req, "Data cannot be read from live output / asset manifest.");
             }
 
             log.LogInformation("Timestamps : " + string.Join(",", assetmanifestdata.TimestampList.Select(n => n.ToString()).ToArray()));
@@ -157,10 +152,7 @@ namespace Functions
             log.LogInformation($"Value duration: {duration}");
             if (duration == new TimeSpan(0)) // Duration is zero, this may happen sometimes !
             {
-                return new NotFoundObjectResult(new
-                {
-                    message = "Stopping. Duration of subclip is zero."
-                });
+                return HttpRequest.ResponseBadRequest(req, "Stopping. Duration of subclip is zero.");
             }
 
             // Output from the Job must be written to an Asset, so let's create one
@@ -183,13 +175,15 @@ namespace Functions
                outputAsset.Name
                );
 
-            return new OkObjectResult(new AnswerBodyModel
+            AnswerBodyModel dataOk = new()
             {
                 SubclipAssetName = outputAsset.Name,
                 SubclipJobName = job.Name,
                 SubclipTransformName = SubclipTransformName,
                 SubclipEndTime = starttime + duration
-            });
+            };
+
+            return HttpRequest.ResponseOk(req, dataOk);
         }
     }
 
