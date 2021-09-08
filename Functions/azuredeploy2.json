@@ -32,7 +32,7 @@
     },
     "mediaServicesAccountAzureActiveDirectoryTenantId": {
       "type": "string",
-      "defaultValue": "microsoft.onmicrosoft.com",
+      "defaultValue": "",
       "metadata": {
         "description": "Azure Active Directory tenant Id or domain of your Media Services account."
       }
