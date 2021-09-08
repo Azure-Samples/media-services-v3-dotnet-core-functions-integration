@@ -149,11 +149,11 @@ If not already done : fork the repo.
 
 #### B.2) Deploy the resources using ARM
 
-You can deploy the Azure resources using the ARM template [azuredeploy2.json](../azuredeploy2.json).
+You can deploy the Azure resources using the ARM template [`azuredeploy2.json`](azuredeploy2.json).
 
 Click on this button to deploy the resources to your subscription :
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
 #### B.3) Use Publish Profile as Deployment Credential
 
