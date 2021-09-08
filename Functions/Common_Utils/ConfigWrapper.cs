@@ -65,51 +65,6 @@ namespace Common_Utils
         {
             get { return new Uri(_config["ArmEndpoint"]); }
         }
-
-        public string EventHubConnectionString
-        {
-            get { return _config["EventHubConnectionString"]; }
-        }
-
-        public string EventHubName
-        {
-            get { return _config["EventHubName"]; }
-        }
-
-        public string StorageContainerName
-        {
-            get { return _config["StorageContainerName"]; }
-        }
-
-        public string StorageAccountName
-        {
-            get { return _config["StorageAccountName"]; }
-        }
-
-        public string StorageAccountKey
-        {
-            get { return _config["StorageAccountKey"]; }
-        }
-
-        public string SymmetricKey
-        {
-            get { return _config["SymmetricKey"]; }
-        }
-
-        public string AskHex
-        {
-            get { return _config["AskHex"]; }
-        }
-
-        public string FairPlayPfxPath
-        {
-            get { return _config["FairPlayPfxPath"]; }
-        }
-
-        public string FairPlayPfxPassword
-        {
-            get { return _config["FairPlayPfxPassword"]; }
-        }
     }
 }
 
