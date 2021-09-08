@@ -13,28 +13,28 @@
       "type": "string",
       "defaultValue": "[subscription().subscriptionId]",
       "metadata": {
-        "description": "Subscription Id for your media services account name."
+        "description": "Subscription Id for your Media Services account."
       }
     },
     "mediaServicesAccountResourceGroup": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Resource Group Name of your media services account name."
+        "description": "Resource Group Name of your Media Services account."
       }
     },
     "mediaServicesAccountName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Your media services account name."
+        "description": "Your Media Services account name."
       }
     },
-    "mediaServicesAccountAzureActiveDirectoryTenantDomain": {
+    "mediaServicesAccountAzureActiveDirectoryTenantId": {
       "type": "string",
       "defaultValue": "microsoft.onmicrosoft.com",
       "metadata": {
-        "description": "Azure Active Directory tenant domain of your media services account."
+        "description": "Azure Active Directory tenant Id or domain of your Media Services account."
       }
     },
     "mediaServicesAccountServicePrincipalClientId": {
@@ -89,7 +89,7 @@
       "name": "[variables('functionAppName')]",
       "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
-      "comments": "This function app depends on the media services account and storage account",
+      "comments": "This function app depends on the Media Services account and storage account",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
@@ -144,8 +144,8 @@
               "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
             },
             {
-              "name": "AadTenantDomain",
-              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantDomain')]"
+              "name": "AadTenantId",
+              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]"
             },
             {
               "name": "AadEndpoint",
