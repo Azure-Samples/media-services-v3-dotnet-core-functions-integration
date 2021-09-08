@@ -100,18 +100,16 @@ namespace Functions
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = (RequestBodyModel)JsonConvert.DeserializeObject(requestBody, typeof(RequestBodyModel));
 
-
-
             // Return bad request if input asset name is not passed in
             if (data.InputAssetName == null && data.InputUrl == null)
             {
-                //return new BadRequestObjectResult("Please pass asset name or input Url in the request body");
+                return ResponseBadRequest(req, "Please pass asset name or input Url in the request body");
             }
 
             // Return bad request if input asset name is not passed in
             if (data.TransformName == null)
             {
-                //return new BadRequestObjectResult("Please pass the transform name in the request body");
+                return ResponseBadRequest(req, "Please pass the transform name in the request body");
             }
 
             ConfigWrapper config = new(new ConfigurationBuilder()
@@ -215,7 +213,6 @@ namespace Functions
                 OutputAssetName = outputAsset.Name,
                 JobName = job.Name
             };
-
             return ResponseOk(req, dataOk);
         }
         // </Run>
@@ -329,7 +326,6 @@ namespace Functions
                         relativePriority: Priority.Normal
                     )
                 };
-
                 string description = $"An encoding transform using {builtInPreset} preset";
 
                 // Create the Transform with the outputs defined above
@@ -339,7 +335,6 @@ namespace Functions
             {
                 log.LogInformation($"Transform '{transformName}' found in AMS account.");
             }
-
             return transform;
         }
 
@@ -369,7 +364,6 @@ namespace Functions
                 log.LogInformation("Creating an output asset..");
                 outputAsset = new Asset(storageAccountName: storageAccountName);
             }
-
             return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, outputAsset);
         }
 
@@ -429,7 +423,6 @@ namespace Functions
                 }
                 throw;
             }
-
             return job;
         }
     }
@@ -443,52 +436,42 @@ namespace Functions
     public class ConfigWrapper
     {
         private readonly IConfiguration _config;
-
         public ConfigWrapper(IConfiguration config)
         {
             _config = config;
         }
-
         public string SubscriptionId
         {
             get { return _config["SubscriptionId"]; }
         }
-
         public string ResourceGroup
         {
             get { return _config["ResourceGroup"]; }
         }
-
         public string AccountName
         {
             get { return _config["AccountName"]; }
         }
-
         public string AadTenantId
         {
             get { return _config["AadTenantId"]; }
         }
-
         public string AadClientId
         {
             get { return _config["AadClientId"]; }
         }
-
         public string AadSecret
         {
             get { return _config["AadSecret"]; }
         }
-
         public Uri ArmAadAudience
         {
             get { return new Uri(_config["ArmAadAudience"]); }
         }
-
         public Uri AadEndpoint
         {
             get { return new Uri(_config["AadEndpoint"]); }
         }
-
         public Uri ArmEndpoint
         {
             get { return new Uri(_config["ArmEndpoint"]); }
