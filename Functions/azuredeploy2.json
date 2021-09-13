@@ -89,6 +89,9 @@
       "name": "[variables('functionAppName')]",
       "apiVersion": "2020-06-01",
       "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "comments": "This function app depends on the Media Services account and storage account",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
