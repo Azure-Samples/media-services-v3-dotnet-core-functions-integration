@@ -14,15 +14,18 @@ You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to A
 There are several functions and more will be added in the future. As an example, the **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body.
 Functions are documented at [the end](#code-documentation).
 
+We recommend to use **[Manage Identity](https://docs.microsoft.com/en-us/azure/media-services/latest/concept-managed-identities)** to authenticate the Azure Functions against Media Services. The other (legacy) option is to use a Service Principal (client Id and client secret). The documentation below supports both methods. Note that a service principal is needed of you want to test your functions locally.
+
 ## Prerequisites
 
 ### 1. Create an Azure Media Services account
 
 Create a Media Services account in your subscription if don't have it already ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/create-account-howto?tabs=portal)).
+If you use Managed Identity, make sure to select "Managed identity / System-managed" in advanced settings.
 
-### 2. Create a Service Principal
+### 2. Optional : create a Service Principal
 
-Create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
+If you don't plan to use Managed Identity or if you want to test your functions locally, create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
 
 ### 3. Make sure the AMS streaming endpoint is started
 
@@ -66,10 +69,10 @@ Use Postman to test your local functions.
 
 In this document, we propose two options to deploy the resources (Storage, Plan and Functions App) and deploy the code to the Azure Functions app.
 
-- First option (A) : using Visual Studio Code or Azure CLI
-- Second option (B) : using an ARM template to deploy the infrastructure, and GitHub Actions for continuous deployment (CD). With such deployment, the Azure app instance will be automatically updated when you commit code to your repo.
+- Option (A) : using Visual Studio Code or Azure CLI
+- Option (B) : using an ARM template to deploy the infrastructure, and GitHub Actions for continuous deployment (CD). With such deployment, the Azure app instance will be automatically updated when you commit code to your repo.
 
-### A) First option : deploy from Visual Studio Code or Azure CLI
+### Option (A): deploy from Visual Studio Code or Azure CLI
 
 For Azure CLI commands, read [this](https://github.com/Azure/azure-functions-dotnet-worker).
 
@@ -86,16 +89,6 @@ More details in the [documentation](https://docs.microsoft.com/en-us/azure/azure
 Once deployed, go the Azure portal, select your Azure functions app, go to the 'Configuration' tab, select 'Advanced Edit' and add the following entries with your own values.
 
 ```json
-  {
-    "name": "AADCLIENTID",
-    "value": "00000000-0000-0000-0000-000000000000",
-    "slotSetting": false
-  },
-  {
-    "name": "AADSECRET",
-    "value": "00000000-0000-0000-0000-000000000000",
-    "slotSetting": false
-  },
   {
     "name": "AADTENANTDOMAIN",
     "value": "microsoft.onmicrosoft.com",
@@ -137,25 +130,84 @@ These application settings are used by the functions to connect to your Media Se
 
 ![Screen capture](../Images/azfunc5deployappsettings.png?raw=true)
 
+#### If a Service Principal is used
+
+Add these two entries in the configuration of the Azure Function app (and replace with your own values):
+
+```json
+  {
+    "name": "AADCLIENTID",
+    "value": "00000000-0000-0000-0000-000000000000",
+    "slotSetting": false
+  },
+  {
+    "name": "AADSECRET",
+    "value": "00000000-0000-0000-0000-000000000000",
+    "slotSetting": false
+  }
+```
+
+#### If Managed Identity is used
+
+- Go to the portal and select your Media Services account.
+- Go to "Access Control" to the left
+- Select "Add" (on the top) / 'Add role assignment"
+- Select role "Media Services Media Operator"
+- Select "Function App" in the box "Assign access to"
+- You should see your Function app name. Select it.
+- If you want to operate Live Events with your functions, repeat the steps with the role "Media Services Live Events Administrator".
+
+Then restart the Function App.
+
+#### Testing
+
 You can use Postman to test your Azure functions.
 
-### B) Second option : deploy using an ARM template and GitHub Actions
+### Option (B): deploy using an ARM template and GitHub Actions
 
 In this section, we deploy and configure an Azure Functions App using an ARM template, then we will configure your GitHub repo to push code updates to the Function App using GitHub Actions.
 
-#### B.1) Fork the repo
+#### (B.1) Fork the repo
 
 If not already done : fork the repo.
 
-#### B.2) Deploy the resources using ARM
+#### (B.2) Managed Identity option: deploy the resources using ARM
 
-You can deploy the Azure resources using the ARM template [`azuredeploy2.json`](azuredeploy2.json).
+If you plan to use **Managed Identity**, you can deploy the Azure resources using the ARM template [`azuredeploy2mi.json`](azuredeploy2mi.json).
+
+Click on this button to deploy the resources to your subscription :
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2mi.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+
+When the deployment is complete, you need to grant the function app access to the Media Services account resource. Go to your new Functions App and get the `Object (principal) ID` :
+
+1. In Azure portal, go to your function app, then `Identity` tab.
+2. In the `System assigned` section, copy the `Object (principal) ID` value.
+
+Now run the commands below in a Terminal. For this request:
+
+- `assignee` is the `Object (principal) ID`
+- `scope` is the `id` of your Media Services account.
+
+```azurecli-interactive
+az login
+
+az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Live Events Administrator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>"
+
+az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Media Operator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>
+```
+
+If you prefer to do it from the portal, follow this [section](#If-Managed-Identity-is-used).
+
+#### (B.2) Service Principal option: deploy the resources using ARM
+
+If you plan to use a **Service Principal**, you can deploy the Azure resources using the ARM template [`azuredeploy2.json`](azuredeploy2.json).
 
 Click on this button to deploy the resources to your subscription :
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-#### B.3) Use Publish Profile as Deployment Credential
+#### (B.3) Use Publish Profile as Deployment Credential
 
 When the deployment is complete, go to your new Functions App to get the publish profile and store it as a secret in your GitHub repository.
 
@@ -164,7 +216,7 @@ When the deployment is complete, go to your new Functions App to get the publish
 3. Open the **.PublishSettings** file and copy the content.
 4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
 
-#### B.4) Setup Continuous deployment
+#### (B.4) Setup Continuous deployment
 
 Let's customize the workflow file to enable continuous deployment (CD) with GitHub Actions.
 
@@ -174,7 +226,7 @@ Let's customize the workflow file to enable continuous deployment (CD) with GitH
 4. Still in GitHub, go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
 5. You should see a new GitHub workflow initiated in **Actions** tab, called **Build and deploy dotnet 5 app to Azure Function App**.
 
-`deploy-functions.yml` based file :
+[`deploy-functions.yml`](../.github/worflows/deploy-functions.yml) based file :
 
 ```yml
 name: Build and deploy dotnet 5 app to Azure Function App
@@ -234,7 +286,7 @@ jobs:
 # For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
 ```
 
-Note : This script installs two versions of .NET and asks the engine to deploy the code from the /Functions folder of the repo.
+Note : This script installs two versions of .NET and asks the engine to deploy the code from the `/Functions` folder of the repo.
 
 ![Screen capture](../Images/azfunc5githubactions.png?raw=true)
 
@@ -242,7 +294,7 @@ Check the status of the workflow in GitHub Actions. If everything worked fine, y
 
 ![Screen capture](../Images/azfunc5appinstance.png?raw=true)
 
-#### B.5) Test the functions
+#### (B.5) Test the functions
 
 In the portal, you can now get the URLs for your functions.
 

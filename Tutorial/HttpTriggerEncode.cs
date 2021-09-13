@@ -12,10 +12,12 @@ using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Microsoft.Identity.Client;
 using Microsoft.Rest;
 using System.Net;
 using Newtonsoft.Json.Linq;
+using Azure.Identity;
+using Azure.Core;
+using Microsoft.Identity.Client;
 
 namespace Functions
 {
@@ -269,7 +271,7 @@ namespace Functions
 
         /// <summary>
         /// Create the ServiceClientCredentials object based on the credentials
-        /// supplied in local configuration file.
+        /// supplied in local configuration file, or with a system managed identity.
         /// </summary>
         /// <param name="config">The param is of type ConfigWrapper. This class reads values from local configuration file.</param>
         /// <returns></returns>
@@ -277,16 +279,31 @@ namespace Functions
         {
             var scopes = new[] { config.ArmAadAudience + "/.default" };
 
-            var app = ConfidentialClientApplicationBuilder.Create(config.AadClientId)
+            string token;
+            if (config.AadClientId != null) // Service Principal
+            {
+                var app = ConfidentialClientApplicationBuilder.Create(config.AadClientId)
                 .WithClientSecret(config.AadSecret)
                 .WithAuthority(AzureCloudInstance.AzurePublic, config.AadTenantId)
                 .Build();
 
-            var authResult = await app.AcquireTokenForClient(scopes)
-                                                     .ExecuteAsync()
-                                                     .ConfigureAwait(false);
+                var authResult = await app.AcquireTokenForClient(scopes)
+                                                        .ExecuteAsync()
+                                                        .ConfigureAwait(false);
 
-            return new TokenCredentials(authResult.AccessToken, TokenType);
+                token = authResult.AccessToken;
+            }
+            else // managed identity
+            {
+                var credential = new ManagedIdentityCredential();
+                var accessTokenRequest = await credential.GetTokenAsync(
+                    new TokenRequestContext(
+                        scopes: scopes
+                        )
+                    );
+                token = accessTokenRequest.Token;
+            }
+            return new TokenCredentials(token, TokenType);
         }
 
         /// <summary>

@@ -36,22 +36,8 @@
       "metadata": {
         "description": "Azure Active Directory tenant Id or domain of your Media Services account."
       }
-    },
-    "mediaServicesAccountServicePrincipalClientId": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Service Principal Client ID to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal"
-      }
-    },
-    "mediaServicesAccountServicePrincipalClientSecret": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Service Principal Client Secret to access your media services account. See https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal"
-      }
     }
-  },
+   },
   "variables": {
     "functionAppName": "[parameters('appName')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
@@ -61,7 +47,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-04-01",
       "location": "[resourceGroup().location]",
       "comments": "This storage account is used by the functions.",
       "sku": {
@@ -72,7 +58,7 @@
     {
       "type": "Microsoft.Web/serverfarms",
       "name": "[variables('hostingPlanName')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-12-01",
       "location": "[resourceGroup().location]",
       "comments": "This hosting plan is created to deploy the function app and set the billing sku tier",
       "sku": {
@@ -87,8 +73,11 @@
     {
       "type": "Microsoft.Web/sites",
       "name": "[variables('functionAppName')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-12-01",
       "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "comments": "This function app depends on the Media Services account and storage account",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
@@ -134,14 +123,6 @@
             {
               "name": "AccountName",
               "value": "[parameters('mediaServicesAccountName')]"
-            },
-            {
-              "name": "AadClientId",
-              "value": "[parameters('mediaServicesAccountServicePrincipalClientId')]"
-            },
-            {
-              "name": "AadSecret",
-              "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
             },
             {
               "name": "AadTenantId",
