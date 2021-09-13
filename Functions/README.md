@@ -156,7 +156,7 @@ Add these two entries in the configuration of the Azure Function app (and replac
 - Select `Function App` in the box `Assign access to`
 - You should see your Function app name. Select it.
 
-![Screen capture](../Images/azfunc5appinstance.png?raw=true)
+![Screen capture](../Images/azfunc5roleassignment.png?raw=true)
 
 - If you want to operate Live Events with your functions, repeat the previous steps with the role `Media Services Live Events Administrator`.
 
@@ -165,6 +165,8 @@ Then restart the Function App.
 #### Testing
 
 You can use Postman to test your Azure functions.
+
+![Screen capture](../Images/azfunc5postmandeployed.png?raw=true)
 
 ### Option (B): deploy using an ARM template and GitHub Actions
 
