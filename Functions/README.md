@@ -14,7 +14,7 @@ You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to A
 There are several functions and more will be added in the future. As an example, the **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body.
 Functions are documented at [the end](#code-documentation).
 
-We recommend to use **[Manage Identity](https://docs.microsoft.com/en-us/azure/media-services/latest/concept-managed-identities)** to authenticate the Azure Functions against Media Services. The other (legacy) option is to use a Service Principal (client Id and client secret). The documentation below supports both methods. Note that a service principal is needed of you want to test your functions locally.
+We recommend to use **[Manage Identity](https://docs.microsoft.com/en-us/azure/media-services/latest/concept-managed-identities)** to authenticate the Azure Functions against Media Services. The other (legacy) option is to use a Service Principal (client Id and client secret). The documentation below supports both methods. Note that a service principal is needed if you want to test your functions locally.
 
 ## Prerequisites
 
@@ -80,7 +80,7 @@ With VS Code, select the Azure tab and click on the icon to deploy it to Azure.
 
 ![Screen capture](../Images/azfunc5deploy.png?raw=true)
 
-To get the function Url, use the Functions explorer in VSCode, or the Azure portal.
+Once the deployment is done, to get the function Url, use the Functions explorer in VSCode, or the Azure portal.
 
 ![Screen capture](../Images/azfunc5geturl.png?raw=true)
 
@@ -150,12 +150,15 @@ Add these two entries in the configuration of the Azure Function app (and replac
 #### If Managed Identity is used
 
 - Go to the portal and select your Media Services account.
-- Go to "Access Control" to the left
-- Select "Add" (on the top) / 'Add role assignment"
-- Select role "Media Services Media Operator"
-- Select "Function App" in the box "Assign access to"
+- Go to `Access Control (IAM)` to the left
+- Select `Add` (on the top) / `Add role assignment`
+- Select role `Media Services Media Operator`
+- Select `Function App` in the box `Assign access to`
 - You should see your Function app name. Select it.
-- If you want to operate Live Events with your functions, repeat the steps with the role "Media Services Live Events Administrator".
+
+![Screen capture](../Images/azfunc5appinstance.png?raw=true)
+
+- If you want to operate Live Events with your functions, repeat the previous steps with the role `Media Services Live Events Administrator`.
 
 Then restart the Function App.
 
@@ -197,7 +200,7 @@ az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Med
 az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Media Operator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>
 ```
 
-If you prefer to do it from the portal, follow this [section](#If-Managed-Identity-is-used).
+If you cannot run the commands from a terminal, you can do it from the portal. Follow the section [If Managed Identity is used](#If-Managed-Identity-is-used).
 
 #### (B.2) Service Principal option: deploy the resources using ARM
 
@@ -226,7 +229,7 @@ Let's customize the workflow file to enable continuous deployment (CD) with GitH
 4. Still in GitHub, go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
 5. You should see a new GitHub workflow initiated in **Actions** tab, called **Build and deploy dotnet 5 app to Azure Function App**.
 
-[`deploy-functions.yml`](../.github/worflows/deploy-functions.yml) based file :
+[`deploy-functions.yml`](../.github/workflows/deploy-functions.yml) based file :
 
 ```yml
 name: Build and deploy dotnet 5 app to Azure Function App
