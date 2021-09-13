@@ -154,13 +154,13 @@ Add these two entries in the configuration of the Azure Function app (and replac
 - Select `Add` (on the top) / `Add role assignment`
 - Select role `Media Services Media Operator`
 - Select `Function App` in the box `Assign access to`
-- You should see your Function app name. Select it.
+- You should see your Function app name. Select it and select `Save`.
 
 ![Screen capture](../Images/azfunc5roleassignment.png?raw=true)
 
-- If you want to operate Live Events with your functions, repeat the previous steps with the role `Media Services Live Events Administrator`.
+- If you want to operate Live Events with your functions, repeat the previous steps to add role `Media Services Live Events Administrator`.
 
-Then restart the Function App.
+Restart the Function App.
 
 #### Testing
 
