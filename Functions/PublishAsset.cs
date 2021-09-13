@@ -121,11 +121,11 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.AssetName == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass asset name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass assetName in the request body");
             }
             if (data.StreamingPolicyName == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass the streaming policy name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass streamingPolicyName in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();
@@ -176,7 +176,7 @@ namespace Functions
                 streamingPolicy = await client.StreamingPolicies.GetAsync(config.ResourceGroup, config.AccountName, data.StreamingPolicyName);
                 if (streamingPolicy == null)
                 {
-                    return HttpRequest.ResponseBadRequest(req, "StreamingPolicy not found");
+                    return HttpRequest.ResponseBadRequest(req, "Streaming Policy not found");
                 }
 
                 if (data.ContentKeyPolicyName != null)
@@ -185,7 +185,7 @@ namespace Functions
                     contentKeyPolicy = await client.ContentKeyPolicies.GetAsync(config.ResourceGroup, config.AccountName, data.ContentKeyPolicyName);
                     if (contentKeyPolicy == null)
                     {
-                        return HttpRequest.ResponseBadRequest(req, "ContentKeyPolicy not found");
+                        return HttpRequest.ResponseBadRequest(req, "Content Key Policy not found");
                     }
                 }
 

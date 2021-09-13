@@ -98,13 +98,13 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.InputAssetName == null && data.InputUrl == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass asset name or input Url in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass inputAssetName or inputUrl in the request body");
             }
 
             // Return bad request if input asset name is not passed in
             if (data.TransformName == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass the transform name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass transformName in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();

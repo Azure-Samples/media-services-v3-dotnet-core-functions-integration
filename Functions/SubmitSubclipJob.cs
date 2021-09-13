@@ -82,7 +82,7 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.LiveEventName == null || data.LiveOutputName == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass live event name and live output name in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass liveEventName and liveOutputName in the request body");
             }
 
             data.IntervalSec ??= 60;
