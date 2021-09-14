@@ -313,7 +313,7 @@ For more information on this type of deployment, see [GitHub Actions for deployi
 
 ## Code documentation
 
-### CreateEmptyAsset
+### [CreateEmptyAsset](CreateEmptyAsset.cs)
 
 This function creates a Media Services asset. It returns back the asset name, asset Id and storage container.
 See the model for the [input](CreateEmptyAsset.cs#L18-L45) and [output](CreateEmptyAsset.cs#L47-L69).
