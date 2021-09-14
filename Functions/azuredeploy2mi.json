@@ -1,0 +1,149 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "[concat('amsv3functions', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Function application to be deployed. The name will automatically be made unique on deployment, all lowercase letters or numbers with no spaces."
+      }
+    },
+    "mediaServicesAccountSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "Subscription Id for your Media Services account."
+      }
+    },
+    "mediaServicesAccountResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group Name of your Media Services account."
+      }
+    },
+    "mediaServicesAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Your Media Services account name."
+      }
+    },
+    "mediaServicesAccountAzureActiveDirectoryTenantId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure Active Directory tenant Id or domain of your Media Services account."
+      }
+    }
+   },
+  "variables": {
+    "functionAppName": "[parameters('appName')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+    "hostingPlanName": "[parameters('appName')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2021-04-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used by the functions.",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[variables('hostingPlanName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This hosting plan is created to deploy the function app and set the billing sku tier",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "computeMode": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('functionAppName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "comments": "This function app depends on the Media Services account and storage account",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ],
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet-isolated"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
+            },
+            {
+              "name": "SubscriptionId",
+              "value": "[parameters('mediaServicesAccountSubscriptionId')]"
+            },
+            {
+              "name": "ResourceGroup",
+              "value": "[parameters('mediaServicesAccountResourceGroup')]"
+            },
+            {
+              "name": "AccountName",
+              "value": "[parameters('mediaServicesAccountName')]"
+            },
+            {
+              "name": "AadTenantId",
+              "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]"
+            },
+            {
+              "name": "AadEndpoint",
+              "value": "https://login.microsoftonline.com"
+            },
+            {
+              "name": "ArmEndpoint",
+              "value": "https://management.azure.com/"
+            },
+            {
+              "name": "ArmAadAudience",
+              "value": "https://management.core.windows.net/"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
