@@ -336,7 +336,7 @@ Or
 }
  ```
 
-### DeleteAsset
+### [DeleteAsset](DeleteAsset.cs)
 
 This function deletes a Media Services asset.
 See the model for the [input](DeleteAsset.cs#L19-L30).
@@ -349,7 +349,7 @@ Input body sample :
 }
 ```
 
-### PublishAsset
+### [PublishAsset](PublishAsset.cs)
 
 This function publishes a Media Services asset. It create a streaming locator.
 See the model for the [input](PublishAsset.cs#L21-L85) and [output](PublishAsset.cs#L87-L103).
@@ -363,7 +363,7 @@ Input body sample :
 }
 ```
 
-### SubmitEncodingJob
+### [SubmitEncodingJob](SubmitEncodingJob.cs)
 
 This function processes a Media Services asset or a source URL. It launches a job using the Transform name provided in the input. If the Transform does not exist, the function creates one based on the provided Media Encoder Standard preset. The function returns back the output asset name and job name.
 See the model for the [input](SubmitEncodingJob.cs#L20-L61) and [output](SubmitEncodingJob.cs#L63-L79).
