@@ -103,7 +103,7 @@ namespace Functions
         }
 
         /// <summary>
-        /// Function which creates a new asset.
+        /// Function which publishes an asset.
         /// </summary>
         /// <param name="req"></param>
         /// <param name="executionContext"></param>
