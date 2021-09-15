@@ -20,7 +20,7 @@ namespace Common_Utils
         /// <param name="assetName">The asset name.</param>
         /// <param name="storageAccountName">The asset storage name.</param>
         /// <returns></returns>
-        public static async Task<Asset> CreateAssetAsync(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string assetName, string storageAccountName = null)
+        public static async Task<Asset> CreateAssetAsync(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string assetName, string storageAccountName = null, string description = null)
         {
             // Check if an Asset already exists
             Asset asset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
@@ -36,6 +36,9 @@ namespace Common_Utils
                 log.LogInformation("Creating an asset..");
                 asset = new Asset(storageAccountName: storageAccountName);
             }
+
+            if (description != null)
+                asset.Description = description;
 
             return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, asset);
         }

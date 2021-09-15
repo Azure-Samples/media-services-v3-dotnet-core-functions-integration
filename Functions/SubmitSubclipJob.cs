@@ -92,7 +92,7 @@ namespace Functions
             IAzureMediaServicesClient client;
             try
             {
-                client = await Authentication.CreateMediaServicesClientAsync(config, log);
+                client = await Authentication.CreateMediaServicesClientAsync(config);
             }
             catch (Exception e)
             {

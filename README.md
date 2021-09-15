@@ -22,7 +22,7 @@ This repository can be accessed directly using <https://aka.ms/ams3functions>.
 
 | Folder | Description |
 |-------------|-------------|
-| [Functions](/Functions)|**New (Sept 2021)** This sample exposes Azure Functions based on .NET 5 using the latest Media Services and Azure Functions SDKs. Deployment is done with an ARM template and GitHub Actions.|
+| [Functions](/Functions)|**New (Sept 2021)** This sample exposes Azure Functions based on .NET 5 using the latest Media Services, Azure Functions and Identity SDKs. Deployment is done with an ARM template and GitHub Actions.|
 | [Encoding](/Encoding)|The sample exposes an Azure Function that encodes an Azure Storage blob with ffmpeg. Azure Functions Premium plan is recommended.|
 | [LiveAndVodDRMOperationsV3](/LiveAndVodDRMOperationsV3)|The sample exposes several Azure functions that can be used to manage live streaming and VOD with DRM with Azure Media Services v3, using Irdeto back-end to deliver the licenses.|
 | [advanced-vod-workflow](/advanced-vod-workflow)|This project contains advanced VOD media workflow examples of using Azure Functions with Azure Media Services v3. The project includes several folders of sample Azure Functions for use with Azure Media Services that show workflows related to ingesting content directly from blob storage, encoding, and writing content back to blob storage.|
@@ -50,4 +50,4 @@ If not already done : fork the repo, deploy Azure Functions and select the right
 
 Note : if you never provided your GitHub account in the Azure portal before, the continuous integration probably will probably fail and you won't see the functions. In that case, you need to setup it manually. Go to your Azure Function App / Deployment / Deployment Center. Select GitHub as a source and configure it to use your fork.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmaster%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmaster%2Fazuredeploy.json)

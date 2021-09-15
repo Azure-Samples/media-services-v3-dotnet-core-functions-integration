@@ -14,7 +14,7 @@ You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to A
 There are several functions and more will be added in the future. As an example, the **SubmitEncodingJob** function takes a Media Services asset or a source URL and launches an encoding job with Media Services. It uses a Transform which is created if it does not exist. When it is created, it used the preset provided in the input body.
 Functions are documented at [the end](#code-documentation).
 
-We recommend to use **[Manage Identity](https://docs.microsoft.com/en-us/azure/media-services/latest/concept-managed-identities)** to authenticate the Azure Functions against Media Services. The other (legacy) option is to use a Service Principal (client Id and client secret). The documentation below supports both methods. Note that a service principal is needed if you want to test your functions locally.
+We recommend to use **[Manage Identity](https://docs.microsoft.com/en-us/azure/media-services/latest/concept-managed-identities)** to authenticate the Azure Functions against Media Services. The other (legacy) option is to use a Service Principal (client Id and client secret). The documentation below supports both methods. As the code uses the [`DefaultAzureCredential`](https://docs.microsoft.com/en-us/dotnet/api/azure.identity.defaultazurecredential?view=azure-dotnet) object from the Azure Identity package, multiple authentication mecanisms are supported: Environment, Managed Identity, Visual Studio, Interactive...
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ If you use Managed Identity, make sure to select "Managed identity / System-mana
 
 ### 2. Optional : create a Service Principal
 
-If you don't plan to use Managed Identity or if you want to test your functions locally, create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
+If you don't plan to use Managed Identity, create a Service Principal and save the password. It will be needed in step #4. To do so, go to the API tab in the account ([follow this article](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto?tabs=portal)).
 
 ### 3. Make sure the AMS streaming endpoint is started
 
@@ -49,8 +49,15 @@ For more on information on .NET 5 & Azure Functions, see [this repository](https
 Create a **.env file** at the root with your account settings.
 For more information, see [Access APIs](https://docs.microsoft.com/en-us/azure/media-services/latest/access-api-howto).
 
-Use [sample.env](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
+Use [`sample.env`](../sample.env) as a template for the .env file to be created. The .env file must be placed at the root of the sample (same location than sample.env).
 Connect to the Azure portal with your browser and go to your media services account / API access to get the .ENV data to store to the .env file.
+
+When running the functions locally, they will authenticate automatically using your credentials. To use a Service Principal, add the following entries with the right values to the `.env` file:  
+
+```env
+AADCLIENTID="00000000-0000-0000-0000-000000000000"
+AADSECRET="00000000-0000-0000-0000-000000000000"
+```
 
 As an alternative, you can edit the `local.settings.json` file. In that case, make sure to exclude the file from source control.
 
@@ -147,7 +154,7 @@ Add these two entries in the configuration of the Azure Function app (and replac
   }
 ```
 
-#### If Managed Identity is used
+#### If Managed Identity is used (recommended)
 
 - Go to the portal and select your Media Services account.
 - Go to `Access Control (IAM)` to the left
@@ -182,7 +189,7 @@ If you plan to use **Managed Identity**, you can deploy the Azure resources usin
 
 Click on this button to deploy the resources to your subscription :
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2mi.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2mi.json)
 
 When the deployment is complete, you need to grant the function app access to the Media Services account resource. Go to your new Functions App and get the `Object (principal) ID` :
 
@@ -210,7 +217,7 @@ If you plan to use a **Service Principal**, you can deploy the Azure resources u
 
 Click on this button to deploy the resources to your subscription :
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fmedia-services-v3-dotnet-core-functions-integration%2Fmain%2FFunctions%2Fazuredeploy2.json)
 
 #### (B.3) Use Publish Profile as Deployment Credential
 
@@ -331,8 +338,8 @@ Or
 ```json
 {
     "assetNamePrefix": "test",
-    "assetDescription" : "a new asset created by a function",
-    "assetStorageAccount" : "storageams01"
+    "assetDescription": "a new asset created by a function",
+    "assetStorageAccount": "storageams01"
 }
  ```
 
@@ -372,9 +379,9 @@ Input body sample :
 
 ```json
 {
-    "inputUrl":"https://nimbuscdn-nimbuspm.streaming.mediaservices.windows.net/2b533311-b215-4409-80af-529c3e853622/Ignite-short.mp4",
-    "transformName" : "TransformAS",
-    "builtInPreset" :"AdaptiveStreaming"
+    "inputUrl": "https://nimbuscdn-nimbuspm.streaming.mediaservices.windows.net/2b533311-b215-4409-80af-529c3e853622/Ignite-short.mp4",
+    "transformName": "TransformAS",
+    "builtInPreset": "AdaptiveStreaming"
  }
  ```
 
@@ -382,8 +389,8 @@ Or
 
 ```json
 {
-    "inputAssetName":"input-dgs4fss5",
-    "transformName" : "TransformAS",
-    "builtInPreset" :"AdaptiveStreaming"
+    "inputAssetName": "input-dgs4fss5",
+    "transformName": "TransformAS",
+    "builtInPreset": "AdaptiveStreaming"
  }
  ```

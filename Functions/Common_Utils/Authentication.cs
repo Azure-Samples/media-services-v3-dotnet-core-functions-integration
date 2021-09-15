@@ -4,11 +4,8 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Azure.Management.Media;
-using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
 using Microsoft.Rest;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Common_Utils
@@ -17,111 +14,34 @@ namespace Common_Utils
     {
         public static readonly string TokenType = "Bearer";
 
+        private static readonly Lazy<TokenCredential> _msiCredential = new(() =>
+        {
+            // https://docs.microsoft.com/en-us/dotnet/api/azure.identity.defaultazurecredential?view=azure-dotnet
+            // Using DefaultAzureCredential allows for local dev by setting environment variables for the current user, provided said user
+            // has the necessary credentials to perform the operations the MSI of the Function app needs in order to do its work. Including
+            // interactive credentials will allow browser-based login when developing locally.
+
+            return new DefaultAzureCredential(includeInteractiveCredentials: true);
+        });
+
         /// <summary>
         /// Creates the AzureMediaServicesClient object based on the credentials
-        /// supplied in local configuration file.
+        /// supplied in local configuration file or from other types of authentication.
         /// </summary>
         /// <param name="config">The param is of type ConfigWrapper, which reads values from local configuration file.</param>
         /// <returns>A task.</returns>
         // <CreateMediaServicesClientAsync>
-        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config, ILogger log, bool interactive = false)
+        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config)
         {
-            ServiceClientCredentials credentials;
-            if (interactive)
-                credentials = await GetCredentialsInteractiveAuthAsync(config, log);
-            else
-                credentials = await GetCredentialsAsync(config);
-
+            string[] scopes = new[] { config.ArmAadAudience + "/.default" };
+            TokenCredential tokenCred = _msiCredential.Value;
+            AccessToken accesToken = await tokenCred.GetTokenAsync(new TokenRequestContext(scopes), new System.Threading.CancellationToken());
+            ServiceClientCredentials credentials = new TokenCredentials(accesToken.Token, TokenType);
             return new AzureMediaServicesClient(config.ArmEndpoint, credentials)
             {
-                SubscriptionId = config.SubscriptionId,
+                SubscriptionId = config.SubscriptionId
             };
         }
         // </CreateMediaServicesClientAsync>
-
-        /// <summary>
-        /// Create the ServiceClientCredentials object based on the credentials
-        /// supplied in local configuration file, or with a system managed identity.
-        /// </summary>
-        /// <param name="config">The param is of type ConfigWrapper. This class reads values from local configuration file.</param>
-        /// <returns></returns>
-        // <GetCredentialsAsync>
-        private static async Task<ServiceClientCredentials> GetCredentialsAsync(ConfigWrapper config)
-        {
-            var scopes = new[] { config.ArmAadAudience + "/.default" };
-
-            string token;
-            if (config.AadClientId != null) // Service Principal
-            {
-                var app = ConfidentialClientApplicationBuilder.Create(config.AadClientId)
-                .WithClientSecret(config.AadSecret)
-                .WithAuthority(AzureCloudInstance.AzurePublic, config.AadTenantId)
-                .Build();
-
-                var authResult = await app.AcquireTokenForClient(scopes)
-                                                        .ExecuteAsync()
-                                                        .ConfigureAwait(false);
-
-                token = authResult.AccessToken;
-            }
-            else // managed identity
-            {
-                var credential = new ManagedIdentityCredential();
-                var accessTokenRequest = await credential.GetTokenAsync(
-                    new TokenRequestContext(
-                        scopes: scopes
-                        )
-                    );
-                token = accessTokenRequest.Token;
-            }
-            return new TokenCredentials(token, TokenType);
-        }
-        // </GetCredentialsAsync>
-
-        /// <summary>
-        /// Create the ServiceClientCredentials object based on interactive authentication done in the browser
-        /// </summary>
-        /// <param name="config">The param is of type ConfigWrapper. This class reads values from local configuration file.</param>
-        /// <returns></returns>
-        // <GetCredentialsInteractiveAuthAsync>
-        private static async Task<ServiceClientCredentials> GetCredentialsInteractiveAuthAsync(ConfigWrapper config, ILogger log)
-        {
-            var scopes = new[] { config.ArmAadAudience + "/user_impersonation" };
-
-            // client application of Az Cli
-            string ClientApplicationId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
-
-            AuthenticationResult result = null;
-
-            IPublicClientApplication app = PublicClientApplicationBuilder.Create(ClientApplicationId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, config.AadTenantId)
-                .WithRedirectUri("http://localhost")
-                .Build();
-
-            var accounts = await app.GetAccountsAsync();
-
-            try
-            {
-                result = await app.AcquireTokenSilent(scopes, accounts.FirstOrDefault()).ExecuteAsync();
-            }
-            catch (MsalUiRequiredException ex)
-            {
-                try
-                {
-                    result = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
-                }
-                catch (MsalException maslException)
-                {
-                    log.LogError($"ERROR: MSAL interactive authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
-                }
-            }
-            catch (MsalException maslException)
-            {
-                log.LogError($"ERROR: MSAL silent authentication exception with code '{maslException.ErrorCode}' and message '{maslException.Message}'.");
-            }
-
-            return new TokenCredentials(result.AccessToken, TokenType);
-        }
-        // </GetCredentialsInteractiveAuthAsync>
     }
 }
