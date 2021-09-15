@@ -4,7 +4,6 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Azure.Management.Media;
-using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
 using System;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace Common_Utils
     {
         public static readonly string TokenType = "Bearer";
 
-        private static readonly Lazy<TokenCredential> _msiCredential = new Lazy<TokenCredential>(() =>
+        private static readonly Lazy<TokenCredential> _msiCredential = new(() =>
         {
             // https://docs.microsoft.com/en-us/dotnet/api/azure.identity.defaultazurecredential?view=azure-dotnet
             // Using DefaultAzureCredential allows for local dev by setting environment variables for the current user, provided said user
@@ -23,9 +22,6 @@ namespace Common_Utils
             // interactive credentials will allow browser-based login when developing locally.
 
             return new DefaultAzureCredential(includeInteractiveCredentials: true);
-            //return new Azure.Identity.DefaultAzureCredential(new DefaultAzureCredentialOptions {ExcludeAzureCliCredential=true, ExcludeAzurePowerShellCredential=true, ExcludeEnvironmentCredential=false,
-            //    ExcludeInteractiveBrowserCredential=true, ExcludeManagedIdentityCredential=true, ExcludeSharedTokenCacheCredential=true, ExcludeVisualStudioCodeCredential=true, ExcludeVisualStudioCredential=true });
-
         });
 
         /// <summary>
@@ -35,14 +31,12 @@ namespace Common_Utils
         /// <param name="config">The param is of type ConfigWrapper, which reads values from local configuration file.</param>
         /// <returns>A task.</returns>
         // <CreateMediaServicesClientAsync>
-        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config, ILogger log, bool interactive = false)
+        public static async Task<IAzureMediaServicesClient> CreateMediaServicesClientAsync(ConfigWrapper config)
         {
-            var scopes = new[] { config.ArmAadAudience + "/.default" };
-
-            var tokenCred = _msiCredential.Value;
-            var accesTok = await tokenCred.GetTokenAsync(new TokenRequestContext(scopes: scopes), new System.Threading.CancellationToken());
-            ServiceClientCredentials credentials = new TokenCredentials(accesTok.Token, TokenType);
-
+            string[] scopes = new[] { config.ArmAadAudience + "/.default" };
+            TokenCredential tokenCred = _msiCredential.Value;
+            AccessToken accesToken = await tokenCred.GetTokenAsync(new TokenRequestContext(scopes), new System.Threading.CancellationToken());
+            ServiceClientCredentials credentials = new TokenCredentials(accesToken.Token, TokenType);
             return new AzureMediaServicesClient(config.ArmEndpoint, credentials)
             {
                 SubscriptionId = config.SubscriptionId

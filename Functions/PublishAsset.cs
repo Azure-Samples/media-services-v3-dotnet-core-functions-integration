@@ -133,7 +133,7 @@ namespace Functions
             IAzureMediaServicesClient client;
             try
             {
-                client = await Authentication.CreateMediaServicesClientAsync(config, log);
+                client = await Authentication.CreateMediaServicesClientAsync(config);
                 log.LogInformation("AMS Client created.");
             }
             catch (Exception e)

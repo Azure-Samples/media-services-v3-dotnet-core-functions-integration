@@ -88,7 +88,7 @@ namespace Functions
             // Return bad request if input asset name is not passed in
             if (data.AssetNamePrefix == null)
             {
-                return HttpRequest.ResponseBadRequest(req, "Please pass asset name prefix in the request body");
+                return HttpRequest.ResponseBadRequest(req, "Please pass assetNamePrefix in the request body");
             }
 
             ConfigWrapper config = ConfigUtils.GetConfig();
@@ -96,7 +96,7 @@ namespace Functions
             IAzureMediaServicesClient client;
             try
             {
-                client = await Authentication.CreateMediaServicesClientAsync(config, log);
+                client = await Authentication.CreateMediaServicesClientAsync(config);
                 log.LogInformation("AMS Client created.");
             }
             catch (Exception e)
@@ -122,7 +122,7 @@ namespace Functions
             try
             {
                 // let's create the asset
-                asset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, assetName, data.AssetStorageAccount);
+                asset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, assetName, data.AssetStorageAccount, data.AssetDescription);
                 log.LogInformation($"Asset '{assetName}' created.");
 
                 // let's get the asset to have full metadata like container
