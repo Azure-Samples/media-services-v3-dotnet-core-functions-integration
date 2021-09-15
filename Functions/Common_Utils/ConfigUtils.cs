@@ -31,6 +31,13 @@ namespace Common_Utils
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables() // parses the values from the optional .env file at the solution root
                 .Build());
+
+            // For Azure.Identity environment credential
+            // see https://docs.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet
+            Environment.SetEnvironmentVariable("AZURE_TENANT_ID", config.AadTenantId);
+            Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", config.AadClientId);
+            Environment.SetEnvironmentVariable("AZURE_CLIENT_SECRET", config.AadSecret);
+
             return config;
         }
 
