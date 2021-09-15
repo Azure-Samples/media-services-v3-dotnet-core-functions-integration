@@ -26,7 +26,7 @@ namespace Common_Utils
 
         /// <summary>
         /// Creates the AzureMediaServicesClient object based on the credentials
-        /// supplied in local configuration file.
+        /// supplied in local configuration file or from other types of authentication.
         /// </summary>
         /// <param name="config">The param is of type ConfigWrapper, which reads values from local configuration file.</param>
         /// <returns>A task.</returns>
