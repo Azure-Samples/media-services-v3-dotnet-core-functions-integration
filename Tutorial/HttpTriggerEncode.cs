@@ -320,19 +320,37 @@ namespace Functions
         /// <returns></returns>
         private static async Task<Transform> CreateEncodingTransform(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string transformName, string builtInPreset)
         {
-            // Does a transform already exist with the desired name? Assume that an existing Transform with the desired name
-            // also uses the same recipe or Preset for processing content.
-            Transform transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
+            bool createTransform = false;
+            Transform transform = null;
 
-            if (transform == null)
+            try
+            {
+                // Does a transform already exist with the desired name? Assume that an existing Transform with the desired name
+                // also uses the same recipe or Preset for processing content.
+                transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
+            }
+            catch (ErrorResponseException ex)
+            {
+                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    createTransform = true;
+                    log.LogInformation("Transform not found.");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            if (createTransform)
             {
                 log.LogInformation($"Creating transform '{transformName}'...");
-
                 // Create a new Transform Outputs array - this defines the set of outputs for the Transform
                 TransformOutput[] outputs = new TransformOutput[]
                 {
                     // Create a new TransformOutput with a custom Standard Encoder Preset
                     // This demonstrates how to create custom codec and layer output settings
+
                   new TransformOutput(
                         new BuiltInStandardEncoderPreset()
                         {
@@ -343,6 +361,7 @@ namespace Functions
                         relativePriority: Priority.Normal
                     )
                 };
+
                 string description = $"An encoding transform using {builtInPreset} preset";
 
                 // Create the Transform with the outputs defined above
@@ -352,6 +371,7 @@ namespace Functions
             {
                 log.LogInformation($"Transform '{transformName}' found in AMS account.");
             }
+
             return transform;
         }
 
@@ -367,21 +387,31 @@ namespace Functions
         /// <returns></returns>
         private static async Task<Asset> CreateOutputAssetAsync(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string assetName, string storageAccountName = null)
         {
-            // Check if an Asset already exists
-            Asset outputAsset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
-
-            if (outputAsset != null)
+            Asset asset;
+            try
             {
+                // Check if an Asset already exists
+                asset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
+
                 // The asset already exists and we are going to overwrite it. In your application, if you don't want to overwrite
                 // an existing asset, use an unique name.
                 log.LogInformation($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
+
             }
-            else
+            catch (ErrorResponseException ex)
             {
-                log.LogInformation("Creating an output asset..");
-                outputAsset = new Asset(storageAccountName: storageAccountName);
+                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    log.LogInformation("Creating an output asset...");
+                    asset = new Asset(storageAccountName: storageAccountName);
+                }
+                else
+                {
+                    throw;
+                }
             }
-            return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, outputAsset);
+
+            return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, asset);
         }
 
         /// <summary>
@@ -431,13 +461,9 @@ namespace Functions
                              Outputs = jobOutputs,
                          });
             }
-            catch (Exception exception)
+            catch (ErrorResponseException exception)
             {
-                if (exception.GetBaseException() is ApiErrorException apiException)
-                {
-                    log.LogError(
-                          $"ERROR: API call failed with error code '{apiException.Body.Error.Code}' and message '{apiException.Body.Error.Message}'.");
-                }
+                log.LogError($"ERROR: API call failed with error code '{exception.Body.Error.Code}' and message '{exception.Body.Error.Message}'.");
                 throw;
             }
             return job;
