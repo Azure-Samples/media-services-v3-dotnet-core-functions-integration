@@ -32,17 +32,10 @@ namespace Common_Utils
                 // also uses the same recipe or Preset for processing content.
                 transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
             }
-            catch (ErrorResponseException ex)
+            catch (ErrorResponseException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    createTransform = true;
-                    log.LogInformation("Transform not found.");
-                }
-                else
-                {
-                    throw;
-                }
+                createTransform = true;
+                log.LogInformation("Transform not found.");
             }
 
             if (createTransform)
@@ -100,17 +93,10 @@ namespace Common_Utils
                 // also uses the same recipe or Preset for processing content.
                 transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
             }
-            catch (ErrorResponseException ex)
+            catch (ErrorResponseException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    createTransform = true;
-                    log.LogInformation("Transform not found.");
-                }
-                else
-                {
-                    throw;
-                }
+                createTransform = true;
+                log.LogInformation("Transform not found.");
             }
 
             if (createTransform)

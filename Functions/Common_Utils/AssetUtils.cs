@@ -32,17 +32,10 @@ namespace Common_Utils
                 log.LogInformation($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
 
             }
-            catch (ErrorResponseException ex)
+            catch (ErrorResponseException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    log.LogInformation("Creating an asset...");
-                    asset = new Asset(storageAccountName: storageAccountName);
-                }
-                else
-                {
-                    throw;
-                }
+                log.LogInformation("Creating an asset...");
+                asset = new Asset(storageAccountName: storageAccountName);
             }
 
             if (description != null)

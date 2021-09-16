@@ -329,18 +329,12 @@ namespace Functions
                 // also uses the same recipe or Preset for processing content.
                 transform = client.Transforms.Get(resourceGroupName, accountName, transformName);
             }
-            catch (ErrorResponseException ex)
+            catch (ErrorResponseException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    createTransform = true;
-                    log.LogInformation("Transform not found.");
-                }
-                else
-                {
-                    throw;
-                }
+                createTransform = true;
+                log.LogInformation("Transform not found.");
             }
+
 
             if (createTransform)
             {
@@ -398,17 +392,10 @@ namespace Functions
                 log.LogInformation($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
 
             }
-            catch (ErrorResponseException ex)
+            catch (ErrorResponseException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    log.LogInformation("Creating an output asset...");
-                    asset = new Asset(storageAccountName: storageAccountName);
-                }
-                else
-                {
-                    throw;
-                }
+                log.LogInformation("Creating an output asset...");
+                asset = new Asset(storageAccountName: storageAccountName);
             }
 
             return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, asset);
