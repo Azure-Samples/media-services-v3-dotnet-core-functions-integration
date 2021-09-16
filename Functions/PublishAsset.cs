@@ -143,7 +143,6 @@ namespace Functions
                     log.LogError("TIP: Make sure that you have filled out the appsettings.json file before running this sample.");
                 }
                 log.LogError($"{e.Message}");
-
                 return HttpRequest.ResponseBadRequest(req, e.Message);
             }
 
@@ -156,7 +155,7 @@ namespace Functions
             string uniqueness = Guid.NewGuid().ToString().Substring(0, 13);
 
             List<StreamingLocatorContentKey> contentKeys = new List<StreamingLocatorContentKey>();
-          
+
             Guid streamingLocatorId = Guid.NewGuid();
             if (data.StreamingLocatorId != null)
                 streamingLocatorId = new Guid((string)(data.StreamingLocatorId));
@@ -168,56 +167,70 @@ namespace Functions
             try
             {
                 asset = await client.Assets.GetAsync(config.ResourceGroup, config.AccountName, data.AssetName);
-                if (asset == null)
-                {
-                    return HttpRequest.ResponseBadRequest(req, "Asset not found");
-                }
+                log.LogInformation("Asset retrieved.");
 
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when getting the asset."));
+            }
+
+            try
+            {
                 streamingPolicy = await client.StreamingPolicies.GetAsync(config.ResourceGroup, config.AccountName, data.StreamingPolicyName);
-                if (streamingPolicy == null)
-                {
-                    return HttpRequest.ResponseBadRequest(req, "Streaming Policy not found");
-                }
+                log.LogInformation("Streaming policy retrieved.");
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when getting streaming policy."));
+            }
 
-                if (data.ContentKeyPolicyName != null)
+            if (data.ContentKeyPolicyName != null)
+            {
+                ContentKeyPolicy contentKeyPolicy = null;
+                try
                 {
-                    ContentKeyPolicy contentKeyPolicy = null;
                     contentKeyPolicy = await client.ContentKeyPolicies.GetAsync(config.ResourceGroup, config.AccountName, data.ContentKeyPolicyName);
-                    if (contentKeyPolicy == null)
-                    {
-                        return HttpRequest.ResponseBadRequest(req, "Content Key Policy not found");
-                    }
+                    log.LogInformation("Content key policy retrieved.");
                 }
-
-                if (data.ContentKeys != null)
+                catch (ErrorResponseException ex)
                 {
-                    JsonConverter[] jsonConverters = {
+                    return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when getting Content Key Policy."));
+                }
+            }
+
+            if (data.ContentKeys != null)
+            {
+                JsonConverter[] jsonConverters = {
                         new MediaServicesHelperJsonReader()
                     };
-                    contentKeys = JsonConvert.DeserializeObject<List<StreamingLocatorContentKey>>(data.ContentKeys.ToString(), jsonConverters);
-                }
-
-                var streamingLocator = new StreamingLocator()
-                {
-                    AssetName = data.AssetName,
-                    StreamingPolicyName = data.StreamingPolicyName,
-                    DefaultContentKeyPolicyName = data.ContentKeyPolicyName,
-                    StreamingLocatorId = streamingLocatorId,
-                    StartTime = data.StartDateTime,
-                    EndTime=data.EndDateTime
-                };
-
-                if (contentKeys.Count != 0)
-                    streamingLocator.ContentKeys = contentKeys;
-                streamingLocator.Validate();
-
-                await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, streamingLocator);
+                contentKeys = JsonConvert.DeserializeObject<List<StreamingLocatorContentKey>>(data.ContentKeys.ToString(), jsonConverters);
             }
-            catch (Exception e)
+
+            var streamingLocator = new StreamingLocator()
             {
-                log.LogError("Error when publishing the asset.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                AssetName = data.AssetName,
+                StreamingPolicyName = data.StreamingPolicyName,
+                DefaultContentKeyPolicyName = data.ContentKeyPolicyName,
+                StreamingLocatorId = streamingLocatorId,
+                StartTime = data.StartDateTime,
+                EndTime = data.EndDateTime
+            };
+
+            if (contentKeys.Count != 0)
+            {
+                streamingLocator.ContentKeys = contentKeys;
+            }
+
+            streamingLocator.Validate();
+            try
+            {
+                await client.StreamingLocators.CreateAsync(config.ResourceGroup, config.AccountName, streamingLocatorName, streamingLocator);
+                log.LogInformation("Streaming locator created.");
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when creating the streaming locator."));
             }
 
             AnswerBodyModel dataOk = new()

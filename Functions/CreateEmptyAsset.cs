@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
@@ -119,20 +120,26 @@ namespace Functions
             string assetName = $"{data.AssetNamePrefix}-{uniqueness}";
 
             Asset asset;
+
             try
             {
                 // let's create the asset
                 asset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, assetName, data.AssetStorageAccount, data.AssetDescription);
                 log.LogInformation($"Asset '{assetName}' created.");
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when creating the asset."));
+            }
 
+            try
+            {
                 // let's get the asset to have full metadata like container
                 asset = await client.Assets.GetAsync(config.ResourceGroup, config.AccountName, assetName);
             }
-            catch (Exception e)
+            catch (ErrorResponseException ex)
             {
-                log.LogError("Error when creating the asset.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when getting the created asset."));
             }
 
             AnswerBodyModel dataOk = new()
@@ -142,7 +149,7 @@ namespace Functions
                 Container = asset.Container
             };
 
-            return HttpRequest.ResponseOk(req, dataOk);
+            return HttpRequest.ResponseOk(req, dataOk, HttpStatusCode.Created);
         }
     }
 }

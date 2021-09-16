@@ -4,7 +4,6 @@
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace Common_Utils
@@ -22,23 +21,34 @@ namespace Common_Utils
         /// <returns></returns>
         public static async Task<Asset> CreateAssetAsync(IAzureMediaServicesClient client, ILogger log, string resourceGroupName, string accountName, string assetName, string storageAccountName = null, string description = null)
         {
-            // Check if an Asset already exists
-            Asset asset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
-
-            if (asset != null)
+            Asset asset;
+            try
             {
+                // Check if an Asset already exists
+                asset = await client.Assets.GetAsync(resourceGroupName, accountName, assetName);
+
                 // The asset already exists and we are going to overwrite it. In your application, if you don't want to overwrite
                 // an existing asset, use an unique name.
                 log.LogInformation($"Warning: The asset named {assetName} already exists. It will be overwritten by the function.");
+
             }
-            else
+            catch (ErrorResponseException ex)
             {
-                log.LogInformation("Creating an asset..");
-                asset = new Asset(storageAccountName: storageAccountName);
+                if (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    log.LogInformation("Creating an asset...");
+                    asset = new Asset(storageAccountName: storageAccountName);
+                }
+                else
+                {
+                    throw;
+                }
             }
 
             if (description != null)
+            {
                 asset.Description = description;
+            }
 
             return await client.Assets.CreateOrUpdateAsync(resourceGroupName, accountName, assetName, asset);
         }

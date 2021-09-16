@@ -15,9 +15,9 @@ namespace Common_Utils
         /// <param name="req">HttpRequestData object</param>
         /// <param name="data">Object to serialize</param>
         /// <returns></returns>
-        public static HttpResponseData ResponseOk(HttpRequestData req, object data)
+        public static HttpResponseData ResponseOk(HttpRequestData req, object data, HttpStatusCode statuscode = HttpStatusCode.OK)
         {
-            var response = req.CreateResponse(HttpStatusCode.OK);
+            var response = req.CreateResponse(statuscode);
             response.Headers.Add("Content-Type", "application/json");
             if (data != null)
             {

@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
@@ -109,8 +110,15 @@ namespace Functions
             // The default value is 30 seconds for the .NET client SDK
             client.LongRunningOperationRetryTimeout = 2;
 
-            // Ensure that you have customized encoding Transform.  This is really a one time setup operation.
-            Transform transform = await TransformUtils.CreateSubclipTransform(client, log, config.ResourceGroup, config.AccountName, SubclipTransformName);
+            try
+            {
+                // Ensure that you have customized encoding Transform.  This is really a one time setup operation.
+                Transform transform = await TransformUtils.GetOrCreateSubclipTransform(client, log, config.ResourceGroup, config.AccountName, SubclipTransformName);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when getting or creating the transform."));
+            }
 
             var liveOutput = await client.LiveOutputs.GetAsync(config.ResourceGroup, config.AccountName, data.LiveEventName, data.LiveOutputName);
 
@@ -155,8 +163,16 @@ namespace Functions
                 return HttpRequest.ResponseBadRequest(req, "Stopping. Duration of subclip is zero.");
             }
 
-            // Output from the Job must be written to an Asset, so let's create one
-            Asset outputAsset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
+            Asset outputAsset;
+            try
+            {
+                // Output from the Job must be written to an Asset, so let's create one
+                 outputAsset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, liveOutput.Name + "-subclip-" + triggerStart, data.OutputAssetStorageAccount);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when creating the output asset."));
+            }
 
             JobInput jobInput = new JobInputAsset(
                 assetName: liveOutput.AssetName,
@@ -164,16 +180,25 @@ namespace Functions
                 end: new AbsoluteClipTime(livetime.Add(TimeSpan.FromMilliseconds(100)))
                 );
 
-            Job job = await JobUtils.SubmitJobAsync(
-               client,
-               log,
-               config.ResourceGroup,
-               config.AccountName,
-               SubclipTransformName,
-               $"Subclip-{liveOutput.Name}-{triggerStart}",
-               jobInput,
-               outputAsset.Name
-               );
+            Job job;
+            try
+            {
+                 job = await JobUtils.SubmitJobAsync(
+              client,
+              log,
+              config.ResourceGroup,
+              config.AccountName,
+              SubclipTransformName,
+              $"Subclip-{liveOutput.Name}-{triggerStart}",
+              jobInput,
+              outputAsset.Name
+              );
+            }
+            catch (ErrorResponseException ex)
+            {
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when submitting the job."));
+            }
+
 
             AnswerBodyModel dataOk = new()
             {
@@ -183,7 +208,7 @@ namespace Functions
                 SubclipEndTime = starttime + duration
             };
 
-            return HttpRequest.ResponseOk(req, dataOk);
+            return HttpRequest.ResponseOk(req, dataOk, HttpStatusCode.Accepted);
         }
     }
 
