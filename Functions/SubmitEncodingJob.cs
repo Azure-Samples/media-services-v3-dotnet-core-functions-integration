@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common_Utils;
@@ -143,13 +144,11 @@ namespace Functions
                 transform = await TransformUtils.CreateEncodingTransform(client, log, config.ResourceGroup, config.AccountName, data.TransformName, data.BuiltInPreset);
                 log.LogInformation("Transform retrieved.");
             }
-            catch (Exception e)
+            catch (ErrorResponseException ex)
             {
-                log.LogError("Error when creating/getting the transform.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when creating the transform."));
             }
-
+          
             Asset outputAsset;
             try
             {
@@ -157,13 +156,11 @@ namespace Functions
                 outputAsset = await AssetUtils.CreateAssetAsync(client, log, config.ResourceGroup, config.AccountName, outputAssetName, data.OutputAssetStorageAccount);
                 log.LogInformation($"Output asset '{outputAssetName}' created.");
             }
-            catch (Exception e)
+            catch (ErrorResponseException ex)
             {
-                log.LogError("Error when creating the output asset.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when creating the output asset."));
             }
-
+          
             // Job input prepration : asset or url
             JobInput jobInput;
             if (data.InputUrl != null)
@@ -193,12 +190,11 @@ namespace Functions
                                            );
                 log.LogInformation($"Job '{jobName}' submitted.");
             }
-            catch (Exception e)
+            catch (ErrorResponseException ex)
             {
-                log.LogError("Error when submitting the job.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when submitting the job."));
             }
+         
                       
             AnswerBodyModel dataOk = new()
             {
@@ -206,7 +202,7 @@ namespace Functions
                 JobName = job.Name
             };
 
-            return HttpRequest.ResponseOk(req, dataOk);
+            return HttpRequest.ResponseOk(req, dataOk, HttpStatusCode.Accepted);
         }
     }
 }

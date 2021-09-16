@@ -9,6 +9,7 @@ using Common_Utils;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Management.Media;
+using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -68,7 +69,6 @@ namespace Functions
                 log.LogError($"{e.Message}");
 
                 return HttpRequest.ResponseBadRequest(req, e.Message);
-
             }
 
             // Set the polling interval for long running operations to 2 seconds.
@@ -81,11 +81,9 @@ namespace Functions
                 await client.Assets.DeleteAsync(config.ResourceGroup, config.AccountName, data.AssetName);
                 log.LogInformation($"Asset '{data.AssetName}' deleted.");
             }
-            catch (Exception e)
+            catch (ErrorResponseException ex)
             {
-                log.LogError("Error when deleting the asset.");
-                log.LogError($"{e.Message}");
-                return HttpRequest.ResponseBadRequest(req, e.Message);
+                return HttpRequest.ResponseBadRequest(req, LogUtils.LogError(log, ex, "Error when deleting the asset."));
             }
 
             return HttpRequest.ResponseOk(req, null);

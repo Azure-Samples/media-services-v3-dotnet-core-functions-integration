@@ -4,7 +4,6 @@
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace Common_Utils
@@ -59,13 +58,11 @@ namespace Common_Utils
                          });
 
             }
-            catch (Exception exception)
+            catch (ErrorResponseException ex)
             {
-                if (exception.GetBaseException() is ApiErrorException apiException)
-                {
-                    log.LogError(
-                          $"ERROR: API call failed with error code '{apiException.Body.Error.Code}' and message '{apiException.Body.Error.Message}'.");
-                }
+                log.LogError(
+                      $"ERROR: API call failed with error code '{ex.Body.Error.Code}' and message '{ex.Body.Error.Message}'.");
+
                 throw;
             }
 
