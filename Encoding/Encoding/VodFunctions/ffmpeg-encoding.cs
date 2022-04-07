@@ -55,18 +55,18 @@ namespace Encoding
             }
             catch (Exception ex)
             {
-                return Helpers.Helpers.ReturnErrorException(log, ex);
+                return Helpers.HelpersBasic.ReturnErrorException(log, ex);
             }
 
             var ffmpegArguments = (string)data.ffmpegArguments;
 
             var sasInputUrl = (string)data.sasInputUrl;
             if (sasInputUrl == null)
-                return Helpers.Helpers.ReturnErrorException(log, "Error - please pass sasInputUrl in the JSON");
+                return Helpers.HelpersBasic.ReturnErrorException(log, "Error - please pass sasInputUrl in the JSON");
 
             var sasOutputUrl = (string)data.sasOutputUrl;
             if (sasOutputUrl == null)
-                return Helpers.Helpers.ReturnErrorException(log, "Error - please pass sasOutputUrl in the JSON");
+                return Helpers.HelpersBasic.ReturnErrorException(log, "Error - please pass sasOutputUrl in the JSON");
 
 
             log.LogInformation("Arguments : ");
