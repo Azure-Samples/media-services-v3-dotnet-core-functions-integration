@@ -1,4 +1,4 @@
-name: Build and deploy dotnet 5 app to Azure Function App
+name: Build and deploy dotnet 7 app to Azure Function App
 
 on:
   push:
@@ -15,9 +15,8 @@ on:
 # 2. Change these variables for your configuration:
 env:
   AZURE_FUNCTIONAPP_NAME: amsv3functionsxxxxxxxxxxxxx  # set this to your application's name
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, set to '.' to use repository root
-  DOTNET_VERSION: '5.0.400'              # set this to the dotnet version to use
-  DOTNET_VERSION_WORKER: '3.1.409'       # set this to the dotnet version to use to build the the Functions Worker Extension
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'          # set this to the path to your web app project, set to '.' to use repository root
+  DOTNET_VERSION: '7.0.x'                              # set this to the dotnet version to use
 
 jobs:
   build-and-deploy:
@@ -26,11 +25,6 @@ jobs:
     steps:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@master
-
-    - name: Setup DotNet ${{ env.DOTNET_VERSION_WORKER }} Function Worker Environment
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION_WORKER }}
 
     - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
       uses: actions/setup-dotnet@v1

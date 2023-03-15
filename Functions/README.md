@@ -4,10 +4,10 @@ platforms: dotnetcore
 author: xpouyat
 ---
 
-# .NET 5 Functions for Azure Media Services v3
+# .NET 7 Functions for Azure Media Services v3
 
-This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 5.
-You can use Visual Studio 2019 or Visual Studio Code to run and deploy them to Azure. Deployment can also be done using [an Azure Resource Manager (ARM) template and GitHub Actions](#b-second-option--deploy-using-an-arm-template-and-github-actions).
+This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 7.
+You can use Visual Studio 2022 or Visual Studio Code to run and deploy them to Azure. Deployment can also be done using [an Azure Resource Manager (ARM) template and GitHub Actions](#b-second-option--deploy-using-an-arm-template-and-github-actions).
 
 ![Deployment architecture using ARM and GitHub Actions](../Images/DrawingAzureFunctionsNet5.png?raw=true)
 
@@ -33,8 +33,8 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 
 ### 4. Install VS Code or Visual Studio
 
-- Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2019](https://visualstudio.microsoft.com/).
-- [.NET Core 3.1 and .NET 5.0 SDKs](https://dotnet.microsoft.com/download/dotnet).
+- Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio 2022](https://visualstudio.microsoft.com/).
+- [.NET 7.0 SDKs](https://dotnet.microsoft.com/download/dotnet).
 - The [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) for Visual Studio Code.
 
 ## .NET solution file and how to launch project
@@ -42,7 +42,7 @@ To enable streaming, go to the Azure portal, select the Azure Media Services acc
 Open the root `/Functions/Functions.sln` (or just open the Functions folder in VS Code).
 The main solution contains the Azure Functions project.
 
-For more on information on .NET 5 & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
+For more on information on .NET & Azure Functions, see [this repository](https://github.com/Azure/azure-functions-dotnet-worker).
 
 ### How to set variables for a local execution
 
@@ -55,8 +55,8 @@ Connect to the Azure portal with your browser and go to your media services acco
 When running the functions locally, they will authenticate automatically using your credentials. To use a Service Principal, add the following entries with the right values to the `.env` file:  
 
 ```env
-AADCLIENTID="00000000-0000-0000-0000-000000000000"
-AADSECRET="00000000-0000-0000-0000-000000000000"
+AZURE_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+AZURE_CLIENT_SECRET="00000000-0000-0000-0000-000000000000"
 ```
 
 As an alternative, you can edit the `local.settings.json` file. In that case, make sure to exclude the file from source control.
@@ -97,37 +97,37 @@ Once deployed, go the Azure portal, select your Azure functions app, go to the '
 
 ```json
   {
-    "name": "AADTENANTDOMAIN",
+    "name": "AZURE_TENANT_DOMAIN",
     "value": "microsoft.onmicrosoft.com",
     "slotSetting": false
   },
   {
-    "name": "AADTENANTID",
+    "name": "AZURE_TENANT_ID",
     "value": "00000000-0000-0000-0000-000000000000",
     "slotSetting": false
   },
   {
-    "name": "ACCOUNTNAME",
+    "name": "AZURE_MEDIA_SERVICES_ACCOUNT_NAME",
     "value": "amsaccount",
     "slotSetting": false
   },
   {
-    "name": "RESOURCEGROUP",
+    "name": "AZURE_RESOURCE_GROUP",
     "value": "amsResourceGroup",
     "slotSetting": false
   },
   {
-    "name": "ARMAADAUDIENCE",
+    "name": "AZURE_ARM_TOKEN_AUDIENCE",
     "value": "https://management.core.windows.net",
     "slotSetting": false
   },
   {
-    "name": "ARMENDPOINT",
+    "name": "AZURE_ARM_ENDPOINT",
     "value": "https://management.azure.com",
     "slotSetting": false
   },
   {
-    "name": "SUBSCRIPTIONID",
+    "name": "AZURE_SUBSCRIPTION_ID",
     "value": "00000000-0000-0000-0000-000000000000",
     "slotSetting": false
   }
@@ -143,12 +143,12 @@ Add these two entries in the configuration of the Azure Function app (and replac
 
 ```json
   {
-    "name": "AADCLIENTID",
+    "name": "AZURE_CLIENT_ID",
     "value": "00000000-0000-0000-0000-000000000000",
     "slotSetting": false
   },
   {
-    "name": "AADSECRET",
+    "name": "AZURE_CLIENT_SECRET",
     "value": "00000000-0000-0000-0000-000000000000",
     "slotSetting": false
   }
@@ -241,7 +241,7 @@ Let's customize the workflow file to enable continuous deployment (CD) with GitH
 [`deploy-functions.yml`](../.github/workflows/deploy-functions.yml) based file :
 
 ```yml
-name: Build and deploy dotnet 5 app to Azure Function App
+name: Build and deploy dotnet 7 app to Azure Function App
 
 on:
   push:
@@ -259,8 +259,7 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: amsv3functionsxxxxxxxxxxxx  # set this to your application's name
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'Functions'    # set this to the path to your web app project, set to '.' to use repository root
-  DOTNET_VERSION: '5.0.400'              # set this to the dotnet version to use
-  DOTNET_VERSION_WORKER: '3.1.409'       # set this to the dotnet version to use to build the the Functions Worker Extension
+  DOTNET_VERSION: '7.0.x'              # set this to the dotnet version to use
 
 jobs:
   build-and-deploy:
@@ -269,11 +268,6 @@ jobs:
     steps:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@master
-
-    - name: Setup DotNet ${{ env.DOTNET_VERSION_WORKER }} Function Worker Environment
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION_WORKER }}
 
     - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
       uses: actions/setup-dotnet@v1

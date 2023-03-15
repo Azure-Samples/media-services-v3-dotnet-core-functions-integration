@@ -113,7 +113,7 @@
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~3"
+              "value": "~4"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -124,39 +124,39 @@
               "value": "1"
             },
             {
-              "name": "SubscriptionId",
+              "name": "AZURE_SUBSCRIPTION_ID",
               "value": "[parameters('mediaServicesAccountSubscriptionId')]"
             },
             {
-              "name": "ResourceGroup",
+              "name": "AZURE_RESOURCE_GROUP",
               "value": "[parameters('mediaServicesAccountResourceGroup')]"
             },
             {
-              "name": "AccountName",
+              "name": "AZURE_MEDIA_SERVICES_ACCOUNT_NAME",
               "value": "[parameters('mediaServicesAccountName')]"
             },
             {
-              "name": "AadClientId",
+              "name": "AZURE_CLIENT_ID",
               "value": "[parameters('mediaServicesAccountServicePrincipalClientId')]"
             },
             {
-              "name": "AadSecret",
+              "name": "AZURE_CLIENT_SECRET",
               "value": "[parameters('mediaServicesAccountServicePrincipalClientSecret')]"
             },
             {
-              "name": "AadTenantId",
+              "name": "AZURE_TENANT_ID",
               "value": "[parameters('mediaServicesAccountAzureActiveDirectoryTenantId')]"
             },
             {
-              "name": "AadEndpoint",
+              "name": "AZURE_AAD_ENDPOINT",
               "value": "https://login.microsoftonline.com"
             },
             {
-              "name": "ArmEndpoint",
+              "name": "AZURE_ARM_ENDPOINT",
               "value": "https://management.azure.com/"
             },
             {
-              "name": "ArmAadAudience",
+              "name": "AZURE_ARM_TOKEN_AUDIENCE",
               "value": "https://management.core.windows.net/"
             }
           ]
