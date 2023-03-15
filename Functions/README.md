@@ -209,7 +209,7 @@ az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Med
 az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Media Operator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>
 ```
 
-If you cannot run the commands from a terminal, you can do it from the portal. Follow the section [If Managed Identity is used](#If-Managed-Identity-is-used).
+If you cannot run the commands from a terminal, you can do it from the portal. Follow the section [If Managed Identity is used](#if-managed-identity-is-used-recommended).
 
 #### (B.2) Service Principal option: deploy the resources using ARM
 
