@@ -4,9 +4,9 @@ platforms: dotnetcore
 author: xpouyat
 ---
 
-# .NET 7 Functions for Azure Media Services v3
+# .NET 7.0 Functions for Azure Media Services v3
 
-This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 7.
+This project contains examples of Azure Functions that connect to Azure Media Services v3 for video processing. Functions are developped using C# and .NET 7.0.
 You can use Visual Studio 2022 or Visual Studio Code to run and deploy them to Azure. Deployment can also be done using [an Azure Resource Manager (ARM) template and GitHub Actions](#b-second-option--deploy-using-an-arm-template-and-github-actions).
 
 ![Deployment architecture using ARM and GitHub Actions](../Images/DrawingAzureFunctionsNet5.png?raw=true)
