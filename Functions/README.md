@@ -206,7 +206,7 @@ az login
 
 az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Live Events Administrator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>"
 
-az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Media Operator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>
+az role assignment create --assignee 00000000-0000-0000-000000000000 --role "Media Services Media Operator" --scope "/subscriptions/<the-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Media/mediaservices/<your-media-services-account-name>"
 ```
 
 If you cannot run the commands from a terminal, you can do it from the portal. Follow the section [If Managed Identity is used](#if-managed-identity-is-used-recommended).
@@ -226,7 +226,7 @@ When the deployment is complete, go to your new Functions App to get the publish
 1. In Azure portal, go to your function app, then Deployment Center tab.
 2. Click **Manage publish profile**, **Download publish profile** to download **.PublishSettings** file.
 3. Open the **.PublishSettings** file and copy the content.
-4. Paste the XML content to your GitHub Repository > Settings > Secrets > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
+4. Paste the XML content to your GitHub Repository > Settings > Secrets and variables > Actions > Add a new secret > **AZURE_FUNCTIONAPP_PUBLISH_PROFILE**
 
 #### (B.4) Setup Continuous deployment
 
@@ -236,7 +236,7 @@ Let's customize the workflow file to enable continuous deployment (CD) with GitH
 2. Change variable value **AZURE_FUNCTIONAPP_NAME** in `env:` section according to your function app name.
 3. Commit the change.
 4. Still in GitHub, go to **Actions**. Enable the workflows if they are disabled (worklows are disabled when they come from the source repo used by the fork).
-5. You should see a new GitHub workflow initiated in **Actions** tab, called **Build and deploy dotnet 5 app to Azure Function App**.
+5. You should see a new GitHub workflow initiated in **Actions** tab, called **Build and deploy dotnet 7 app to Azure Function App**.
 
 [`deploy-functions.yml`](../.github/workflows/deploy-functions.yml) based file :
 
@@ -267,10 +267,10 @@ jobs:
     environment: dev
     steps:
     - name: 'Checkout GitHub Action'
-      uses: actions/checkout@master
+      uses: actions/checkout@v3
 
     - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -278,7 +278,7 @@ jobs:
       shell: pwsh
       run: |
         pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-        dotnet build --configuration Release --output ./output
+        dotnet build --configuration Release --p:OutputPath=./output
         popd
 
     - name: 'Run Azure Functions Action'
