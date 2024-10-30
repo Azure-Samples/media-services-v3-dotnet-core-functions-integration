@@ -13,6 +13,8 @@ azureDeploy: https://raw.githubusercontent.com/Azure-Samples/media-services-v3-d
 
 # Azure Media Services v3 - Serverless Workflows with Azure Functions & Logic Apps
 
+**IMPORTANT NOTE : Azure Media Service has been retired on June 30, 2024. Please see the (retirement guide](https://learn.microsoft.com/en-us/azure/media-services/latest/azure-media-services-retirement).**
+
 This repository contains projects that show how to integrate Azure Media Services with Azure Functions & Azure Logic Apps.
 These Media Services Functions examples are based on AMS REST API v3 on Azure Functions v3. Most of the functions can also be used from Logic Apps.
 
